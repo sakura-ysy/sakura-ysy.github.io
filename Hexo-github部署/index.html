@@ -27,8 +27,13 @@
 <meta property="og:image" content="https://i.bmp.ovh/imgs/2022/01/cbcaf19961dd2f30.png">
 <meta property="og:image" content="https://i.bmp.ovh/imgs/2022/01/57a82e42da55b911.png">
 <meta property="og:image" content="https://i.bmp.ovh/imgs/2022/01/4c06520619a2bb09.png">
+<meta property="og:image" content="https://s2.loli.net/2022/01/15/xBvwpgXJFE9oqeW.png">
+<meta property="og:image" content="https://s2.loli.net/2022/01/15/jLJsXgzFWA7Hlvp.png">
+<meta property="og:image" content="https://s2.loli.net/2022/01/15/PTl2WvhfyNaEKRL.png">
+<meta property="og:image" content="https://s2.loli.net/2022/01/15/AfwcSEl5U9gHRBF.png">
+<meta property="og:image" content="https://s2.loli.net/2022/01/15/MyLpC91z3tTYi5l.png">
 <meta property="article:published_time" content="2022-01-15T05:32:02.000Z">
-<meta property="article:modified_time" content="2022-01-15T07:39:13.667Z">
+<meta property="article:modified_time" content="2022-01-15T15:41:28.016Z">
 <meta property="article:author" content="SrcMiLe">
 <meta property="article:tag" content="Hexo">
 <meta property="article:tag" content="Blog">
@@ -395,7 +400,7 @@
 
 <p>but后面的这里不用关注。</p>
 <h4 id="本地推送"><a href="#本地推送" class="headerlink" title="本地推送"></a>本地推送</h4><p>在根<code>_config.yml</code>中进行部署配置，将<code>deploy</code>中的内容全部改为：</p>
-<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">deploy:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">git</span></span><br><span class="line">  <span class="attr">repository:</span> <span class="string">https://github.com/sakura-ysy/sakura-ysy.github.io.git</span></span><br><span class="line">  <span class="attr">branch:</span> <span class="string">main</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">deploy:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">git</span></span><br><span class="line">  <span class="attr">repository:</span> <span class="string">https://github.com/sakura-ysy/sakura-ysy.github.io.git</span></span><br><span class="line">  <span class="attr">branch:</span> <span class="string">main</span></span><br></pre></td></tr></table></figure>
 
 <p>type是固定的，rep指仓库地址，branch可以自己选要用哪个分支部署。注意，github的主分支由原来的master变为了main。</p>
 <p>然后，在博客根目录下打开<code>Git Bash</code>，安装Git部署工具:</p>
@@ -413,6 +418,66 @@
 <p><img src="https://i.bmp.ovh/imgs/2022/01/4c06520619a2bb09.png"></p>
 <p>在第一次<code>hexo d</code>需要验证身份时，输入上述令牌即可。</p>
 <p>上面工作全部完成后，即可通过公网访问博客，网址就是仓库名：<a target="_blank" rel="noopener" href="http://sakura-ysy.github.io/">http://sakura-ysy.github.io</a></p>
+<hr>
+<h3 id="图片插入"><a href="#图片插入" class="headerlink" title="图片插入"></a>图片插入</h3><p>MarkDown中存储的是图片本地文件路径，要想在公网展示，必须将图片存储在云端并在md中使用该路径，有两个较好用的方法：</p>
+<blockquote>
+<ul>
+<li>图片存在Git仓库</li>
+<li>使用图床</li>
+</ul>
+</blockquote>
+<h4 id="图片存在Git仓库"><a href="#图片存在Git仓库" class="headerlink" title="图片存在Git仓库"></a>图片存在Git仓库</h4><p>首先安装插件hexo-renderer-marked：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-renderer-marked</span><br></pre></td></tr></table></figure>
+
+<p>安装完成后，在根_config.yml中新增如下配置 :</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">post_asset_folder:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">marked:</span></span><br><span class="line">  <span class="attr">prependRoot:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">postAsset:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<p>这样以来，当我们使用 <code>hexo new post &#39;文章名&#39;</code> 时，在source/_post目录下除了生成对应的md文件，还会生成一个同名的目录。将所有图片存在该目录下，并使用相对路径引用该目录中的图片即可。</p>
+<p>但是，上述插件只会生成一个空目录，并不会自动将图片放进去，所有操作需要手动执行，非常麻烦，那怎么让它自动执行？这里就要用到强大的<strong>Typora</strong>了</p>
+<p>打开Typora的偏好设置，使图片在插入时会复制到指定路径，由于目标目录名和文章名相同，因此复制到<code>./$&#123;filename&#125;</code>处即可。</p>
+<p><img src="https://s2.loli.net/2022/01/15/xBvwpgXJFE9oqeW.png" alt="image.png"></p>
+<p>使用该配置后，插入到Typora中的图片，会直接复制该到文章资源文件夹，同时在md中自动更改路径。如复制网络路径的图片<code>https://...../image.jpg</code>粘贴到Typora中叫<code>文章名</code>的文章后，图片会自动变为<code>![](文章名/image.jpg)</code>。</p>
+<p>但是在部署后的路径和本地路径是不一样的，它会直接在文章的资源文件夹中找，因此路径中的<code>文章名/</code> 需要删掉，即更改为<code>[]image.jpg)</code>，这样虽然在本地md中路径错误，但是部署后即正确。</p>
+<p>为了方便，可以在Typora编写完博客后，使用Ctrl+F全局搜索<code>文章名/</code>，然后将其替换成空串即可。</p>
+<h4 id="使用图床"><a href="#使用图床" class="headerlink" title="使用图床"></a>使用图床</h4><p>将图片存在Git上有两个缺点，一是本地寻址不出来，二是图片加载很慢，为了解决这两个问题，可以使用图床来存储图片。</p>
+<p>所谓图床，就是公网上的存储空间，将本地文件上传上去后会返回该图片在网络上的URL，使用该URL作为图片路径即可。</p>
+<p>如果有已备案域名的话，推荐使用七牛云，因为它是国内服务商，速度快且稳定，不用担心被封，用户也有免费的10G空间可用。</p>
+<p>如果没有的话，直接使用现成的公共图床也可，不同的图床速度和空间都不一样，根据需求选用，可以参考：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/58863378">https://zhuanlan.zhihu.com/p/58863378</a></p>
+<p>比如使用<a target="_blank" rel="noopener" href="https://sm.ms/">sm.ms</a>图床，上传后返回图片的网络地址和不同的引用格式，在md文件中引用就行。</p>
+<p><img src="https://s2.loli.net/2022/01/15/jLJsXgzFWA7Hlvp.png" alt="image.png"></p>
+<p>建议使用具有CDN加速的图床，这样会很快。</p>
+<p>不过公共图床毕竟是公共的，免不了被封的风险，且自己也没法管理上传的内容。所以如果想折腾的话，建议用自己的服务器搭图床。</p>
+<hr>
+<h3 id="绑定域名"><a href="#绑定域名" class="headerlink" title="绑定域名"></a>绑定域名</h3><p>.github.io这个域名后缀着实不好看，并且前面必须用git账户名，所以给它绑个域名最好。首先得租一个域名，可以直接去阿里万网那租。租完后，就需要将新域名和原域名进行绑定，这个操作在服务商端和Git端都要进行，可以理解为一种双向同意。</p>
+<h4 id="服务商端"><a href="#服务商端" class="headerlink" title="服务商端"></a>服务商端</h4><p>以阿里万网为例，点击<code>解析</code>进入解析设置。</p>
+<p><img src="https://s2.loli.net/2022/01/15/PTl2WvhfyNaEKRL.png" alt="MAIJUE8AS_SJ2G1A_M90MZC.png"></p>
+<p>将记录类型设为<code>CNAME</code>，意为用该域名指向另一个域名。记录值填原域名，即sakura-ysy.github.io。其他值默认就行。</p>
+<p><img src="https://s2.loli.net/2022/01/15/AfwcSEl5U9gHRBF.png" alt="image.png"></p>
+<p>当然，记录类型也可以选择A，即直接让域名执行Git的IPv4，可以通过<code>ping sakura-ysy.github.io</code> 来获得该IP。</p>
+<p>至于主机记录，其实就是域名前缀，常见用法有：</p>
+<blockquote>
+<ul>
+<li><p><strong>www：</strong>解析后的域名为<a target="_blank" rel="noopener" href="http://www.aliyun.com./">www.aliyun.com。</a></p>
+</li>
+<li><p><strong>@：</strong>直接解析主域名 aliyun.com。</p>
+</li>
+<li><p>*<strong>：</strong>泛解析，匹配其他所有域名 *.aliyun.com。</p>
+</li>
+<li><p><strong>mail：</strong>将域名解析为mail.aliyun.com，通常用于解析邮箱服务器。</p>
+</li>
+<li><p><strong>二级域名：</strong>如：abc.aliyun.com，填写abc。</p>
+</li>
+<li><p><strong>手机网站：</strong>如：m.aliyun.com，填写m。</p>
+</li>
+<li><p><strong>显性URL：</strong>不支持泛解析（泛解析：将所有子域名解析到同一地址）</p>
+</li>
+</ul>
+</blockquote>
+<h4 id="Git端"><a href="#Git端" class="headerlink" title="Git端"></a>Git端</h4><p>只需要在Git仓库中添加一个无后缀文件<code>CNAME</code>，内容只有一行，为绑定的域名，即<code>yesiyuan.cn</code>。当然，也可以直接在Settings-&gt;Pages中的Custom domain中绑定该域名。</p>
+<p><img src="https://s2.loli.net/2022/01/15/MyLpC91z3tTYi5l.png" alt="image.png"></p>
+<p>两端都完成配置后，即可使用新域名来访问博客啦。</p>
+<h4 id="使用HTTPS"><a href="#使用HTTPS" class="headerlink" title="使用HTTPS"></a>使用HTTPS</h4><p>这个我还没弄</p>
+<p>未完待续……</p>
 
             
 
@@ -558,7 +623,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="toc-number">1.</span> <span class="toc-text">准备工作</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85Node-js"><span class="toc-number">1.1.</span> <span class="toc-text">安装Node.js</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85Git"><span class="toc-number">1.2.</span> <span class="toc-text">安装Git</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85Hexo"><span class="toc-number">1.3.</span> <span class="toc-text">安装Hexo</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E6%93%8D%E4%BD%9C"><span class="toc-number">2.</span> <span class="toc-text">本地操作</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Hexo%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-number">2.1.</span> <span class="toc-text">Hexo初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E7%BD%91%E9%A1%B5%E7%94%9F%E6%88%90%E4%B8%8E%E9%A2%84%E8%A7%88"><span class="toc-number">2.2.</span> <span class="toc-text">静态网页生成与预览</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Github%E9%83%A8%E7%BD%B2"><span class="toc-number">3.</span> <span class="toc-text">Github部署</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E4%BB%93%E5%BA%93"><span class="toc-number">3.1.</span> <span class="toc-text">创建仓库</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%94%9F%E6%88%90SSH-Keys"><span class="toc-number">3.2.</span> <span class="toc-text">生成SSH Keys</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E6%8E%A8%E9%80%81"><span class="toc-number">3.3.</span> <span class="toc-text">本地推送</span></a></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="toc-number">1.</span> <span class="toc-text">准备工作</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85Node-js"><span class="toc-number">1.1.</span> <span class="toc-text">安装Node.js</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85Git"><span class="toc-number">1.2.</span> <span class="toc-text">安装Git</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%89%E8%A3%85Hexo"><span class="toc-number">1.3.</span> <span class="toc-text">安装Hexo</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E6%93%8D%E4%BD%9C"><span class="toc-number">2.</span> <span class="toc-text">本地操作</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Hexo%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-number">2.1.</span> <span class="toc-text">Hexo初始化</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E7%BD%91%E9%A1%B5%E7%94%9F%E6%88%90%E4%B8%8E%E9%A2%84%E8%A7%88"><span class="toc-number">2.2.</span> <span class="toc-text">静态网页生成与预览</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Github%E9%83%A8%E7%BD%B2"><span class="toc-number">3.</span> <span class="toc-text">Github部署</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E4%BB%93%E5%BA%93"><span class="toc-number">3.1.</span> <span class="toc-text">创建仓库</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%94%9F%E6%88%90SSH-Keys"><span class="toc-number">3.2.</span> <span class="toc-text">生成SSH Keys</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E6%8E%A8%E9%80%81"><span class="toc-number">3.3.</span> <span class="toc-text">本地推送</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%BE%E7%89%87%E6%8F%92%E5%85%A5"><span class="toc-number">4.</span> <span class="toc-text">图片插入</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9B%BE%E7%89%87%E5%AD%98%E5%9C%A8Git%E4%BB%93%E5%BA%93"><span class="toc-number">4.1.</span> <span class="toc-text">图片存在Git仓库</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%9B%BE%E5%BA%8A"><span class="toc-number">4.2.</span> <span class="toc-text">使用图床</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%91%E5%AE%9A%E5%9F%9F%E5%90%8D"><span class="toc-number">5.</span> <span class="toc-text">绑定域名</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E5%95%86%E7%AB%AF"><span class="toc-number">5.1.</span> <span class="toc-text">服务商端</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Git%E7%AB%AF"><span class="toc-number">5.2.</span> <span class="toc-text">Git端</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8HTTPS"><span class="toc-number">5.3.</span> <span class="toc-text">使用HTTPS</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>
@@ -671,15 +736,15 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">test</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">Hexo</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">Blog</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">test</a>
               </li>
             
             <div class="clearfix"></div>
