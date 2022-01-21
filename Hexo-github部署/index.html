@@ -9,13 +9,13 @@
     <link rel="dns-prefetch" href="http://example.com">
     <title>
       
-        Hexo: Github部署 | 
+        Hexo(一): Github部署 | 
             SrcMiLeの杂货铺
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <meta name="description" content="Hexo是一个快速、简洁且高效的博客框架，默认使用MarkDown解析文章，用选定的主题渲染出静态页面。使用JavaScript进行逻辑控制，没有后端，直接通过Url访问页面即可。通过github仓库来存储Hexo需要的文件(包括资源文件和Html页面)，即可搭建公网博客。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Hexo: Github部署">
+<meta property="og:title" content="Hexo(一): Github部署">
 <meta property="og:url" content="http://example.com/Hexo-github%E9%83%A8%E7%BD%B2/index.html">
 <meta property="og:site_name" content="SrcMiLeの杂货铺">
 <meta property="og:description" content="Hexo是一个快速、简洁且高效的博客框架，默认使用MarkDown解析文章，用选定的主题渲染出静态页面。使用JavaScript进行逻辑控制，没有后端，直接通过Url访问页面即可。通过github仓库来存储Hexo需要的文件(包括资源文件和Html页面)，即可搭建公网博客。">
@@ -33,7 +33,7 @@
 <meta property="og:image" content="https://s2.loli.net/2022/01/15/AfwcSEl5U9gHRBF.png">
 <meta property="og:image" content="https://s2.loli.net/2022/01/15/MyLpC91z3tTYi5l.png">
 <meta property="article:published_time" content="2022-01-15T05:32:02.000Z">
-<meta property="article:modified_time" content="2022-01-15T15:52:59.812Z">
+<meta property="article:modified_time" content="2022-01-21T14:33:31.280Z">
 <meta property="article:author" content="SrcMiLe">
 <meta property="article:tag" content="Hexo">
 <meta property="article:tag" content="Blog">
@@ -115,7 +115,7 @@
 
                     <br/>
 					<nav>
-						<p>文章数: 3</p>
+						<p>文章数: 4</p>
 					</nav>
 
 					<nav class="header-smart-menu">
@@ -244,7 +244,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      Hexo: Github部署
+      Hexo(一): Github部署
     </h1>
   
 
@@ -268,7 +268,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-hourglass-half"></i>
         <span class="post-meta-item-text">  阅读时长: </span>
-        <span class="post-count">11分</span>
+        <span class="post-count">12分</span>
       </span>
     </span>
 </div>
@@ -291,11 +291,9 @@
 <hr>
 <h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><p>安装Hexo很简单，不过要先装上<code>Node.js</code>和<code>Git</code></p>
 <blockquote>
-<ul>
-<li>Node.js</li>
-<li>Git</li>
-<li>Hexo</li>
-</ul>
+<p>​    &gt; Node.js</p>
+<p>​    &gt; Git</p>
+<p>​    &gt; Hexo</p>
 </blockquote>
 <h3 id="安装Node-js"><a href="#安装Node-js" class="headerlink" title="安装Node.js"></a>安装Node.js</h3><p>Hexo基于JavaScript，因此首先要安装<code>Node.js</code>，版本不能低于10.13。Hexo建议使用最新版本，Node.js建议使用<code>v12.22</code>版本，版本过高会导致一些插件无法适配。</p>
 <table>
@@ -393,11 +391,9 @@
 </ul>
 <h3 id="生成SSH-Keys"><a href="#生成SSH-Keys" class="headerlink" title="生成SSH Keys"></a>生成SSH Keys</h3><p><code>SSH Key</code>(Secure Shell)是一个公私钥对，这里用于Git仓库和本地机器的绑定。使用SSH Key，就可以不用每次更新都需要输入令牌，方便很多。</p>
 <blockquote>
-<ul>
-<li>一个 SSH key 可以访问你的所有仓库，即使你有 1000000 个仓库，都没问题</li>
-<li>如果换了电脑，就在新电脑上重新生成一个 SSH key，把这个 key 也上传到 GitHub，它可以和之前的 key 共存在 GitHub 上</li>
-<li>如果你把 key 从电脑上删除了，重新生成一个 key 即可，替换之前的 key</li>
-</ul>
+<p>​    &gt; 一个 SSH key 可以访问你的所有仓库，即使你有 1000000 个仓库，都没问题</p>
+<p>​    &gt; 如果换了电脑，就在新电脑上重新生成一个 SSH key，把这个 key 也上传到 GitHub，它可以和之前的 key 共存在 GitHub 上</p>
+<p>​    &gt; 如果你把 key 从电脑上删除了，重新生成一个 key 即可，替换之前的 key</p>
 </blockquote>
 <p>SSH Key是针对机器而非特定目录的，所以在任意一个目录下打开<code>Git Bash</code>，输入<code>ssh</code>检查机器是否装有SSH。</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">usage: ssh [-46AaCfGgKkMNnqsTtVvXxYy] [-B bind_interface]</span><br><span class="line">           [-b bind_address] [-c cipher_spec] [-D [bind_address:]port]</span><br><span class="line">           [-E log_file] [-e escape_char] [-F configfile] [-I pkcs11]</span><br><span class="line">           [-i identity_file] [-J [user@]host[:port]] [-L address]</span><br><span class="line">           [-l login_name] [-m mac_spec] [-O ctl_cmd] [-o option] [-p port]</span><br><span class="line">           [-Q query_option] [-R address] [-S ctl_path] [-W host:port]</span><br><span class="line">           [-w local_tun[:remote_tun]] destination [command]</span><br></pre></td></tr></table></figure>
@@ -407,10 +403,8 @@
 
 <p>键入四个回车就行，用默认选项。完成后，该命令会在用户文件夹下生成一个<code>.ssh</code>目录，路径为：C:\Users\用户名\.ssh。目录下有两个文件，分别为：</p>
 <blockquote>
-<ul>
-<li>id_rsa：SSH私钥</li>
-<li>id_rsa.pub：SSH公钥</li>
-</ul>
+<p>​    &gt; id_rsa：SSH私钥</p>
+<p>​    &gt; id_rsa.pub：SSH公钥</p>
 </blockquote>
 <p>生成完毕后，将SSH公钥注册进Github中。在<code>Settings</code>-&gt;<code>SSH and GPG keys</code>-&gt;<code>New SSh key</code>中新建一个SSH公钥：</p>
 <p><img src="/Hexo-github%E9%83%A8%E7%BD%B2/fa156de2f4d32046.png"></p>
@@ -445,10 +439,8 @@
 <hr>
 <h2 id="图片插入"><a href="#图片插入" class="headerlink" title="图片插入"></a>图片插入</h2><p>MarkDown中存储的是图片本地文件路径，要想在公网展示，必须将图片存储在云端并在md中使用该路径，有两个较好用的方法：</p>
 <blockquote>
-<ul>
-<li>图片存在Git仓库</li>
-<li>使用图床</li>
-</ul>
+<p>​    &gt; 图片存在Git仓库</p>
+<p>​    &gt; 使用图床</p>
 </blockquote>
 <h3 id="图片存在Git仓库"><a href="#图片存在Git仓库" class="headerlink" title="图片存在Git仓库"></a>图片存在Git仓库</h3><p>首先安装插件hexo-renderer-marked：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-renderer-marked</span><br></pre></td></tr></table></figure>
@@ -618,6 +610,15 @@
   
 <nav id="article-nav">
   
+    <a href="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          Docker基础(一): 初识
+        
+      </div>
+    </a>
+  
   
     <a href="/test1/" id="article-nav-older" class="article-nav-link-wrap">
       <div class="article-nav-title">test1</div>
@@ -760,15 +761,27 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">Docker</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">云计算</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">分布式</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">test</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">Hexo</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">Blog</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">test</a>
               </li>
             
             <div class="clearfix"></div>

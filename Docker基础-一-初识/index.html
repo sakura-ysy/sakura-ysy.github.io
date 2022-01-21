@@ -9,17 +9,33 @@
     <link rel="dns-prefetch" href="http://example.com">
     <title>
       
-        Archives: 2022 | 
+        Docker基础(一): 初识 | 
             SrcMiLeの杂货铺
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <meta property="og:type" content="website">
-<meta property="og:title" content="SrcMiLeの杂货铺">
-<meta property="og:url" content="http://example.com/archives/2022/index.html">
+    <meta name="description" content="假设你已经开发了一个Java项目，你所用的开发设备上已经配好了所有的相关环境，比如java8&#x2F;mysql&#x2F;redis等等。现在，你需要将你的源码交付给其他开发人员和测试人员或者直接打成jar包部署上线。问题来了，每个人机器上的环境都不一样，而你开发的项目依赖于你所选的环境和某些配置文件，这样一来其他人就需要为你的项目重新配好环境，非常麻烦。那么有没有什么办法可以避免这种头疼的配置协调问题呢？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker基础(一): 初识">
+<meta property="og:url" content="http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/index.html">
 <meta property="og:site_name" content="SrcMiLeの杂货铺">
+<meta property="og:description" content="假设你已经开发了一个Java项目，你所用的开发设备上已经配好了所有的相关环境，比如java8&#x2F;mysql&#x2F;redis等等。现在，你需要将你的源码交付给其他开发人员和测试人员或者直接打成jar包部署上线。问题来了，每个人机器上的环境都不一样，而你开发的项目依赖于你所选的环境和某些配置文件，这样一来其他人就需要为你的项目重新配好环境，非常麻烦。那么有没有什么办法可以避免这种头疼的配置协调问题呢？">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/docker2.jpg">
+<meta property="og:image" content="http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/image-20220121155005700.png">
+<meta property="og:image" content="http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/image-20220121161206070.png">
+<meta property="og:image" content="http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/docker1.png">
+<meta property="og:image" content="http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/k8s.png">
+<meta property="og:image" content="http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/dockergithub.png">
+<meta property="og:image" content="http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/image-20220121170207430.png">
+<meta property="og:image" content="http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/docker架构.png">
+<meta property="article:published_time" content="2022-01-21T06:27:34.000Z">
+<meta property="article:modified_time" content="2022-01-21T14:32:08.015Z">
 <meta property="article:author" content="SrcMiLe">
+<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="云计算">
+<meta property="article:tag" content="分布式">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/docker2.jpg">
       
         <link rel="alternative" href="/atom.xml" title="SrcMiLeの杂货铺" type="application/atom+xml">
         
@@ -217,36 +233,212 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-Docker基础-一-初识"
+  class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2022" class="archive-year">2022</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/" class="archive-article-date">
-  	<time datetime="2022-01-21T06:27:34.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-21</time>
-</a>
-        </div>
-    	 
+      <header class="article-header" style="font-size: large;">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/">Docker基础(一): 初识</a>
+    <h1 class="article-title" itemprop="name">
+      Docker基础(一): 初识
     </h1>
   
 
-        <div class="article-info info-on-right">
           
+            <a href="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/" class="archive-article-date">
+  	<time datetime="2022-01-21T06:27:34.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-21</time>
+</a>
+              <!-- 开始添加字数统计-->
+              
+                  <div style="margin-top:10px;">
+    <span class="post-time">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-keyboard-o"></i>
+        <span class="post-meta-item-text">  总字数: </span>
+        <span class="post-count">2.9k字</span>
+      </span>
+    </span>
+
+    <span class="post-time">
+      &nbsp; | &nbsp;
+      <span class="post-meta-item-icon">
+        <i class="fa fa-hourglass-half"></i>
+        <span class="post-meta-item-text">  阅读时长: </span>
+        <span class="post-count">10分</span>
+      </span>
+    </span>
+</div>
+
+              
+              <!-- 添加完成 -->
+              
+      </header>
+      
+
+        <div class="article-entry" itemprop="articleBody">
+          
+
+                    
+
+                          <p><img src="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/docker2.jpg" alt="docker2"></p>
+<p>假设你已经开发了一个Java项目，你所用的开发设备上已经配好了所有的相关环境，比如java8/mysql/redis等等。现在，你需要将你的源码交付给其他开发人员和测试人员或者直接打成jar包部署上线。问题来了，每个人机器上的环境都不一样，而你开发的项目依赖于你所选的环境和某些配置文件，这样一来其他人就需要为你的项目重新配好环境，非常麻烦。那么有没有什么办法可以避免这种头疼的配置协调问题呢？</p>
+<span id="more"></span>
+
+<p>试想，如果你将jar包或者源码和整个项目需要的所有配置环境和依赖一并打包，使你交付的东西不仅拥有项目本身，还拥有整个环境，这样拉下来之后直接可以运行，问题不就解决了吗。而这，就是 <code>docker</code> 的核心思想！</p>
+<hr>
+<h3 id="Docker的意义"><a href="#Docker的意义" class="headerlink" title="Docker的意义"></a>Docker的意义</h3><p>在docker出来之前，开发和运维的对调是很麻烦的，经常出现开发者的项目没问题，但是到了运维那就跑不起来了，基本都是环境的问题。比如，你使用java8写了一个项目，但是运维那里用的是java11，你使用mysql5.7.17，但是运维那用mysql8.0.26。</p>
+<p>好在，你和运维关系很好，没吵架，他愿意和你协调。于是，你把项目需要的所有配置列成清单给他，他一看，麻了。清单上列的慢慢的环境配置，和他现在用的都不一样，得一个个重新配。很明显，传统项目交接有两个很头痛的毛病</p>
+<blockquote>
+<p>1&gt;  环境不一样</p>
+<p>2&gt;  安装啰嗦，配置麻烦</p>
+</blockquote>
+<p>你以为这样就结束了？不对！假设你写的项目是一个电商平台，每天的数据量非常大，redis必须使用集群。到了双十一附近，交易量猛增，集群必须要迅速的扩容，从原来的3主3从扩到5主5从。在传统的方式中，运维撑破天也无法在<code>秒级</code>完成这种扩缩容。这就暴露出了第三个缺点：</p>
+<blockquote>
+<p>3&gt;  扩缩容慢</p>
+</blockquote>
+<p>Docker的出现得以打破过去「程序即应用」的观念。透过镜像(images)将作业系统核心、运作应用程序所需要的系统环境，由下而上打包，达到应用程式跨平台间的无缝接轨运作。</p>
+<hr>
+<h3 id="Docker与虚拟机的对比"><a href="#Docker与虚拟机的对比" class="headerlink" title="Docker与虚拟机的对比"></a>Docker与虚拟机的对比</h3><p>docker并不是第一个采用这种思想的技术，在docker出来之前，业界的网红是 <code>虚拟机(virtual machine)</code>， 它也是一个典型的带环境安装的方案。不管你的物理机是什么系统，只要下载下来OS的镜像(.iso)，在VMWare上一跑就行了。</p>
+<p>比如Windows10系统里面运行Linux系统CentOS7。应用程序对此毫无感知，因为虚拟机看上去跟真实系统一模一样，而对于底层系统来说，虚拟机就是一个普通文件，不需要了就删掉，对其他部分毫无影响。需要注意的是，虚拟机是要虚拟出一整套<code>硬件</code>的，然后在其上运行一整个完整的OS。</p>
+<p><img src="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/image-20220121155005700.png" alt="image-20220121155005700"></p>
+<p>正因为虚拟机是硬件层面上的虚拟，且要模拟出整套OS，因此体量非常大，故缺点很多，比如：</p>
+<blockquote>
+<p>​    &gt; 内存占用大</p>
+<p>​    &gt; 启动慢</p>
+<p>​    &gt; 冗余步骤多，麻烦</p>
+</blockquote>
+<p>由于虚拟机存在这些缺点，Linux发展出了另一种虚拟化技术：</p>
+<blockquote>
+<p>Linux容器（Linux Containers，缩写为LXC）</p>
+</blockquote>
+<p>Linux容器不是模拟一个完整的操作系统，而是对进程进行隔离。有了容器，就可以将软件运行所需要的所有资源打包到一个隔离的容器中。容器于虚拟机不同，不需要捆绑一整套操作系统，只需要软件工作所需的库资源和配置，也就是<strong>最小的最必须的环境</strong>。系统因此变得高效而轻量，并保证部署在任何环境中的软件都能始终如一地运行。实际上，这个Linux容器技术，后来就发展成了<code>docker</code>。</p>
+<p><img src="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/image-20220121161206070.png" alt="image-20220121161206070"></p>
+<p>Docker容器是在 <code>OS层面</code> 上虚拟化的，直接复用本地主机的OS。与虚拟机相比，Docker启动快速、体积小。</p>
+<table>
+<thead>
+<tr>
+<th align="center"></th>
+<th align="center">Virtual Machine</th>
+<th align="center">Docker</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">大小</td>
+<td align="center">GB-TB</td>
+<td align="center">KB-MB</td>
+</tr>
+<tr>
+<td align="center">启动速度</td>
+<td align="center">分钟级</td>
+<td align="center">秒级</td>
+</tr>
+<tr>
+<td align="center">虚拟层面</td>
+<td align="center">硬件</td>
+<td align="center">OS</td>
+</tr>
+<tr>
+<td align="center">隔离级别</td>
+<td align="center">OS级</td>
+<td align="center">进程级</td>
+</tr>
+<tr>
+<td align="center">集群规模</td>
+<td align="center">上百</td>
+<td align="center">上万</td>
+</tr>
+</tbody></table>
+<p>总结一下就是：</p>
+<blockquote>
+<p>​    &gt; 传统虚拟机技术是虚拟出一套硬件后，在其上运行一个完整OS，在该系统上在运行所需应用进程</p>
+<p>​    &gt; 容器内的应用进程直接运行于宿主的内核，容器内没有自己的内核且也没有进行硬件虚拟。</p>
+<p>​    &gt; 每个容器之间互相隔离，各自有自己的文件系统 ，容器之间进程不会相互影响，能区分计算资源。</p>
+</blockquote>
+<hr>
+<h3 id="Docker的诞生"><a href="#Docker的诞生" class="headerlink" title="Docker的诞生"></a>Docker的诞生</h3><p>2010年，几个搞IT的年轻人，在美国旧金山成立了一家名叫“dotCloud”的公司。这家公司主要提供基于PaaS的云计算技术服务，具体来说，就是和前面提到的<code>LXC</code>有关的容器技术。后来，dotCloud公司将自己的容器技术进行了简化和标准化，并将该技术命名为——<strong>Docker</strong>。</p>
+<p><img src="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/docker1.png" alt="docker1"></p>
+<p>很可惜，Docker技术诞生之后，并没有引起行业的关注。而dotCloud公司，作为一家小型创业企业，在激烈的竞争之下，也步履维艰。那怎么办呢？==&gt; 办不下去就开源！</p>
+<p>2013年3月，dotCloud公司的创始人之一，Docker之父，28岁的Solomon Hykes决定，将Docker技术开源。不开则已，一开惊人。越来越多的IT工程师发现了Docker的优点，然后蜂拥而至，加入了Docker开源社区。Docker人气迅速攀升，开源当月，Docker 0.1发布，在此后的每一个月，Docker都会发布一个版本。到2014年6月9日，Docker 1.0版本正式发布。</p>
+<p>此时的Docker，已经成为行业里人气最火爆的开源技术，没有之一。甚至像Google、微软、Amazon、VMware这样的巨头，都对它青睐有加，表示将全力支持。Docker火了之后，dotCloud公司干脆把公司名字也改成了Docker Inc。</p>
+<p>就在Docker容器技术被炒得热火朝天之时，大家发现，如果想要将Docker应用于具体的业务实现，是存在困难的——编排、管理和调度等各个方面，都不容易。于是，人们迫切需要一套管理系统，对Docker及容器进行更高级更灵活的管理。这个时候，K8S出现了！</p>
+<blockquote>
+<p>K8S，就是基于容器的集群管理平台，它的全称，是kubernetes，8是代表中间8个字母。</p>
+</blockquote>
+<p><img src="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/k8s.png" alt="k8s"></p>
+<p>和Docker不同，K8S的创造者，是众人皆知的行业巨头——Google。然而，K8S并不是一件全新的发明。它的前身，是Google自己捣鼓了十多年的<strong>Borg</strong>系统。</p>
+<p>其实，在很早之前，Google就用了容器化的技术，并拥有一套完善的集群管理系统——Borg，且不开源。慢慢地，对这种管理系统的需求越来越多，但Google迟迟不开源，没办法，需求者只能自己写。唉，这个时候，Google怕了，万一这种技术出现了，那自己垄断Borg的优势不久荡然无存了。怎么办？ ==&gt; 打不过就加入，我开源还不行嘛。于是乎，Google用Go重写了一遍Borg，更名为K8S，将其开源，继续作为领域的领跑者。</p>
+<p>2014年6月，Google公司正式公布K8S并宣布开源的。之后的一年内，VMware、HP、Intel等公司，也陆续加入。2015年7月，Google正式加入OpenStack基金会。与此同时，Kuberentes v1.0正式发布。</p>
+<p>K8S的架构，相对来说很复杂，组件比较多，交互也复杂，具体的之后再说吧。</p>
+<hr>
+<h3 id="Docker三要素"><a href="#Docker三要素" class="headerlink" title="Docker三要素"></a>Docker三要素</h3><blockquote>
+<p>​    &gt; 镜像（image）</p>
+<p>​    &gt; 容器（container）</p>
+<p>​    &gt; 仓库（repository）</p>
+</blockquote>
+<p>可以用java做一个粗略的类比，所谓镜像，就是java中的一个个class，所谓容器，就是用class来new出来的一个个对象（实例），所谓仓库，就是存储那些镜像的地方。</p>
+<p>再生动一些，你住的房子就是你现在所处的容器，假设你要搬家，但是还想住一个和现在一摸一样的家，于是你找来了女巫，女巫用魔法通过你的房子生成了一个一摸一样的模型，整个模型就是<code>镜像</code>。你将该模型带了一片空地上，女巫瞬间用改模型在地上建立了一个和之前那个一摸一样的新房子，连地基都一样，这个新房子就是一个新的<code>容器</code>。现在，女巫告诉你她有一个<code>仓库</code>，你可以将自己房子的镜像上传上去，也可以拉取别人的镜像，里面有中式四合院、欧式别墅、大豪宅、甚至还有非洲茅草屋，只要拉取了镜像，直接可以带地基生成一个完整的房子，岂不美哉？</p>
+<blockquote>
+<p>Docker镜像（image）就是一个只读的模板。镜像可以用来创建Docker容器，一个镜像可以创建很多容器，也可以通过容器来构造一个新的镜像。它也相当于是一个root文件系统，比如官方镜像centos:7就包含了完整的一套centos:7最小系统的root文件系统。</p>
+<p>容器就是一个简易版的Linux环境，包括root用户权限、进程空间、用户空间和网络空间等等，外加在其中运行的应用程序。</p>
+</blockquote>
+<p>要注意，Docker本身并不是容器，它是创建容器的工具，是应用容器引擎，即Docker Engine。</p>
+<p>至于仓库，就是docker hub，类似于github，官方仓库为：<a target="_blank" rel="noopener" href="https://hub.docker.com/">https://hub.docker.com/</a></p>
+<p><img src="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/dockergithub.png" alt="dockergithub"></p>
+<p>基于此，Docker提出了它的两句口号</p>
+<blockquote>
+<p>1&gt;  Build, Ship and Run； 即“构建，发送，运行”三板斧</p>
+<p>2&gt;  Build once, Run anywhere； 即构建一次，处处能用</p>
+</blockquote>
+<hr>
+<h3 id="Docker架构"><a href="#Docker架构" class="headerlink" title="Docker架构"></a>Docker架构</h3><p><img src="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/image-20220121170207430.png" alt="image-20220121170207430"></p>
+<p>Docker是一个<code>C/S模式的架构</code>，后端是一个松耦合架构，众多模块各司其职，Docker运行的基本流程为：</p>
+<p>1&gt;  用户使用Docker Client与Docker Daemon建立通信，并发送请求给后者。</p>
+<p>2&gt;  Docker Daemon作为Docker架构中的主体部分，首先提供Docker Server的功能使其可以接收Docker Client的请求。</p>
+<p>3&gt;  Docker Engine执行Docker内部的一系列工作，每一项工作都是以一个Job的形式存在的。比如，用<code>docker run 镜像</code> 命令来创建一个容器，就是一个Job。</p>
+<p>4&gt;  Job运行过程中，当需要镜像时，就会在本地中找，如果本地没有，就去Docker Registry中拉取镜像，并通过镜像管理驱动Graph driver将下载镜像以Graph的形式存储在本地。</p>
+<p>5&gt;  当需要为Docker容器创建环境时，通过网络管理驱动Network Driver创建并配置Docker容器网络环境。详细情况会在后续Docker network博客讲述。</p>
+<p>6&gt;  当需要限制Docker容器运行资源或执行用户指令等操作时，则通过Exec Driver来完成。主要为命令：<code>docker exec [OPTIONS] 容器名/ID [CMD] </code>，详见后续docker基础命令博客。</p>
+<p>7&gt;  Libcontainer是一项独立的容器管理包，Network driver以及Exec driver都是通过Libcontainer来实现具体对容器进行的操作。</p>
+<img src="docker架构.png" style="height:600px; width:600px;margin-left:50px">
+
+
+                            
+
+
+                              
+                                <div class="page-reward">
+                                  <a href="javascript:;" class="page-reward-btn tooltip-top">
+                                    <div class="tooltip tooltip-east">
+                                      <span class="tooltip-item">
+                                        赏
+                                      </span>
+                                      <span class="tooltip-content">
+                                        <span class="tooltip-text">
+                                          <span class="tooltip-inner">
+                                            <p class="reward-p"><i class="icon icon-quo-left"></i>
+                                              谢谢你请我吃辣条<i class="icon icon-quo-right"></i>
+                                            </p>
+                                            <div class="reward-box">
+                                              
+                                                  
+                                                    <div class="reward-box-item">
+                                                      <img class="reward-img" src="/img/wechat.jpg">
+                                                      <span class="reward-type">微信</span>
+                                                    </div>
+                                                    
+                                            </div>
+                                          </span>
+                                        </span>
+                                      </span>
+                                    </div>
+                                  </a>
+                                </div>
+                                
+        </div>
+        <div class="article-info article-info-index">
+          
+              
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
@@ -266,138 +458,120 @@
 		</ul>
 	</div>
 
-          
+                
 
+                  
+
+                      
+                        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%80-%E5%88%9D%E8%AF%86/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+                          
+                            <div class="clearfix"></div>
+        </div>
   </div>
 </article>
+
   
+<nav id="article-nav">
+  
+  
+    <a href="/Hexo-github%E9%83%A8%E7%BD%B2/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Hexo(一): Github部署</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/Hexo-github%E9%83%A8%E7%BD%B2/" class="archive-article-date">
-  	<time datetime="2022-01-15T05:32:02.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-15</time>
-</a>
+      <aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/Hexo-github%E9%83%A8%E7%BD%B2/">Hexo(一): Github部署</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">Hexo</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">Blog</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Docker%E7%9A%84%E6%84%8F%E4%B9%89"><span class="toc-number">1.</span> <span class="toc-text">Docker的意义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Docker%E4%B8%8E%E8%99%9A%E6%8B%9F%E6%9C%BA%E7%9A%84%E5%AF%B9%E6%AF%94"><span class="toc-number">2.</span> <span class="toc-text">Docker与虚拟机的对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Docker%E7%9A%84%E8%AF%9E%E7%94%9F"><span class="toc-number">3.</span> <span class="toc-text">Docker的诞生</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Docker%E4%B8%89%E8%A6%81%E7%B4%A0"><span class="toc-number">4.</span> <span class="toc-text">Docker三要素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Docker%E6%9E%B6%E6%9E%84"><span class="toc-number">5.</span> <span class="toc-text">Docker架构</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/test1/" class="archive-article-date">
-  	<time datetime="2022-01-14T06:30:06.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-14</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/test1/">test1</a>
-    </h1>
-  
+        
+    </div>
+</aside>
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">test</a>
-        		</li>
-      		
-		</ul>
-	</div>
 
+        
           
 
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/hello-world/" class="archive-article-date">
-  	<time datetime="2022-01-14T05:17:47.402Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-14</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/hello-world/">Hello World</a>
-    </h1>
-  
+                
 
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">test</a>
-        		</li>
-      		
-		</ul>
-	</div>
+                      
 
-          
+                            
 
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-    
-
+                                
+                                      
 
           </div>
         </div>
@@ -424,8 +598,8 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,
