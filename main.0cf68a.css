@@ -2253,7 +2253,8 @@ pre .id {
   padding: 5px 8px;
   line-height: 16px;
   border-radius: 2px;
-  transition: background .3s
+  transition: background .3s;
+  opacity: 0.5;
 }
 
 .article-more-link a:hover {
@@ -2370,11 +2371,12 @@ pre .id {
 .article-entry p code {
   padding: 1px 3px;
   margin: 0 3px;
-  background: #ddd;
+  background: #e7dddb;
   border: 1px solid #ccc;
   font-family: Menlo, Monaco, Andale Mono, lucida console, Courier New, monospace;
   word-wrap: break-word;
-  font-size: 14px
+  font-size: 16px;
+  color: red;
 }
 
 .article-entry blockquote {
@@ -2494,7 +2496,8 @@ pre .id {
   width: 100%;
   border: 1px solid #dedede;
   margin: 15px 0;
-  border-collapse: collapse
+  border-collapse: collapse;
+  
 }
 
 .article-entry table td,
