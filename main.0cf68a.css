@@ -2254,7 +2254,6 @@ pre .id {
   line-height: 16px;
   border-radius: 2px;
   transition: background .3s;
-  opacity: 0.5;
 }
 
 .article-more-link a:hover {
@@ -2376,7 +2375,7 @@ pre .id {
   font-family: Menlo, Monaco, Andale Mono, lucida console, Courier New, monospace;
   word-wrap: break-word;
   font-size: 16px;
-  color: red;
+  color: indianred;
 }
 
 .article-entry blockquote {
