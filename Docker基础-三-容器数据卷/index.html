@@ -9,28 +9,28 @@
     <link rel="dns-prefetch" href="http://example.com">
     <title>
       
-        书架子 | 
+        Docker基础(三): 容器数据卷 | 
             SrcMiLeの杂货铺
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <meta name="description" content="人菜还是得多读书         .hexo-douban-tabs {     margin-bottom: 15px;     margin-top: 15px; }  .hexo-douban-tab {     padding: 5px; }  .hexo-douban-active {     background: #657b83;">
-<meta property="og:type" content="website">
-<meta property="og:title" content="书架子">
-<meta property="og:url" content="http://example.com/books/index.html">
+    <meta name="description" content="想象一下，你的公司使用docker在容器中部署了一个电商项目，数据全部存在容器中。现在，你一不小心把这个容器删了，里面的数据全没了，再也无法恢复。完了，公司的核心资产被你搞没了，猜猜你能在牢里蹲多久？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker基础(三): 容器数据卷">
+<meta property="og:url" content="http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%89-%E5%AE%B9%E5%99%A8%E6%95%B0%E6%8D%AE%E5%8D%B7/index.html">
 <meta property="og:site_name" content="SrcMiLeの杂货铺">
-<meta property="og:description" content="人菜还是得多读书         .hexo-douban-tabs {     margin-bottom: 15px;     margin-top: 15px; }  .hexo-douban-tab {     padding: 5px; }  .hexo-douban-active {     background: #657b83;">
+<meta property="og:description" content="想象一下，你的公司使用docker在容器中部署了一个电商项目，数据全部存在容器中。现在，你一不小心把这个容器删了，里面的数据全没了，再也无法恢复。完了，公司的核心资产被你搞没了，猜猜你能在牢里蹲多久？">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://img3.doubanio.com/view/subject/s/public/s25948080.jpg">
-<meta property="og:image" content="https://img1.doubanio.com/view/subject/s/public/s29195878.jpg">
-<meta property="og:image" content="https://img3.doubanio.com/view/subject/s/public/s28050760.jpg">
-<meta property="og:image" content="https://img1.doubanio.com/view/subject/s/public/s24611679.jpg">
-<meta property="og:image" content="https://img2.doubanio.com/view/subject/s/public/s33542403.jpg">
-<meta property="og:image" content="https://img3.doubanio.com/view/subject/s/public/s27753770.jpg">
-<meta property="og:image" content="https://img9.doubanio.com/view/subject/s/public/s29350294.jpg">
-<meta property="og:image" content="https://img9.doubanio.com/view/subject/s/public/s33492346.jpg">
+<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/01/0569fbc976e494b7.png">
+<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/01/ccdd351da2233cae.png">
+<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/01/3aa48b47a02047be.png">
+<meta property="article:published_time" content="2022-01-23T14:19:55.000Z">
+<meta property="article:modified_time" content="2022-01-23T16:33:20.371Z">
 <meta property="article:author" content="SrcMiLe">
+<meta property="article:tag" content="Docker">
+<meta property="article:tag" content="云计算">
+<meta property="article:tag" content="分布式">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://img3.doubanio.com/view/subject/s/public/s25948080.jpg">
+<meta name="twitter:image" content="https://i.bmp.ovh/imgs/2022/01/0569fbc976e494b7.png">
       
         <link rel="alternative" href="/atom.xml" title="SrcMiLeの杂货铺" type="application/atom+xml">
         
@@ -228,23 +228,43 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="-books"
-  class="article article-type- " itemscope itemprop="blogPost">
+            <article id="post-Docker基础-三-容器数据卷"
+  class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header" style="font-size: large;">
         
   
     <h1 class="article-title" itemprop="name">
-      书架子
+      Docker基础(三): 容器数据卷
     </h1>
   
 
           
-            <a href="/books/index.html" class="archive-article-date">
-  	<time datetime="2022-01-23T16:34:47.885Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-24</time>
+            <a href="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%89-%E5%AE%B9%E5%99%A8%E6%95%B0%E6%8D%AE%E5%8D%B7/" class="archive-article-date">
+  	<time datetime="2022-01-23T14:19:55.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-23</time>
 </a>
               <!-- 开始添加字数统计-->
+              
+                  <div style="margin-top:10px;">
+    <span class="post-time">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-keyboard-o"></i>
+        <span class="post-meta-item-text">  总字数: </span>
+        <span class="post-count">2k字</span>
+      </span>
+    </span>
+
+    <span class="post-time">
+      &nbsp; | &nbsp;
+      <span class="post-meta-item-icon">
+        <i class="fa fa-hourglass-half"></i>
+        <span class="post-meta-item-text">  阅读时长: </span>
+        <span class="post-count">7分</span>
+      </span>
+    </span>
+</div>
+
               
               <!-- 添加完成 -->
               
@@ -256,404 +276,72 @@
 
                     
 
-                          <blockquote>
-    <p>人菜还是得多读书</p>
+                          <p>想象一下，你的公司使用docker在容器中部署了一个电商项目，数据全部存在容器中。现在，你一不小心把这个容器删了，里面的数据全没了，再也无法恢复。完了，公司的核心资产被你搞没了，猜猜你能在牢里蹲多久？</p>
+<span id="more"></span>
+
+<h2 id="啥是数据卷"><a href="#啥是数据卷" class="headerlink" title="啥是数据卷"></a>啥是数据卷</h2><p>当然，一个公司业务不可能这么脆弱，但是容器天生就有数据不持久的特点，数据随容器即生即灭，那有什么方法能让其中的重要数据持久化呢？答案就是<code>备份</code>。前面讲过，docker可以通过cp命令和export将容器中的数据备份到主机上，这不失是一种方法。但是，这种操作是一次性的，也即每需要备份时都要手动执行一次，当业务大时，这是不可想象的。那么有没有一种办法，使容器中特定目录和主机之间建立一个持久性的联系，实现自动备份？有的，这就是docker容器数据卷，简称<code>容器卷</code>，或<code>数据卷</code>，或<code>卷</code>。</p>
+<p>所谓卷，就是在主机的指定目录和容器内指定目录之间建立一个<code>双向</code>的管道，二者中的数据完全相同，且任意一者的更改都会同步到另一者之中，实现实时备份与数据共享。</p>
+<blockquote>
+<p><strong>数据卷(Data Volumes)<strong>是一个可供容器使用的特殊目录，它将主机OS目录直接映射进容器，类似于Linux的</strong>mount</strong>行为。</p>
+<p>​    ■ 数据卷可以在容器之间共享和重用，容器间传递数据将变得高效与方便；</p>
+<p>​    ■ 对数据卷内数据的修改会立马生效，无论是容器内操作还是本地操作；</p>
+<p>​    ■ 对数据卷的更新不会影响镜像，解耦开应用和数据；</p>
+<p>​    ■ 卷会一直存在，直到没有容器使用，可以安全卸载它；</p>
 </blockquote>
+<hr>
+<h2 id="创建数据卷"><a href="#创建数据卷" class="headerlink" title="创建数据卷"></a>创建数据卷</h2><p>Docker提供<code>volume</code>子命令来管理数据卷，如下命令可以在本地创建一个名为test的数据卷：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker volume create -d <span class="built_in">local</span> <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
 
-<style>
-    
-.hexo-douban-tabs {
-    margin-bottom: 15px;
-    margin-top: 15px;
-}
+<p>该数据卷存在本地主机的 <code>/var/lib/docker/volumes</code> 路径下，在该路径下会新建一个名为test的目录，就是创建的数据卷。使用<code>inspect</code>查看卷的信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker voulme inpect <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
 
-.hexo-douban-tab {
-    padding: 5px;
-}
+<p>得到如下结果，</p>
+<img src="https://i.bmp.ovh/imgs/2022/01/0569fbc976e494b7.png" style="zoom: 80%;" />
 
-.hexo-douban-active {
-    background: #657b83;
-    color: #fff;
-}
+<p>可以看到，<code>Mountpoint</code>值为<code>/var/lib/docker/volumes/test/_data</code>，说明改卷会将选定的容器目录映射进主机的该目录中。如果想要让容器使用该卷，使用<code>run -v test:...</code>来绑定该卷即可。</p>
+<p>出来create和inspect，docker volume还支持<code>ls</code>（列出已有数据卷）、<code>prune</code>（清理无用数据卷）、<code>rm</code>（删除数据卷）等，当然这些命令都比较简单。</p>
+<hr>
+<h2 id="绑定数据卷"><a href="#绑定数据卷" class="headerlink" title="绑定数据卷"></a>绑定数据卷</h2><p>创建完数据卷后，使用<code>run</code>的<code>-v</code>（volume）选项来将容器的指定目录绑定上该数据卷，建立容器目录和主机目录之间的双向映射，以数据卷test为例，具体命令为：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -v <span class="built_in">test</span>:/data --name=r3 redits:6.0.8</span><br></pre></td></tr></table></figure>
 
-.hexo-douban-item {
-    padding-bottom: 10px;
-    position: relative;
-    clear: both;
-    min-height: 170px;
-    padding: 10px 0;
-    border-bottom: 1px #ddd solid;
-}
+<p>上述命令将会创建容器r3，并将r3的<code>/data</code>目录映射到主机<code>/var/lib/docker/volumes/test/_data</code>目录中，当对r3的该目录进行操作时，主机也会进行同步。</p>
+<img src="https://i.bmp.ovh/imgs/2022/01/ccdd351da2233cae.png" style="zoom:80%;" />
 
-@media screen and (max-width: 600px) {
-    .hexo-douban-item {
-        width: 100%;
-    }
-}
+<p>同样，在主机的对应目录下进行操作，/data也会同步。比如，前者创建一个文件或目录，后者也会跟着创建一个文件或目录，前者对某个文件进行更改，后者的该文件也会相应更新。</p>
+<p>现在你肯定想问，能不能不预先创建数据卷，直接在<code>run</code>时创建数据卷，进行目录映射，且指定主机目录？当然可以，依然使用<code>-v</code>选项，以r1的/data目录为例，命令形式为：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -v 主机目录:/data --name=r1 redits:6.0.8</span><br></pre></td></tr></table></figure>
 
-.hexo-douban-picture {
-    position: absolute;
-    left: 0;
-    top: 10px;
-    width: 100px;
-}
+<p>也可以用<code>--mount</code>选项来进行绑定。比如，使用 training/webapp 镜像创建 Web 容器，并创建一个数据卷挂载到容器的/opt/webapp 目录：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -P --name web --mount <span class="built_in">type</span>=<span class="built_in">bind</span>,<span class="built_in">source</span>=/webapp,destination=/opt/ </span><br><span class="line">webapp training/webapp python app.py</span><br></pre></td></tr></table></figure>
 
-.hexo-douban-info {
-    padding-left: 120px;
-}
+<p>另外，<code>-v</code>是可以同时创建多个数据卷的，完成多对目录的映射（–mount应该也可以，没试过）。命令形式也很间，用多个-v就行了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -v 主机目录1:容器目录1 -v 主机目录2:容器目录2 --name=r1 redits:6.0.8</span><br></pre></td></tr></table></figure>
 
-.hexo-douban-meta {
-    font-size: 12px;
-    padding-right: 10px;
-}
+<p>这里建议，在使用存储类服务时，一定要记得用数据卷，尤其是<strong>mysql</strong>这种！在用mysql创建容器时，一般都会将<code>log</code>、<code>data</code>、<code>config</code>均创建一个数据卷进行备份，因此，创建mysql容器通常用命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">docker run -p 3307:3306 --name mysql-master \</span><br><span class="line">-v /mydata/mysql-master/<span class="built_in">log</span>:/var/<span class="built_in">log</span>/mysql \</span><br><span class="line">-v /mydata/mysql-master/data:/var/lib/mysql \</span><br><span class="line">-v /mydata/mysql-master/conf:/etc/mysql \</span><br><span class="line">-e MYSQL_ROOT_PASSWORD=root  \</span><br><span class="line">-d mysql</span><br></pre></td></tr></table></figure>
 
-.hexo-douban-comments {
-    font-size: 12px;
-}
+<hr>
+<h2 id="权限"><a href="#权限" class="headerlink" title="权限"></a>权限</h2><p>数据卷有两种权限，一是<code>rw</code>（读写），一是<code>ro</code>（只读）。这里的权限是只针对容器而不针对主机的。比如，<code>rw</code>指容器对主机相应目录可读可写，<code>ro</code>指容器对主机相应目录只能读不能写。</p>
+<p>容器使用数据卷的默认权限是<code>rw</code>，如果想要用<code>ro</code>，对命令进行如下更改即可：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -v 主机目录:/data:ro --name=r1 redits:6.0.8</span><br></pre></td></tr></table></figure>
 
-.hexo-douban-pagination {
-    margin-top: 15px;
-    text-align: center;
-    margin-bottom: 10px;
-}
+<p>注意，当使用<code>ro</code>后，不是指容器内的写操作不会被映射，而是指容器已经无法对该目录（容器内）进行任何写操作了，因为它是一个<code>Read-only file system</code>。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/01/3aa48b47a02047be.png"></p>
+<hr>
+<h2 id="数据卷容器"><a href="#数据卷容器" class="headerlink" title="数据卷容器"></a>数据卷容器</h2><p>如果你需要在多个容器之间共享一些持续更新的数据，最简单的方式是使用数据卷容器。数据卷容器也是一个容器，但是它的目的是专门提供数据卷给其他容器挂载。</p>
+<p>首先，创建一个容器dbdata，并在其中创建一个数据卷挂载到主机的/dbdata目录下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -it -v /dbdata:/ --name dbdata ubuntu</span><br></pre></td></tr></table></figure>
 
-.hexo-douban-button {
-    padding: 5px;
-}
+<p>然后，可以在其他容器中使用<code>--volumes-from</code>来挂载dbdata容器中的数据卷，例如创建db1和db2两个容器，并从dbdata容器挂载数据卷：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker run -it --volumes-from dbdata --name db1 ubuntu</span><br><span class="line">docker run -it --volumes-from dbdata --name db2 ubuntu</span><br></pre></td></tr></table></figure>
 
-.hexo-douban-button:hover {
-    background: #657b83;
-    color: #fff;
-}
+<p>此时，容器db1和db2都挂载同一个数据卷到相同的/dbdata目录中，三个容器任何一方在该目录下的写入，其他容器都可以看到，当然，主机也能看到。</p>
+<p>从<code>--volumes-from</code>这个名字就可以看出来，这种关系可以理解为数据卷的<strong>继承</strong>。既然如此，那么可不可以层层继承？答案是可以的。比如，在上面的基础上，我们可以在创建一个容器db3，它将从db1处继承容器卷，这样一来，四台容器和主机都会互相连通。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -it --volumes-from db1 --name db3 ubuntu</span><br></pre></td></tr></table></figure>
 
-.hexo-douban-hide {
-    display: none;
-}
-
-.hexo-douban-show {
-    display: block;
-}
-
-
-</style>
-
-<div class="hexo-douban-tabs">
-    <a class="hexo-douban-tab" id="hexo-douban-tab1" href="javascript:;"
-       rel="external">
-        在读
-        (2)</a>
-    <a class="hexo-douban-tab" id="hexo-douban-tab2" href="javascript:;"
-       rel="external">
-        想读
-        (2)</a>
-    <a class="hexo-douban-tab" id="hexo-douban-tab3" href="javascript:;"
-       rel="external">
-        已读
-        (4)</a>
-</div>
-<div>
-    <div id="hexo-douban-item1">
-        
-        <div class="hexo-douban-item">
-    <div class="hexo-douban-picture"><img src="/assets/douban-loading.gif" data-src="https://img3.doubanio.com/view/subject/s/public/s25948080.jpg" referrerPolicy="no-referrer" /></div>
-    <div class="hexo-douban-info">
-        <div class="hexo-douban-title"><a target="_blank" href="https://book.douban.com/subject/22163516/"> 云雀叫了一整天</a></div>
-        <div class="hexo-douban-meta">
-        
-  
-  木心 / 广西师范大学出版社 / 2013-3 / 30.00
-
-        </div>
-        <div class="hexo-douban-meta">2022-01-14
-      在读 / </div>
-        <div class="hexo-douban-comments">
-  </div>
-    </div>
-</div>
-
-        
-        <div class="hexo-douban-item">
-    <div class="hexo-douban-picture"><img src="/assets/douban-loading.gif" data-src="https://img1.doubanio.com/view/subject/s/public/s29195878.jpg" referrerPolicy="no-referrer" /></div>
-    <div class="hexo-douban-info">
-        <div class="hexo-douban-title"><a target="_blank" href="https://book.douban.com/subject/26912767/"> 深入理解计算机系统（原书第3版）</a></div>
-        <div class="hexo-douban-meta">
-        
-  
-  Randal E.Bryant、David O&#39;Hallaron / 龚奕利、贺莲 / 机械工业出版社 / 2016-11 / 139.00元
-
-        </div>
-        <div class="hexo-douban-meta">2022-01-14
-      在读 / </div>
-        <div class="hexo-douban-comments">
-  </div>
-    </div>
-</div>
-
-        
-        <div class="hexo-douban-pagination">
-    <a class="hexo-douban-button hexo-douban-firstpage" href="javascript:;"> 首页</a>
-    <a class="hexo-douban-button hexo-douban-previouspage" href="javascript:;">上一页</a>
-    <span class="hexo-douban-pagenum">2 / 3</span>
-    <a class="hexo-douban-button hexo-douban-nextpage" href="javascript:;">下一页</a>
-    <a class="hexo-douban-button hexo-douban-lastpage" href="javascript:;">尾页</a>
-</div>
-    </div>
-    <div id="hexo-douban-item2">
-        
-        <div class="hexo-douban-item">
-    <div class="hexo-douban-picture"><img src="/assets/douban-loading.gif" data-src="https://img3.doubanio.com/view/subject/s/public/s28050760.jpg" referrerPolicy="no-referrer" /></div>
-    <div class="hexo-douban-info">
-        <div class="hexo-douban-title"><a target="_blank" href="https://book.douban.com/subject/26362836/"> 献给阿尔吉侬的花束</a></div>
-        <div class="hexo-douban-meta">
-        
-  
-  [美] 丹尼尔·凯斯 / 陈澄和 / 广西师范大学出版社 / 2015-4 / 36.00元
-
-      
-        </div>
-        <div class="hexo-douban-meta">2022-01-14
-      想读 / </div>
-        <div class="hexo-douban-comments">
-      一定要找时间看下
-      
-  
-
-  </div>
-    </div>
-</div>
-
-        
-        <div class="hexo-douban-item">
-    <div class="hexo-douban-picture"><img src="/assets/douban-loading.gif" data-src="https://img1.doubanio.com/view/subject/s/public/s24611679.jpg" referrerPolicy="no-referrer" /></div>
-    <div class="hexo-douban-info">
-        <div class="hexo-douban-title"><a target="_blank" href="https://book.douban.com/subject/20440644/"> 文学回忆录</a></div>
-        <div class="hexo-douban-meta">
-        
-  
-  木心 口述、陈丹青 笔录 / 广西师范大学出版社 / 2013-1-10 / 98.00元
-
-      
-        </div>
-        <div class="hexo-douban-meta">2022-01-14
-      想读 / </div>
-        <div class="hexo-douban-comments">
-      想看看
-      
-  
-
-  </div>
-    </div>
-</div>
-
-        
-        <div class="hexo-douban-pagination">
-    <a class="hexo-douban-button hexo-douban-firstpage" href="javascript:;"> 首页</a>
-    <a class="hexo-douban-button hexo-douban-previouspage" href="javascript:;">上一页</a>
-    <span class="hexo-douban-pagenum">2 / 3</span>
-    <a class="hexo-douban-button hexo-douban-nextpage" href="javascript:;">下一页</a>
-    <a class="hexo-douban-button hexo-douban-lastpage" href="javascript:;">尾页</a>
-</div>
-
-    </div>
-    <div id="hexo-douban-item3">
-        
-        <div class="hexo-douban-item">
-    <div class="hexo-douban-picture"><img src="/assets/douban-loading.gif" data-src="https://img2.doubanio.com/view/subject/s/public/s33542403.jpg" referrerPolicy="no-referrer" /></div>
-    <div class="hexo-douban-info">
-        <div class="hexo-douban-title"><a target="_blank" href="https://book.douban.com/subject/27107109/"> 百年孤独</a></div>
-        <div class="hexo-douban-meta">
-        
-  
-  [哥伦比亚] 加西亚·马尔克斯 / 范晔 / 南海出版公司 / 2017-8 / 55.00元
-
-      </div>
-        <div class="hexo-douban-meta">2022-01-14
-      读过 /  / ★★★★★ 力荐</div>
-        <div class="hexo-douban-comments">
-  </div>
-    </div>
-</div>
-
-        
-        <div class="hexo-douban-item">
-    <div class="hexo-douban-picture"><img src="/assets/douban-loading.gif" data-src="https://img3.doubanio.com/view/subject/s/public/s27753770.jpg" referrerPolicy="no-referrer" /></div>
-    <div class="hexo-douban-info">
-        <div class="hexo-douban-title"><a target="_blank" href="https://book.douban.com/subject/26118072/"> 祈祷落幕时</a></div>
-        <div class="hexo-douban-meta">
-        
-  
-  (日)东野圭吾 / 代珂 / 南海出版公司 / 2015-1 / 39.50元
-
-      </div>
-        <div class="hexo-douban-meta">2022-01-14
-      读过 /  / ★★★★★ 力荐</div>
-        <div class="hexo-douban-comments">
-  </div>
-    </div>
-</div>
-
-        
-        <div class="hexo-douban-item">
-    <div class="hexo-douban-picture"><img src="/assets/douban-loading.gif" data-src="https://img9.doubanio.com/view/subject/s/public/s29350294.jpg" referrerPolicy="no-referrer" /></div>
-    <div class="hexo-douban-info">
-        <div class="hexo-douban-title"><a target="_blank" href="https://book.douban.com/subject/26879778/"> 杀死一只知更鸟</a></div>
-        <div class="hexo-douban-meta">
-        
-  
-  [美] 哈珀·李 / 李育超 / 译林出版社 / 2017-2 / 48.00
-
-      </div>
-        <div class="hexo-douban-meta">2022-01-14
-      读过 /  / ★★★★★ 力荐</div>
-        <div class="hexo-douban-comments">
-  </div>
-    </div>
-</div>
-
-        
-        <div class="hexo-douban-item">
-    <div class="hexo-douban-picture"><img src="/assets/douban-loading.gif" data-src="https://img9.doubanio.com/view/subject/s/public/s33492346.jpg" referrerPolicy="no-referrer" /></div>
-    <div class="hexo-douban-info">
-        <div class="hexo-douban-title"><a target="_blank" href="https://book.douban.com/subject/33440205/"> 你当像鸟飞往你的山</a></div>
-        <div class="hexo-douban-meta">
-        
-  
-  [美] 塔拉·韦斯特弗 / 任爱红 / 南海出版公司 / 2019-10 / 59.00元
-
-      </div>
-        <div class="hexo-douban-meta">2022-01-14
-      读过 /  / ★★★★★ 力荐</div>
-        <div class="hexo-douban-comments">
-  </div>
-    </div>
-</div>
-
-        
-        <div class="hexo-douban-pagination">
-    <a class="hexo-douban-button hexo-douban-firstpage" href="javascript:;"> 首页</a>
-    <a class="hexo-douban-button hexo-douban-previouspage" href="javascript:;">上一页</a>
-    <span class="hexo-douban-pagenum">2 / 3</span>
-    <a class="hexo-douban-button hexo-douban-nextpage" href="javascript:;">下一页</a>
-    <a class="hexo-douban-button hexo-douban-lastpage" href="javascript:;">尾页</a>
-</div>
-    </div>
-
-</div>
-
-<script>
-    /**
- * Created by myths on 18-2-8.
- */
-
-Element.prototype.siblings = function () {
-    var siblingElement = [];
-    var sibs = this.parentNode.children;
-    for (var i = 0; i < sibs.length; i++) {
-        if (sibs[i] !== this) {
-            siblingElement.push(sibs[i]);
-        }
-    }
-    return siblingElement;
-};
-function tabClick() {
-    //修改标签样式
-    this.classList.add('hexo-douban-active');
-    var sibs = this.siblings();
-    for (var j = 0; j < sibs.length; j++) {
-        sibs[j].classList.remove('hexo-douban-active');
-    }
-    //显示对应板块
-    var itemId = this.id.replace('tab', 'item');
-    var target = document.getElementById(itemId);
-    target.classList.remove('hexo-douban-hide');
-    target.classList.add('hexo-douban-show');
-    sibs = document.getElementById(itemId).siblings();
-    for (var k = 0; k < sibs.length; k++) {
-        sibs[k].classList.remove('hexo-douban-show');
-        sibs[k].classList.add('hexo-douban-hide');
-    }
-}
-var tabs = document.getElementsByClassName("hexo-douban-tab");
-for (var i = 0; i < tabs.length; i++) {
-    tabs[i].onclick = tabClick;
-    tabs[i].onclick.apply(tabs[i]);
-}
-tabs[2].click();
-
-    var firstpages = document.getElementsByClassName("hexo-douban-firstpage");
-var previouspages = document.getElementsByClassName("hexo-douban-previouspage");
-var nextpages = document.getElementsByClassName("hexo-douban-nextpage");
-var lastpages = document.getElementsByClassName("hexo-douban-lastpage");
-var pagenums = document.getElementsByClassName("hexo-douban-pagenum");
-
-function makePageNum(num, arr) {
-    return (num + 1) + ' / ' + (Math.ceil(arr.length / 10 === 0 ? 1 : Math.ceil(arr.length / 10)));
-}
-
-function firstBtn() {
-    var sibs = this.parentNode.siblings();
-    displayPage(sibs, 0);
-    this.parentNode.getElementsByClassName('hexo-douban-pagenum')[0].innerText = makePageNum(0, sibs);
-}
-
-function previousBtn() {
-    var sibs = this.parentNode.siblings();
-    var currNum = this.parentNode.getElementsByClassName('hexo-douban-pagenum')[0].innerText;
-    currNum = currNum.substr(0, currNum.indexOf('/') - 1);
-    currNum = parseInt(currNum, 10) - 1;
-    if (currNum > 0) {
-        currNum--;
-    }
-    displayPage(sibs, currNum);
-    this.parentNode.getElementsByClassName('hexo-douban-pagenum')[0].innerText = makePageNum(currNum, sibs);
-}
-
-function nextBtn() {
-    var sibs = this.parentNode.siblings();
-    var currNum = this.parentNode.getElementsByClassName('hexo-douban-pagenum')[0].innerText;
-    currNum = currNum.substr(0, currNum.indexOf('/') - 1);
-    currNum = parseInt(currNum, 10) - 1;
-    if (currNum < Math.ceil(sibs.length / 10) - 1) {
-        currNum++;
-    }
-    displayPage(sibs, currNum);
-    this.parentNode.getElementsByClassName('hexo-douban-pagenum')[0].innerText = makePageNum(currNum, sibs);
-}
-
-function lastBtn() {
-    var sibs = this.parentNode.siblings();
-    displayPage(sibs, Math.ceil(sibs.length / 10) - 1);
-    this.parentNode.getElementsByClassName('hexo-douban-pagenum')[0].innerText = makePageNum(Math.ceil(sibs.length / 10) - 1 === -1 ? 0 : Math.ceil(sibs.length / 10) - 1, sibs);
-}
-
-function displayPage(arr, num) {
-    for (var i = 0; i < arr.length; i++) {
-        if (Math.floor(i / 10) === num) {
-            arr[i].classList.remove('hexo-douban-hide');
-            var img = arr[i].getElementsByTagName('img')[0];
-            img.src = img.getAttribute('data-src');
-        } else {
-            arr[i].classList.add('hexo-douban-hide');
-        }
-    }
-}
-
-for (var i = 0; i < firstpages.length; i++) {
-
-    //add listener
-    firstpages[i].onclick = firstBtn;
-    previouspages[i].onclick = previousBtn;
-    nextpages[i].onclick = nextBtn;
-    lastpages[i].onclick = lastBtn;
-
-    //set page num
-    var size = pagenums[i].parentNode.siblings().length;
-    pagenums[i].innerText = '1 / ' + (Math.ceil(size / 10) === 0 ? 1 : Math.ceil(size / 10));
-    firstpages[i].click();
-}
-
-</script>
-
+<p>如果删除了”父类“容器（包括dbdata、db1和db2），数据卷并不会被删除，这意味着db3依然能够通过其与主机进行映射，即使其”父类“已经消失了。更好玩的是，当你停止了dbdata、db1和db2（并没有删除），然后在主机相应目录或db3相应目录进行写入，比如创建一个a.txt。然后再打开上面上个容器，它们仍然会同步这些数据，即出现a.txt。</p>
+<hr>
+<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>我挺好奇数据卷的实现原理的，比如它到底是对多个空间进行相互拷贝还是建立了一个共享空间，又比如它不属于联合文件系统（Union File System）到底是什么意思，这点我还没搞懂，而且也没查到相关的资料。等我搞懂了会补上，如果有大佬知道千万要告诉我，蟹蟹!</p>
 
                             
 
@@ -691,6 +379,25 @@ for (var i = 0; i < firstpages.length; i++) {
         <div class="article-info article-info-index">
           
               
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Docker</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">云计算</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">分布式</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
                 
 
                   
@@ -741,7 +448,7 @@ for (var i = 0; i < firstpages.length; i++) {
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=http://example.com/books/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%89-%E5%AE%B9%E5%99%A8%E6%95%B0%E6%8D%AE%E5%8D%B7/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -753,6 +460,16 @@ for (var i = 0; i < firstpages.length; i++) {
 </article>
 
   
+<nav id="article-nav">
+  
+  
+    <a href="/Docker%E5%9F%BA%E7%A1%80-%E4%BA%8C-%E5%9F%BA%E7%A1%80%E5%91%BD%E4%BB%A4/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Docker基础(二): 基础命令</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
     
       <aside class="wrap-side-operation">
     <div class="mod-side-operation">
@@ -774,7 +491,7 @@ for (var i = 0; i < firstpages.length; i++) {
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    目录，不存在的…
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%95%A5%E6%98%AF%E6%95%B0%E6%8D%AE%E5%8D%B7"><span class="toc-number">1.</span> <span class="toc-text">啥是数据卷</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%95%B0%E6%8D%AE%E5%8D%B7"><span class="toc-number">2.</span> <span class="toc-text">创建数据卷</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%91%E5%AE%9A%E6%95%B0%E6%8D%AE%E5%8D%B7"><span class="toc-number">3.</span> <span class="toc-text">绑定数据卷</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9D%83%E9%99%90"><span class="toc-number">4.</span> <span class="toc-text">权限</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%8D%B7%E5%AE%B9%E5%99%A8"><span class="toc-number">5.</span> <span class="toc-text">数据卷容器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="toc-number">6.</span> <span class="toc-text">实现原理</span></a></li></ol>
                     </div>
                 </span>
             </div>
@@ -785,6 +502,16 @@ for (var i = 0; i < firstpages.length; i++) {
 
 
         
+          
+
+                
+
+                      
+
+                            
+
+                                
+                                      
 
           </div>
         </div>
@@ -811,7 +538,7 @@ for (var i = 0; i < firstpages.length; i++) {
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
+		isPost: true,
 		isArchive: false,
 		isTag: false,
 		isCategory: false,
