@@ -95,7 +95,7 @@
 
                     <br/>
 					<nav>
-						<p>文章数: 6</p>
+						<p>文章数: 8</p>
 					</nav>
 
 					<nav class="header-smart-menu">
@@ -217,6 +217,228 @@
           </div>
           <div id="js-content" class="content-ll">
             
+  
+    <article id="post-逃逸-CVE-2017-1002101"
+  class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header" style="font-size: large;">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/%E9%80%83%E9%80%B8-CVE-2017-1002101/">逃逸: CVE-2017-1002101</a>
+    </h1>
+  
+
+          
+            <a href="/%E9%80%83%E9%80%B8-CVE-2017-1002101/" class="archive-article-date">
+  	<time datetime="2022-01-25T12:55:14.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-25</time>
+</a>
+              <!-- 开始添加字数统计-->
+              
+                  <div style="margin-top:10px;">
+    <span class="post-time">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-keyboard-o"></i>
+        <span class="post-meta-item-text">  总字数: </span>
+        <span class="post-count">4.2k字</span>
+      </span>
+    </span>
+
+    <span class="post-time">
+      &nbsp; | &nbsp;
+      <span class="post-meta-item-icon">
+        <i class="fa fa-hourglass-half"></i>
+        <span class="post-meta-item-text">  阅读时长: </span>
+        <span class="post-count">21分</span>
+      </span>
+    </span>
+</div>
+
+              
+              <!-- 添加完成 -->
+              
+      </header>
+      
+
+        <div class="article-entry" itemprop="articleBody">
+          
+            <p>CVE-2017-1002101漏洞能让Kubelet创建的Pod挂载到宿主机中不允许挂载的目录，从而造成了逃逸。这听上去很不可思议，因为完全可以在<code>PSP(Pod Security Policies)</code>中限制Pod对主机目录的挂载权限。是的没错，我们可以通过PSP限制Pod只能挂载特定的安全目录，对于其他目录都不允许挂载。但是，至少在k8s<code>v1.9.4</code>版本之前，这种逃逸攻击都是可行的。其核心，就是Linux的<code>软连接</code>和k8s的<code>volume subPath</code>。</p>
+              
+                  
+
+
+                              
+        </div>
+        <div class="article-info article-info-index">
+          
+              
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">云计算</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">k8s</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">漏洞</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">云安全</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+                
+
+                  
+                    <p class="article-more-link">
+                      <a class="article-more-a" href="/%E9%80%83%E9%80%B8-CVE-2017-1002101/">
+                        Read More >>
+                      </a>
+                    </p>
+                    
+
+                      
+                            <div class="clearfix"></div>
+        </div>
+  </div>
+</article>
+
+      <aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+        
+
+  
+    <article id="post-Linux软硬链接"
+  class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header" style="font-size: large;">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/">Linux软硬链接</a>
+    </h1>
+  
+
+          
+            <a href="/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/" class="archive-article-date">
+  	<time datetime="2022-01-24T15:07:13.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-24</time>
+</a>
+              <!-- 开始添加字数统计-->
+              
+                  <div style="margin-top:10px;">
+    <span class="post-time">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-keyboard-o"></i>
+        <span class="post-meta-item-text">  总字数: </span>
+        <span class="post-count">0字</span>
+      </span>
+    </span>
+
+    <span class="post-time">
+      &nbsp; | &nbsp;
+      <span class="post-meta-item-icon">
+        <i class="fa fa-hourglass-half"></i>
+        <span class="post-meta-item-text">  阅读时长: </span>
+        <span class="post-count">1分</span>
+      </span>
+    </span>
+</div>
+
+              
+              <!-- 添加完成 -->
+              
+      </header>
+      
+
+        <div class="article-entry" itemprop="articleBody">
+          
+
+                    
+
+                          
+                            
+
+
+                              
+        </div>
+        <div class="article-info article-info-index">
+          
+              
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Linux</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">OS</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+                
+
+                  
+                    <p class="article-more-link">
+                      <a class="article-more-a" href="/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/">
+                        Read More >>
+                      </a>
+                    </p>
+                    
+
+                      
+                            <div class="clearfix"></div>
+        </div>
+  </div>
+</article>
+
+      <aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+        
+
   
     <article id="post-Docker基础-三-容器数据卷"
   class="article article-type-post  article-index" itemscope itemprop="blogPost">
@@ -974,6 +1196,10 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
               </li>
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">test</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">Hexo</a>
               </li>
              
@@ -982,11 +1208,27 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">test</a>
+                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">OS</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color3">波吉</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">k8s</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">漏洞</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">云安全</a>
               </li>
             
             <div class="clearfix"></div>
