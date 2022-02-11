@@ -13,17 +13,27 @@
             SrcMiLeの杂货铺
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <meta property="og:type" content="article">
+    <meta name="description" content="在Linux种，ln命令会在文件之间创建链接，这种操作实际上是给系统中已有的某个文件指定另外一个可用于访问它的名称，看上去就像是Windows的快捷方式。但是，链接分为两种，一种叫作硬链接(Hard Link) ，另一种叫作符号链接(Symbolic Link)，后者又称为软链接。实际上，软链接才真正像是Win中的快捷方式，而硬链接却大有不同。">
+<meta property="og:type" content="article">
 <meta property="og:title" content="Linux软硬链接">
 <meta property="og:url" content="http://example.com/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/index.html">
 <meta property="og:site_name" content="SrcMiLeの杂货铺">
+<meta property="og:description" content="在Linux种，ln命令会在文件之间创建链接，这种操作实际上是给系统中已有的某个文件指定另外一个可用于访问它的名称，看上去就像是Windows的快捷方式。但是，链接分为两种，一种叫作硬链接(Hard Link) ，另一种叫作符号链接(Symbolic Link)，后者又称为软链接。实际上，软链接才真正像是Win中的快捷方式，而硬链接却大有不同。">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/e7e444d37978f394.png">
+<meta property="og:image" content="http://example.com/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/15dfc1432e96b471.png">
+<meta property="og:image" content="http://example.com/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/edd13d190dd04be9.png">
+<meta property="og:image" content="http://example.com/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/f10172dff4a76d0c.png">
+<meta property="og:image" content="http://example.com/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/99fedeb837365ac9.png">
+<meta property="og:image" content="http://example.com/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/89772db97f5081aa.png">
+<meta property="og:image" content="http://example.com/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/e3a1dcff818eb9d3.png">
 <meta property="article:published_time" content="2022-01-24T15:07:13.000Z">
-<meta property="article:modified_time" content="2022-01-24T15:08:30.160Z">
+<meta property="article:modified_time" content="2022-02-11T08:57:13.173Z">
 <meta property="article:author" content="SrcMiLe">
 <meta property="article:tag" content="Linux">
 <meta property="article:tag" content="OS">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/e7e444d37978f394.png">
       
         <link rel="alternative" href="/atom.xml" title="SrcMiLeの杂货铺" type="application/atom+xml">
         
@@ -244,7 +254,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-keyboard-o"></i>
         <span class="post-meta-item-text">  总字数: </span>
-        <span class="post-count">0字</span>
+        <span class="post-count">1.4k字</span>
       </span>
     </span>
 
@@ -253,7 +263,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-hourglass-half"></i>
         <span class="post-meta-item-text">  阅读时长: </span>
-        <span class="post-count">1分</span>
+        <span class="post-count">4分</span>
       </span>
     </span>
 </div>
@@ -269,7 +279,40 @@
 
                     
 
-                          
+                          <p>在Linux种，ln命令会在文件之间创建链接，这种操作实际上是给系统中已有的某个文件指定另外一个可用于访问它的名称，看上去就像是Windows的快捷方式。但是，链接分为两种，一种叫作<code>硬链接(Hard Link) </code>，另一种叫作<code>符号链接(Symbolic Link)</code>，后者又称为软链接。实际上，软链接才真正像是Win中的快捷方式，而硬链接却大有不同。</p>
+<span id="more"></span>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ln -s <span class="built_in">source</span> dist <span class="comment"># 建立软链接</span></span><br><span class="line">ln <span class="built_in">source</span> dist    <span class="comment"># 建立硬链接</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="inode"><a href="#inode" class="headerlink" title="inode"></a>inode</h2><p>要想了解软硬链接的区别，就要先明白<code>inode</code>这一概念，这里简单阐述下。</p>
+<p>文件储存在硬盘上，硬盘的最小存储单位叫做<code>扇区(Sector)</code>，每个扇区储存512字节。操作系统在读取硬盘的时候，不会一个个扇区去读，这样效率太低了，而是一次性连续读取多个扇区，即一次读取一个<code>块(block)</code>。这种由多个扇区组成的块，是文件存取的最小单位。<code>块</code>的大小，最常见的是4KB，即连续八个sector组成一个block。</p>
+<p>文件数据都存储的<code>块</code>中，那么很显然，我们还必须找到一个地方存储文件的元信息，比如文件的创建者、文件的创建日期、文件的大小等等，它们能够唯一的<code>标识</code>一个文件。这种存储文件元信息的区域就叫做<code>inode</code>，中文译名为<code>索引节点</code>。</p>
+<p>对于一个文件来说，有唯一的<code>inode</code>与之对应，而对于一个<code>inode</code>而言，可以有<code>多个</code>文件名/路径与之对应。也就是说，一个<code>inode</code>唯一标识一个文件，但是找个文件可以有多种不同的访问路径。这里啰嗦一嘴，Linux下一切皆文件，包括目录、硬盘等等。</p>
+<p>可以使用<code>ls -i example.txt</code>来查看某文件的inode编号，同样，可以使用<code>ls -li</code>来查看当前目录下所有文件的inode编号，第一列就是。</p>
+<p><img src="/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/e7e444d37978f394.png"></p>
+<hr>
+<h2 id="软链接"><a href="#软链接" class="headerlink" title="软链接"></a>软链接</h2><p>软连接实际上是通过名字来引用另外一个文件，类似于Windows的快捷方式。软连接和目标文件有着<code>不同的inode号</code>，也就是说软链接本身是一个独立的文件。可以理解为，软链接是一个独立文件，但是这个文件存储的是目标文件的路径，起到指针的作用。</p>
+<p><img src="/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/15dfc1432e96b471.png"></p>
+<p>当系统访问软链接后，会自动跳转到对应的目标文件处进行处理。当你使用<code>vim abc_s</code>对该文件进行更改时，实质上更改的是abc.txt，当再次打开abc.txt后，发现其内容就是你刚改的东西。</p>
+<hr>
+<h2 id="硬链接"><a href="#硬链接" class="headerlink" title="硬链接"></a>硬链接</h2><p>硬链接和软链接大不相同。硬链接是通过<code>inode</code>引用另外一个文件，因此硬链接和目标文件具有<code>相同的inode号</code>。也就是说，软链接是一个独立文件，但是硬链接和目标文件本质上就是同一个，可以理解为一个实际文件有多个文件名。</p>
+<p><img src="/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/edd13d190dd04be9.png"></p>
+<p>硬链接与文件原有的名字是平权的，在Linux看来它们是等价的。由于这个原因，硬链接不能连接两个不同文件系统上的文件，但是软链接就可以跨文件系统。</p>
+<p>每当我们为文件创建一个硬链接，该文件的硬链接数就是增加，上图中的2就是硬链接数。可以看到，因为abc_h和abc.txt本质上是一个文件，所以它们的硬链接数都为2。硬链接数也就表示的就是指有多少个文件的名字/路径和该文件的inode产生映射关系。<code>info ln</code>中这么解释硬链接：</p>
+<blockquote>
+<p> A “hard link” is another name for an existing file; the link and the<br>original are indistinguishable.  Technically speaking, they share the<br>same inode, and the inode contains all the information about a<br>file–indeed, it is not incorrect to say that the inode is the file.</p>
+</blockquote>
+<p>Linux是不允许用户将硬链接指向的<code>目录</code>的。但是，Linux一切皆文件，包括目录，因此目录理应也可以硬链接。实际上，目录是有硬链接的，只不过这个操作只能由系统完成，用户是不能进行的。</p>
+<hr>
+<h2 id="目录的硬链接"><a href="#目录的硬链接" class="headerlink" title="目录的硬链接"></a>目录的硬链接</h2><p><img src="/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/f10172dff4a76d0c.png"></p>
+<p>可以看到，新创建的目录默认有两个硬链接数，说明有两条路径指向这个目录文件的inode。很显然，<code>/home/sakura/test/testDir</code>也即这个目录本身是一个，那么另一个是什么呢？</p>
+<p>我们知道，每个目录都可以通过<code>.</code>来表明当前目录，也就是指向它自己。进入<code>testDir</code>内部，使用<code>ln -ali</code>来查看更详细的信息，发现<code>.</code>的inode号和<code>testDir</code>的inode号一模一样。也就是说，目录文件初始的两个硬链接，一个是其本身，另一个就是其下的<code>.</code></p>
+<p><img src="/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/99fedeb837365ac9.png"></p>
+<p>现在，我们在<code>testDir</code>下再新建一个目录，重新查看其硬链接数，发现变为了3。</p>
+<p><img src="/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/89772db97f5081aa.png"></p>
+<p>这是因为，新的目录下的<code>..</code>指向该目录的上级目录，就是<code>testDir</code>，它也是testDir的inode的一条路径，所以硬链接数变为了3。更一般的，一个新建的目录初始硬链接数为2，每当在该目录下新建一个子目录，其硬链接数就会加一，关系可以归为下图：</p>
+<p><img src="/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/e3a1dcff818eb9d3.png"></p>
+
                             
 
 
@@ -423,7 +466,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    目录，不存在的…
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#inode"><span class="toc-number">1.</span> <span class="toc-text">inode</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%AF%E9%93%BE%E6%8E%A5"><span class="toc-number">2.</span> <span class="toc-text">软链接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A1%AC%E9%93%BE%E6%8E%A5"><span class="toc-number">3.</span> <span class="toc-text">硬链接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%AE%E5%BD%95%E7%9A%84%E7%A1%AC%E9%93%BE%E6%8E%A5"><span class="toc-number">4.</span> <span class="toc-text">目录的硬链接</span></a></li></ol>
                     </div>
                 </span>
             </div>
@@ -556,6 +599,10 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
               </li>
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">test</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">Linux</a>
               </li>
              
@@ -565,10 +612,6 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color3">波吉</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">test</a>
               </li>
              
               <li class="article-tag-list-item">
