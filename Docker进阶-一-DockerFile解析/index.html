@@ -20,14 +20,16 @@
 <meta property="og:site_name" content="SrcMiLeの杂货铺">
 <meta property="og:description" content="Dockerfile是用来构建Docker镜像的文本文件，是由一条条构建镜像所需的指令和参数构成的脚本，类似于Linux的MakeFile。现在，假设我们需要构建一个包含vim&#x2F;ifconfig的ubuntu镜像，我们需要run一个原始ubuntun镜像，然后在其中安装vim&#x2F;ifconfig，最后通过commit来生成镜像。但是，如果需要多次安装，就要多次重复上述commit步骤，很麻烦。那么，">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/Docker进阶-一-DockerFile解析/a3fc6f16e8523838.png">
-<meta property="og:image" content="http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/image-20220212143529077.png">
-<meta property="og:image" content="http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/e1eabb3396ab4d1c.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/1e96f3b77c9f4c1ca483a90b4c6112f3.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU3JjTWlMZQ==,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/a2c7708eb2ee436c970c88f58160552a.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/34fb7878c7cd40528ad9b6cc634c9ce4.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU3JjTWlMZQ==,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/ee6b3d3a19dd40fba1c422850a0e7c09.png">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/c5f220a24bb0472287fc7bd95cf481e7.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU3JjTWlMZQ==,size_20,color_FFFFFF,t_70,g_se,x_16">
 <meta property="article:published_time" content="2022-02-11T09:15:57.000Z">
-<meta property="article:modified_time" content="2022-02-12T08:05:06.652Z">
+<meta property="article:modified_time" content="2022-02-12T09:14:13.267Z">
 <meta property="article:author" content="SrcMiLe">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/Docker进阶-一-DockerFile解析/a3fc6f16e8523838.png">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/1e96f3b77c9f4c1ca483a90b4c6112f3.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU3JjTWlMZQ==,size_20,color_FFFFFF,t_70,g_se,x_16">
       
         <link rel="alternative" href="/atom.xml" title="SrcMiLeの杂货铺" type="application/atom+xml">
         
@@ -252,7 +254,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-keyboard-o"></i>
         <span class="post-meta-item-text">  总字数: </span>
-        <span class="post-count">1.5k字</span>
+        <span class="post-count">2.8k字</span>
       </span>
     </span>
 
@@ -261,7 +263,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-hourglass-half"></i>
         <span class="post-meta-item-text">  阅读时长: </span>
-        <span class="post-count">5分</span>
+        <span class="post-count">10分</span>
       </span>
     </span>
 </div>
@@ -281,11 +283,10 @@
 <span id="more"></span>
 
 <p>Dockerfile就像一个<code>图纸</code>，把镜像需要安装的东西全部写进去，然后<code>build</code>生成镜像时一口气直接装完。可以看到，<code>commit</code>是通过Container来生成镜像的，而Dockerfile则不需要操作者通过手动运行Container来对镜像进行增强。</p>
-<img src="Docker进阶-一-DockerFile解析/a3fc6f16e8523838.png" style="zoom: 67%;" />
-
+<p><img src="https://img-blog.csdnimg.cn/1e96f3b77c9f4c1ca483a90b4c6112f3.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU3JjTWlMZQ==,size_20,color_FFFFFF,t_70,g_se,x_16" alt="img"></p>
 <hr>
 <h2 id="构建过程解析"><a href="#构建过程解析" class="headerlink" title="构建过程解析"></a>构建过程解析</h2><p>每条保留字指令都必须为<code>大写字母</code>，且后面要跟随至少一个参数，如COPY保留字：</p>
-<p><img src="/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/image-20220212143529077.png" alt="image-20220212143529077"></p>
+<p><img src="https://img-blog.csdnimg.cn/a2c7708eb2ee436c970c88f58160552a.png" alt="img"></p>
 <p>指令按照从上到下，顺序执行，<strong>每条指令都会创建一个新的<code>镜像层</code>并对镜像进行提交</strong>，#表示注释。至于镜像层，简单来说，就是Docker镜像是一层层构成的，这样才能使我们可以在一个初始镜像的基础上生成新的镜像，具体分层概念将在下一篇博客中讲述。</p>
 <p><strong>【Dockerfile执行流程】</strong></p>
 <p>1&gt;  Docker从基础镜像运行一个Container。</p>
@@ -299,7 +300,7 @@
 <p>Docker镜像使软件的交付品</p>
 <p>Docker容器则是软件镜像的运行态，也即运行实例</p>
 </blockquote>
-<p><img src="/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/e1eabb3396ab4d1c.png"></p>
+<p><img src="https://img-blog.csdnimg.cn/34fb7878c7cd40528ad9b6cc634c9ce4.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU3JjTWlMZQ==,size_20,color_FFFFFF,t_70,g_se,x_16" alt="img"></p>
 <p>总的来说，Dockerfile定义了最终的容器进程需要的一切东西。Dockerfile涉及的内容包括执行代码或者是文件、环境变量、依赖包、运行时环境、动态链接库、操作系统的发行版、服务进程和内核进程（当应用进程需要和系统服务和内核进程打交道时，需要考虑如何设计namespace的权限控制）等等。</p>
 <hr>
 <h2 id="保留字"><a href="#保留字" class="headerlink" title="保留字"></a>保留字</h2><p>参考tomcat8的Dockerfile入门：<a target="_blank" rel="noopener" href="https://github.com/docker-library/tomcat%EF%BC%8C%E8%BF%99%E9%87%8C%E7%BD%97%E5%88%97%E4%BA%8612%E4%B8%AA%E6%9C%80%E5%B8%B8%E7%94%A8%E7%9A%84%E4%BF%9D%E7%95%99%E5%AD%97%E3%80%82">https://github.com/docker-library/tomcat，这里罗列了12个最常用的保留字。</a></p>
@@ -323,7 +324,74 @@
 
 <p>注意，<code>EXPOSE</code>指令是声明运行时容器提供服务端口，这只是一个声明，在运行时并不会因为这个声明就开启这个端口的服务。在Dockerfile中写入这样的声明有两个好处，一个是帮助镜像使用者理解这个镜像服务的守护端口，以方便配置映射；另一个用处则是在运行时使用随机端口映射时，也就是<code>docker run -P</code>时，会自动随机映射EXPOSE的端口。</p>
 <p>要将<code>EXPOSE</code>和<code>docker run -p &lt;宿主端口&gt;:&lt;容器端口&gt;</code>区分开来。-p，是将宿主端口映射向容器端口，也就是说将容器端口向宿主机外暴漏。而EXPOSE，仅仅是声明<code>容器内</code>暴露的端口。</p>
-<p>一般使用<code>docker run -p &lt;宿主端口&gt;:EXPOSE端口</code>来指定宿主机端口和该容器暴露端口的映射，或者使用<code>-P</code>来进行随机映射。这样一想，我们最终在外部直接访问的仍然是宿主机上的端口，<code>EXPOSE</code>只是在设置<code>-p/-P</code>时提醒操作者容器内服务的端口是多少，从而构成映射吗，是不是非常鸡肋？我个人觉得</p>
+<p>一般使用<code>docker run -p &lt;宿主端口&gt;:EXPOSE端口</code>来指定宿主机端口和该容器暴露端口的映射，或者使用<code>-P</code>来进行随机映射。这样一想，我们最终在外部直接访问的仍然是宿主机上的端口，<code>EXPOSE</code>只是在设置<code>-p/-P</code>时提醒操作者容器内服务的端口是多少，从而构成映射吗，是不是有些鸡肋？我个人觉得是的，它只是起到声明和提醒的作用。</p>
+<p>但是，<code>EXPOSE</code>也有中有趣的玩法，那就是不使用端口映射，让端口直接暴露在宿主机外。怎么做？==&gt; host模式。在<code>docker run</code>时设置<code>--net=host</code>，这样一来容器就和宿主机公用同样的网络配置，包括端口。运行之后，使用<code>docker inspect containerID </code>发现没有任何端口映射信息，因为容器的端口直接就是宿主机的端口。</p>
+<p><img src="https://img-blog.csdnimg.cn/ee6b3d3a19dd40fba1c422850a0e7c09.png" alt="img"></p>
+<p>这样一来，就可以在使用EXPOSE端口来访问容器内的服务了，不再需要-p/-P映射。</p>
+<h3 id="WORKDIR"><a href="#WORKDIR" class="headerlink" title="WORKDIR"></a>WORKDIR</h3><p>指定构建的镜像运行出容器后，终端默认的初始工作目录，也就是落脚点。比如，tomcat容器的落脚点为<code>/usr/local/tomcat</code>，它的dockerfile就这样写：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ENV</span> CATALINA_HOME /usr/local/tomcat</span><br><span class="line"><span class="comment"># ...</span></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="bash"> <span class="variable">$CATALINA_HOME</span></span></span><br></pre></td></tr></table></figure>
+
+<h3 id="USER"><a href="#USER" class="headerlink" title="USER"></a>USER</h3><p>指定该镜像以什么样的用户去执行，如果都不指定，默认为<code>root</code></p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">USER</span> &lt;<span class="keyword">user</span>&gt;[:&lt;group&gt;] <span class="comment">#or</span></span><br><span class="line"><span class="keyword">USER</span> &lt;UID&gt;[:&lt;GID&gt;]</span><br></pre></td></tr></table></figure>
+
+<h3 id="ENV"><a href="#ENV" class="headerlink" title="ENV"></a>ENV</h3><p>用来在构建镜像过程中设置环境变量，注意，是<code>构建过程中</code>，不是构建后。这个环境变量可以在后续的任何<code>RUN</code>指令中使用，也可以在其他指令中直接使用，比如<code>WORKDIR</code>，引用时加<code>$</code>。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ENV</span> NAME VALUE</span><br></pre></td></tr></table></figure>
+
+<h3 id="VOLUME"><a href="#VOLUME" class="headerlink" title="VOLUME"></a>VOLUME</h3><p>容器数据卷，不用多说，相当于<code>docker run -v ...</code>，用于数据保存和持久化工作。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> ubuntu</span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> mkdir /myvol</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> <span class="built_in">echo</span> <span class="string">&quot;hello world&quot;</span> &gt; /myvol/greeting</span></span><br><span class="line"><span class="keyword">VOLUME</span><span class="bash"> /myvol</span></span><br></pre></td></tr></table></figure>
+
+<p>上述指令会在容器的<code> /myvol</code>目录下设置一个挂载点，并在宿主机上创建一个数据卷和其相关联，由于没有指定宿主机目录，所以是默认的，类似于 <code>docker run -v /myvol 镜像名 </code>。可以使用<code>docker inspect 容器名/ID</code>来查看相关联的宿主机目录的路径，会发现数据卷名是一串编号：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/var/lib/docker/volumes/<span class="number">0</span>ab0aaf0d6ef391cb68b72bd8c43216a8f8ae9205f0ae941ef16ebe32dc9fc01/_data</span><br></pre></td></tr></table></figure>
+
+<p>当然，也可以同时创建多个挂载点，每个挂载点都有独立的数据卷：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">VOLUME</span><span class="bash"> [<span class="string">&quot;/data1&quot;</span>,<span class="string">&quot;/data2&quot;</span>]</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;Mounts&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;Name&quot;</span>: <span class="string">&quot;d411f6b8f17f4418629d4e5a1ab69679dee369b39e13bb68bed77aa4a0d12d21&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;Source&quot;</span>: <span class="string">&quot;/var/lib/docker/volumes/d411f6b8f17f4418629d4e5a1ab69679dee369b39e13bb68bed77aa4a0d12d21/_data&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;Destination&quot;</span>: <span class="string">&quot;/data1&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;Driver&quot;</span>: <span class="string">&quot;local&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;Mode&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;RW&quot;</span>: <span class="literal">true</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;Name&quot;</span>: <span class="string">&quot;6d3badcf47c4ac5955deda6f6ae56f4aaf1037a871275f46220c14ebd762fc36&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;Source&quot;</span>: <span class="string">&quot;/var/lib/docker/volumes/6d3badcf47c4ac5955deda6f6ae56f4aaf1037a871275f46220c14ebd762fc36/_data&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;Destination&quot;</span>: <span class="string">&quot;/data2&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;Driver&quot;</span>: <span class="string">&quot;local&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;Mode&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;RW&quot;</span>: <span class="literal">true</span></span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br></pre></td></tr></table></figure>
+
+<h3 id="COPY"><a href="#COPY" class="headerlink" title="COPY"></a>COPY</h3><p>把宿主机目录下的文件和目录拷贝进镜像中，将从构建上下文目录中 &lt;源路径&gt; 的文件/目录复制到新的一层的镜像内的 &lt;目标路径&gt; 位置。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">COPY</span><span class="bash"> src dest <span class="comment">#or</span></span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> [<span class="string">&quot;src&quot;</span>,<span class="string">&quot;dest&quot;</span>]</span></span><br><span class="line"><span class="comment"># &lt;src源路径&gt;：源文件或者源目录</span></span><br><span class="line"><span class="comment"># &lt;dest目标路径&gt;：容器内的指定路径，该路径不用事先建好，路径不存在的话，会自动创建</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="ADD"><a href="#ADD" class="headerlink" title="ADD"></a>ADD</h3><p>将宿主机目录下的文件拷贝进镜像且会自动处理URL和解压tar压缩包，即<code>COPY</code>的升级版：COPY+解压，一般用这个就行。</p>
+<h3 id="CMD"><a href="#CMD" class="headerlink" title="CMD"></a>CMD</h3><p>指定容器启动后要干的事情。注意，这个容器是运行最终镜像的容器，而不是构建镜像过程中的临时容器，也就是说，这个时候已经和镜像的构建无关了。</p>
+<blockquote>
+<p>RUN是在docker build时运行</p>
+<p>CMD是在docker run时运行</p>
+</blockquote>
+<p><code>CMD</code>指令和<code>RUN</code>的格式相似，外加了一个参数列表格式：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># shell 格式</span></span><br><span class="line"><span class="keyword">CMD</span><span class="bash"> &lt;命令&gt;</span></span><br><span class="line"><span class="comment"># exec 格式</span></span><br><span class="line"><span class="keyword">CMD</span><span class="bash"> [<span class="string">&quot;可执行文件&quot;</span>,<span class="string">&quot;参数1&quot;</span>,<span class="string">&quot;参数2&quot;</span>...]</span></span><br><span class="line"><span class="comment"># 参数列表格式，在指定了ENTRYPOINT后，用CMD指定具体参数</span></span><br><span class="line"><span class="keyword">CMD</span><span class="bash"> [<span class="string">&quot;参数1&quot;</span>,<span class="string">&quot;参数2&quot;</span>...]</span></span><br></pre></td></tr></table></figure>
+
+<p>Dockerfile中可以有多个CMD指令，但只有<code>最后一个</code>生效，并且，CMD会被<code>docker run</code>设定的运行命令替换。比如，tomcat的dockerfile的最后一行为：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CMD</span><span class="bash"> [<span class="string">&quot;catalina.sh&quot;</span>, <span class="string">&quot;run&quot;</span>]</span></span><br></pre></td></tr></table></figure>
+
+<p>即，运行tomcat容器后会在WORKDIR下执行命令<code>catalina.sh run </code>。但是，如果在<code>docker run</code>之后加入了<code>/bin/bash</code>，就会发现tomcat服务并没有启动，因为原本应该执行的<code>catalina.sh run</code>被自己写的<code>/bin/bash</code>覆盖了，因此只启动了容器，并没有启动服务。</p>
+<h3 id="ENTRYPOINT"><a href="#ENTRYPOINT" class="headerlink" title="ENTRYPOINT"></a>ENTRYPOINT</h3><p>也是用来指定一个容器启动时要运行的命令，类似于<code>CMD</code>指令，但不同的是，<code>ENTRYPOINT</code>不会被<code>docker run </code>后面的命令覆盖，而且这些命令行参数会被当作参数送给<code>ENTRYPOINT</code>指令指定的程序。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># exec 格式</span></span><br><span class="line"><span class="keyword">ENTRYPOINT</span><span class="bash"> [<span class="string">&quot;executable&quot;</span>, <span class="string">&quot;param1&quot;</span>, <span class="string">&quot;param2&quot;</span>]</span></span><br><span class="line"><span class="comment"># shell 格式</span></span><br><span class="line"><span class="keyword">ENTRYPOINT</span><span class="bash"> <span class="built_in">command</span> param1 param2</span></span><br></pre></td></tr></table></figure>
+
+<p><code>ENTRYPOINT</code>可以和<code>CMD</code>一起使用，一般是变参才会使用CMD，这里的CMD等于是在给ENTRYPOINT传参。当指定了ENTRYPOINT之后，CMD的含义就发生了变化，不再是直接运行其命令，而是将CMD的内容作为参数传递给ENTRYPOINT，它们两个组合成<code>&lt;ENTRYPOINT&gt;&lt;CMD&gt;</code> 来执行。</p>
+<p>比如，通过Dokcerfile构建nginx:test镜像，规定运行时指令，分为定参和变参两部分：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> nginx</span><br><span class="line"><span class="comment">#...</span></span><br><span class="line"><span class="keyword">ENTRYPOINT</span><span class="bash"> [<span class="string">&quot;nginx&quot;</span>,<span class="string">&quot;-c&quot;</span>] <span class="comment"># 定参</span></span></span><br><span class="line"><span class="keyword">CMD</span><span class="bash"> [<span class="string">&quot;/etc/nginx/nginx.conf&quot;</span>] <span class="comment"># 变参</span></span></span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th>不传参</th>
+<th>传参</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Docker命令</td>
+<td>docker run nginx:test</td>
+<td>docker run nginx:test /etc/nginx/new.conf</td>
+</tr>
+<tr>
+<td>衍生出的容器命令</td>
+<td>nginx -c /etc/nginx/nginx.conf</td>
+<td>nginx -c /etc/nginx/new.conf</td>
+</tr>
+</tbody></table>
+<p>如果Dockerfile中存在多个<code>ENTRYPOINT</code>指令，仅最后一个生效。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p><img src="https://img-blog.csdnimg.cn/c5f220a24bb0472287fc7bd95cf481e7.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAU3JjTWlMZQ==,size_20,color_FFFFFF,t_70,g_se,x_16" alt="img"></p>
 
                             
 
@@ -454,7 +522,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%84%E5%BB%BA%E8%BF%87%E7%A8%8B%E8%A7%A3%E6%9E%90"><span class="toc-number">1.</span> <span class="toc-text">构建过程解析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%9D%E7%95%99%E5%AD%97"><span class="toc-number">2.</span> <span class="toc-text">保留字</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#FROM"><span class="toc-number">2.1.</span> <span class="toc-text">FROM</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MAINTAINER"><span class="toc-number">2.2.</span> <span class="toc-text">MAINTAINER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RUN"><span class="toc-number">2.3.</span> <span class="toc-text">RUN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#EXPOSE"><span class="toc-number">2.4.</span> <span class="toc-text">EXPOSE</span></a></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%84%E5%BB%BA%E8%BF%87%E7%A8%8B%E8%A7%A3%E6%9E%90"><span class="toc-number">1.</span> <span class="toc-text">构建过程解析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%9D%E7%95%99%E5%AD%97"><span class="toc-number">2.</span> <span class="toc-text">保留字</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#FROM"><span class="toc-number">2.1.</span> <span class="toc-text">FROM</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MAINTAINER"><span class="toc-number">2.2.</span> <span class="toc-text">MAINTAINER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RUN"><span class="toc-number">2.3.</span> <span class="toc-text">RUN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#EXPOSE"><span class="toc-number">2.4.</span> <span class="toc-text">EXPOSE</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#WORKDIR"><span class="toc-number">2.5.</span> <span class="toc-text">WORKDIR</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#USER"><span class="toc-number">2.6.</span> <span class="toc-text">USER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ENV"><span class="toc-number">2.7.</span> <span class="toc-text">ENV</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#VOLUME"><span class="toc-number">2.8.</span> <span class="toc-text">VOLUME</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#COPY"><span class="toc-number">2.9.</span> <span class="toc-text">COPY</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ADD"><span class="toc-number">2.10.</span> <span class="toc-text">ADD</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CMD"><span class="toc-number">2.11.</span> <span class="toc-text">CMD</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ENTRYPOINT"><span class="toc-number">2.12.</span> <span class="toc-text">ENTRYPOINT</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">2.13.</span> <span class="toc-text">总结</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>
