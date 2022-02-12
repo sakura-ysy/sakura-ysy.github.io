@@ -24,7 +24,7 @@
 <meta property="og:image" content="http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/image-20220212143529077.png">
 <meta property="og:image" content="http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/e1eabb3396ab4d1c.png">
 <meta property="article:published_time" content="2022-02-11T09:15:57.000Z">
-<meta property="article:modified_time" content="2022-02-12T07:37:40.425Z">
+<meta property="article:modified_time" content="2022-02-12T08:05:06.652Z">
 <meta property="article:author" content="SrcMiLe">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/Docker进阶-一-DockerFile解析/a3fc6f16e8523838.png">
@@ -252,7 +252,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-keyboard-o"></i>
         <span class="post-meta-item-text">  总字数: </span>
-        <span class="post-count">1.1k字</span>
+        <span class="post-count">1.5k字</span>
       </span>
     </span>
 
@@ -261,7 +261,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-hourglass-half"></i>
         <span class="post-meta-item-text">  阅读时长: </span>
-        <span class="post-count">4分</span>
+        <span class="post-count">5分</span>
       </span>
     </span>
 </div>
@@ -318,7 +318,12 @@
 <figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># exec 格式</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> [<span class="string">&quot;可执行文件&quot;</span>,<span class="string">&quot;参数1&quot;</span>,<span class="string">&quot;参数2&quot;</span>]</span></span><br><span class="line"><span class="comment"># RUN [&quot;./test.php&quot;, &quot;dev&quot;, &quot;offline&quot;]等价于RUN ./test.php dev offline</span></span><br></pre></td></tr></table></figure>
 
 <p>以shell格式为例，如果我们想要安装vim，那么在容器中就需要使用命令<code>yum -y install vim</code>，然后出容器使用<code>docker commit</code>来构建镜像。现在有了dockerfile，只需要在其中加一句<code>RUN yum -y install vim</code>即可，docker运行完该指令会自动commit。</p>
-<h3 id="EXPOSE"><a href="#EXPOSE" class="headerlink" title="EXPOSE"></a>EXPOSE</h3><p>当前容器对外暴露出的端口，严格来说，是用该dockerfile构建的镜像，运行出的容器对外暴露的端口。</p>
+<h3 id="EXPOSE"><a href="#EXPOSE" class="headerlink" title="EXPOSE"></a>EXPOSE</h3><p>暴露出容器将要提供服务所开放的端口，严格来说，是用该dockerfile构建的镜像，运行出的容器提供的服务对外暴露的端口。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">EXPOSE</span> &lt;端口<span class="number">1</span>&gt;[/传输格式] [&lt;端口<span class="number">2</span>&gt;[/传输格式]...]</span><br><span class="line"><span class="comment"># EXPOSE 8080/tcp</span></span><br></pre></td></tr></table></figure>
+
+<p>注意，<code>EXPOSE</code>指令是声明运行时容器提供服务端口，这只是一个声明，在运行时并不会因为这个声明就开启这个端口的服务。在Dockerfile中写入这样的声明有两个好处，一个是帮助镜像使用者理解这个镜像服务的守护端口，以方便配置映射；另一个用处则是在运行时使用随机端口映射时，也就是<code>docker run -P</code>时，会自动随机映射EXPOSE的端口。</p>
+<p>要将<code>EXPOSE</code>和<code>docker run -p &lt;宿主端口&gt;:&lt;容器端口&gt;</code>区分开来。-p，是将宿主端口映射向容器端口，也就是说将容器端口向宿主机外暴漏。而EXPOSE，仅仅是声明<code>容器内</code>暴露的端口。</p>
+<p>一般使用<code>docker run -p &lt;宿主端口&gt;:EXPOSE端口</code>来指定宿主机端口和该容器暴露端口的映射，或者使用<code>-P</code>来进行随机映射。这样一想，我们最终在外部直接访问的仍然是宿主机上的端口，<code>EXPOSE</code>只是在设置<code>-p/-P</code>时提醒操作者容器内服务的端口是多少，从而构成映射吗，是不是非常鸡肋？我个人觉得</p>
 
                             
 
@@ -578,19 +583,19 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">OS</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">Hexo</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">Blog</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">OS</a>
               </li>
              
               <li class="article-tag-list-item">
