@@ -9,17 +9,25 @@
     <link rel="dns-prefetch" href="http://example.com">
     <title>
       
-        Tag: pod | 
+        Docker进阶(一): DockerFile解析 | 
             SrcMiLeの杂货铺
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <meta property="og:type" content="website">
-<meta property="og:title" content="SrcMiLeの杂货铺">
-<meta property="og:url" content="http://example.com/tags/pod/index.html">
+    <meta name="description" content="Dockerfile是用来构建Docker镜像的文本文件，是由一条条构建镜像所需的指令和参数构成的脚本，类似于Linux的MakeFile。现在，假设我们需要构建一个包含vim&#x2F;ifconfig的ubuntu镜像，我们需要run一个原始ubuntun镜像，然后在其中安装vim&#x2F;ifconfig，最后通过commit来生成镜像。但是，如果需要多次安装，就要多次重复上述commit步骤，很麻烦。那么，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker进阶(一): DockerFile解析">
+<meta property="og:url" content="http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/index.html">
 <meta property="og:site_name" content="SrcMiLeの杂货铺">
+<meta property="og:description" content="Dockerfile是用来构建Docker镜像的文本文件，是由一条条构建镜像所需的指令和参数构成的脚本，类似于Linux的MakeFile。现在，假设我们需要构建一个包含vim&#x2F;ifconfig的ubuntu镜像，我们需要run一个原始ubuntun镜像，然后在其中安装vim&#x2F;ifconfig，最后通过commit来生成镜像。但是，如果需要多次安装，就要多次重复上述commit步骤，很麻烦。那么，">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/Docker进阶-一-DockerFile解析/a3fc6f16e8523838.png">
+<meta property="og:image" content="http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/image-20220212143529077.png">
+<meta property="og:image" content="http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/e1eabb3396ab4d1c.png">
+<meta property="article:published_time" content="2022-02-11T09:15:57.000Z">
+<meta property="article:modified_time" content="2022-02-12T07:37:40.425Z">
 <meta property="article:author" content="SrcMiLe">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/Docker进阶-一-DockerFile解析/a3fc6f16e8523838.png">
       
         <link rel="alternative" href="/atom.xml" title="SrcMiLeの杂货铺" type="application/atom+xml">
         
@@ -221,73 +229,247 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-Docker进阶-一-DockerFile解析"
+  class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2022" class="archive-year">2022</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/k8s%E6%BA%90%E7%A0%81-%E4%B8%80-Pod%E5%88%9B%E5%BB%BA%E6%B5%81%E7%A8%8B/" class="archive-article-date">
-  	<time datetime="2022-01-26T03:53:58.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-26</time>
-</a>
-        </div>
-    	 
+      <header class="article-header" style="font-size: large;">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/k8s%E6%BA%90%E7%A0%81-%E4%B8%80-Pod%E5%88%9B%E5%BB%BA%E6%B5%81%E7%A8%8B/">k8s源码(一): Pod创建流程</a>
+    <h1 class="article-title" itemprop="name">
+      Docker进阶(一): DockerFile解析
     </h1>
   
 
-        <div class="article-info info-on-right">
           
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">云计算</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">k8s</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">kubelet</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">pod</a>
-        		</li>
-      		
-		</ul>
-	</div>
+            <a href="/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/" class="archive-article-date">
+  	<time datetime="2022-02-11T09:15:57.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-02-11</time>
+</a>
+              <!-- 开始添加字数统计-->
+              
+                  <div style="margin-top:10px;">
+    <span class="post-time">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-keyboard-o"></i>
+        <span class="post-meta-item-text">  总字数: </span>
+        <span class="post-count">1.1k字</span>
+      </span>
+    </span>
 
+    <span class="post-time">
+      &nbsp; | &nbsp;
+      <span class="post-meta-item-icon">
+        <i class="fa fa-hourglass-half"></i>
+        <span class="post-meta-item-text">  阅读时长: </span>
+        <span class="post-count">4分</span>
+      </span>
+    </span>
+</div>
+
+              
+              <!-- 添加完成 -->
+              
+      </header>
+      
+
+        <div class="article-entry" itemprop="articleBody">
           
 
+                    
+
+                          <p>Dockerfile是用来构建Docker镜像的文本文件，是由一条条<code>构建镜像</code>所需的指令和参数构成的脚本，类似于Linux的MakeFile。现在，假设我们需要构建一个包含vim/ifconfig的ubuntu镜像，我们需要<code>run</code>一个原始ubuntun镜像，然后在其中安装vim/ifconfig，最后通过<code>commit</code>来生成镜像。但是，如果需要多次安装，就要多次重复上述commit步骤，很麻烦。那么，能不能将需要安装的东西列一个清单，然后一次性搞定呢？==&gt; Dockerfile。</p>
+<span id="more"></span>
+
+<p>Dockerfile就像一个<code>图纸</code>，把镜像需要安装的东西全部写进去，然后<code>build</code>生成镜像时一口气直接装完。可以看到，<code>commit</code>是通过Container来生成镜像的，而Dockerfile则不需要操作者通过手动运行Container来对镜像进行增强。</p>
+<img src="Docker进阶-一-DockerFile解析/a3fc6f16e8523838.png" style="zoom: 67%;" />
+
+<hr>
+<h2 id="构建过程解析"><a href="#构建过程解析" class="headerlink" title="构建过程解析"></a>构建过程解析</h2><p>每条保留字指令都必须为<code>大写字母</code>，且后面要跟随至少一个参数，如COPY保留字：</p>
+<p><img src="/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/image-20220212143529077.png" alt="image-20220212143529077"></p>
+<p>指令按照从上到下，顺序执行，<strong>每条指令都会创建一个新的<code>镜像层</code>并对镜像进行提交</strong>，#表示注释。至于镜像层，简单来说，就是Docker镜像是一层层构成的，这样才能使我们可以在一个初始镜像的基础上生成新的镜像，具体分层概念将在下一篇博客中讲述。</p>
+<p><strong>【Dockerfile执行流程】</strong></p>
+<p>1&gt;  Docker从基础镜像运行一个Container。</p>
+<p>2&gt;  顺序执行一条指令并对Container作出修改。</p>
+<p>3&gt;  执行类似<code>commit</code>的操作来提交一个新的镜像层。</p>
+<p>4&gt;  Docker再基于刚提交的镜像运行一个新的Container。</p>
+<p>5&gt;  执行Dockerfile中的下一条指令直到所有指令都执行完成。</p>
+<p>从应用软件的角度来看，Dockerfile、Docker镜像与Docker容器分别代表了软件的三个不同阶段：</p>
+<blockquote>
+<p>Dockerfile使软件的设计图纸</p>
+<p>Docker镜像使软件的交付品</p>
+<p>Docker容器则是软件镜像的运行态，也即运行实例</p>
+</blockquote>
+<p><img src="/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/e1eabb3396ab4d1c.png"></p>
+<p>总的来说，Dockerfile定义了最终的容器进程需要的一切东西。Dockerfile涉及的内容包括执行代码或者是文件、环境变量、依赖包、运行时环境、动态链接库、操作系统的发行版、服务进程和内核进程（当应用进程需要和系统服务和内核进程打交道时，需要考虑如何设计namespace的权限控制）等等。</p>
+<hr>
+<h2 id="保留字"><a href="#保留字" class="headerlink" title="保留字"></a>保留字</h2><p>参考tomcat8的Dockerfile入门：<a target="_blank" rel="noopener" href="https://github.com/docker-library/tomcat%EF%BC%8C%E8%BF%99%E9%87%8C%E7%BD%97%E5%88%97%E4%BA%8612%E4%B8%AA%E6%9C%80%E5%B8%B8%E7%94%A8%E7%9A%84%E4%BF%9D%E7%95%99%E5%AD%97%E3%80%82">https://github.com/docker-library/tomcat，这里罗列了12个最常用的保留字。</a></p>
+<h3 id="FROM"><a href="#FROM" class="headerlink" title="FROM"></a>FROM</h3><p>基础镜像，说明当前新镜像是基于哪个镜像的，指定一个已经存在的镜像作为模板，Dockerfile的第一条指令必须是FROM。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> [--platform=&lt;platform&gt;] &lt;image&gt; [AS &lt;name&gt;]  <span class="comment"># or</span></span><br><span class="line"><span class="keyword">FROM</span> [--platform=&lt;platform&gt;] &lt;image&gt;[:&lt;tag&gt;] [AS &lt;name&gt;]  <span class="comment">#or</span></span><br><span class="line"><span class="keyword">FROM</span> [--platform=&lt;platform&gt;] &lt;image&gt;[@&lt;digest&gt;] [AS &lt;name&gt;]</span><br></pre></td></tr></table></figure>
+
+<h3 id="MAINTAINER"><a href="#MAINTAINER" class="headerlink" title="MAINTAINER"></a>MAINTAINER</h3><p>可以通过该保留字留下维护者的姓名和邮箱地址，非必须。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">MAINTAINER</span> &lt;name&gt;</span><br></pre></td></tr></table></figure>
+
+<p>新版本中，官方建议用<code>LABEL</code>来替代它：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">LABEL</span><span class="bash"> org.opencontainers.image.authors=<span class="string">&quot;SvenDowideit@home.org.au&quot;</span></span></span><br></pre></td></tr></table></figure>
+
+<h3 id="RUN"><a href="#RUN" class="headerlink" title="RUN"></a>RUN</h3><p>容器构建镜像时需要运行的命令，有两种格式，<code>shell</code>格式和<code>exec</code>格式。注意，<code>RUN</code>是在<code>docker build</code>时运行的，那为什么会和容器有关呢？就像前文说的，dockerfile每一条指令实质上就是在前一步运行的新的Container上进行操作，然后通过类似<code>commit</code>的操作来构建新镜像，所以实际上是对容器的操作。两种格式分别为：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># shell 格式</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> &lt;命令行命令&gt;</span></span><br><span class="line"><span class="comment"># &lt;命令行命令&gt;等同于，在容器终端操作的shell命令。</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># exec 格式</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> [<span class="string">&quot;可执行文件&quot;</span>,<span class="string">&quot;参数1&quot;</span>,<span class="string">&quot;参数2&quot;</span>]</span></span><br><span class="line"><span class="comment"># RUN [&quot;./test.php&quot;, &quot;dev&quot;, &quot;offline&quot;]等价于RUN ./test.php dev offline</span></span><br></pre></td></tr></table></figure>
+
+<p>以shell格式为例，如果我们想要安装vim，那么在容器中就需要使用命令<code>yum -y install vim</code>，然后出容器使用<code>docker commit</code>来构建镜像。现在有了dockerfile，只需要在其中加一句<code>RUN yum -y install vim</code>即可，docker运行完该指令会自动commit。</p>
+<h3 id="EXPOSE"><a href="#EXPOSE" class="headerlink" title="EXPOSE"></a>EXPOSE</h3><p>当前容器对外暴露出的端口，严格来说，是用该dockerfile构建的镜像，运行出的容器对外暴露的端口。</p>
+
+                            
+
+
+                              
+                                <div class="page-reward">
+                                  <a href="javascript:;" class="page-reward-btn tooltip-top">
+                                    <div class="tooltip tooltip-east">
+                                      <span class="tooltip-item">
+                                        赏
+                                      </span>
+                                      <span class="tooltip-content">
+                                        <span class="tooltip-text">
+                                          <span class="tooltip-inner">
+                                            <p class="reward-p"><i class="icon icon-quo-left"></i>
+                                              谢谢你请我吃辣条<i class="icon icon-quo-right"></i>
+                                            </p>
+                                            <div class="reward-box">
+                                              
+                                                  
+                                                    <div class="reward-box-item">
+                                                      <img class="reward-img" src="/img/wechat.jpg">
+                                                      <span class="reward-type">微信</span>
+                                                    </div>
+                                                    
+                                            </div>
+                                          </span>
+                                        </span>
+                                      </span>
+                                    </div>
+                                  </a>
+                                </div>
+                                
         </div>
-        <div class="clearfix"></div>
-    </header>
+        <div class="article-info article-info-index">
+          
+              
+                
+
+                  
+
+                      
+                        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
+        </div>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://example.com/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+                          
+                            <div class="clearfix"></div>
+        </div>
   </div>
 </article>
+
+  
+<nav id="article-nav">
   
   
-    </div></section>
+    <a href="/k8s%E6%BA%90%E7%A0%81-%E4%B8%80-Pod%E5%88%9B%E5%BB%BA%E6%B5%81%E7%A8%8B/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">k8s源码(一): Pod创建流程</div>
+      <i class="icon-circle-right"></i>
+    </a>
   
+</nav>
 
     
+      <aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%84%E5%BB%BA%E8%BF%87%E7%A8%8B%E8%A7%A3%E6%9E%90"><span class="toc-number">1.</span> <span class="toc-text">构建过程解析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%9D%E7%95%99%E5%AD%97"><span class="toc-number">2.</span> <span class="toc-text">保留字</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#FROM"><span class="toc-number">2.1.</span> <span class="toc-text">FROM</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MAINTAINER"><span class="toc-number">2.2.</span> <span class="toc-text">MAINTAINER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RUN"><span class="toc-number">2.3.</span> <span class="toc-text">RUN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#EXPOSE"><span class="toc-number">2.4.</span> <span class="toc-text">EXPOSE</span></a></li></ol></li></ol>
+                    </div>
+                </span>
+            </div>
+        </div>
+        
+    </div>
+</aside>
 
+
+        
+          
+
+                
+
+                      
+
+                            
+
+                                
+                                      
 
           </div>
         </div>
@@ -314,9 +496,9 @@
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
-		isPost: false,
+		isPost: true,
 		isArchive: false,
-		isTag: true,
+		isTag: false,
 		isCategory: false,
 		open_in_new: false,
 		toc_hide_index: true,

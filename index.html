@@ -95,7 +95,7 @@
 
                     <br/>
 					<nav>
-						<p>文章数: 9</p>
+						<p>文章数: 10</p>
 					</nav>
 
 					<nav class="header-smart-menu">
@@ -107,6 +107,10 @@
 								
 									
 							
+								<a q-on="click: openSlider(e, 'friends')" href="javascript:void(0)">
+									true
+								</a>
+								
 									
 							
 								<a q-on="click: openSlider(e, 'aboutme')" href="javascript:void(0)">
@@ -217,6 +221,97 @@
           </div>
           <div id="js-content" class="content-ll">
             
+  
+    <article id="post-Docker进阶-一-DockerFile解析"
+  class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header" style="font-size: large;">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/">Docker进阶(一): DockerFile解析</a>
+    </h1>
+  
+
+          
+            <a href="/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/" class="archive-article-date">
+  	<time datetime="2022-02-11T09:15:57.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-02-11</time>
+</a>
+              <!-- 开始添加字数统计-->
+              
+                  <div style="margin-top:10px;">
+    <span class="post-time">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-keyboard-o"></i>
+        <span class="post-meta-item-text">  总字数: </span>
+        <span class="post-count">1.1k字</span>
+      </span>
+    </span>
+
+    <span class="post-time">
+      &nbsp; | &nbsp;
+      <span class="post-meta-item-icon">
+        <i class="fa fa-hourglass-half"></i>
+        <span class="post-meta-item-text">  阅读时长: </span>
+        <span class="post-count">4分</span>
+      </span>
+    </span>
+</div>
+
+              
+              <!-- 添加完成 -->
+              
+      </header>
+      
+
+        <div class="article-entry" itemprop="articleBody">
+          
+            <p>Dockerfile是用来构建Docker镜像的文本文件，是由一条条<code>构建镜像</code>所需的指令和参数构成的脚本，类似于Linux的MakeFile。现在，假设我们需要构建一个包含vim/ifconfig的ubuntu镜像，我们需要<code>run</code>一个原始ubuntun镜像，然后在其中安装vim/ifconfig，最后通过<code>commit</code>来生成镜像。但是，如果需要多次安装，就要多次重复上述commit步骤，很麻烦。那么，能不能将需要安装的东西列一个清单，然后一次性搞定呢？==&gt; Dockerfile。</p>
+              
+                  
+
+
+                              
+        </div>
+        <div class="article-info article-info-index">
+          
+              
+                
+
+                  
+                    <p class="article-more-link">
+                      <a class="article-more-a" href="/Docker%E8%BF%9B%E9%98%B6-%E4%B8%80-DockerFile%E8%A7%A3%E6%9E%90/">
+                        Read More >>
+                      </a>
+                    </p>
+                    
+
+                      
+                            <div class="clearfix"></div>
+        </div>
+  </div>
+</article>
+
+      <aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+        
+
   
     <article id="post-k8s源码-一-Pod创建流程"
   class="article article-type-post  article-index" itemscope itemprop="blogPost">
@@ -1256,6 +1351,8 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
       
     
       
+      
+      
     
       
       
@@ -1267,13 +1364,15 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
     
     
       
-      <li style="width: 50%" q-on="click: openSlider(e, 'innerArchive')"><a href="javascript:void(0)" q-class="active:innerArchive">所有文章</a></li>
+      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'innerArchive')"><a href="javascript:void(0)" q-class="active:innerArchive">所有文章</a></li>
       
         
       
+      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'friends')"><a href="javascript:void(0)" q-class="active:friends">true</a></li>
+      
         
       
-      <li style="width: 50%" q-on="click: openSlider(e, 'aboutme')"><a href="javascript:void(0)" q-class="active:aboutme">关于我</a></li>
+      <li style="width: 33.333333333333336%" q-on="click: openSlider(e, 'aboutme')"><a href="javascript:void(0)" q-class="active:aboutme">关于我</a></li>
       
         
     </ul>
@@ -1314,15 +1413,15 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">test</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">Linux</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color3">OS</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">test</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -1392,6 +1491,18 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
     	</section>
     
 
+    
+    	<section class="tools-section tools-section-friends" q-show="friends">
+  		
+        <ul class="search-ul">
+          
+            <li class="search-li">
+              <a href="http://159.75.112.81:8090/#" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>凯凯的博客</a>
+            </li>
+          
+        </ul>
+  		
+    	</section>
     
 
     
