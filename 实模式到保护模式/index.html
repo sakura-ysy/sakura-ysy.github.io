@@ -24,9 +24,10 @@
 <meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/e8e4882d1409b8c8.png">
 <meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/477588c3761f2737.png">
 <meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/ccabd82c4185bc24.png">
+<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/331f5d92ee10678c.png">
 <meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/71d060da237efc08.png">
 <meta property="article:published_time" content="2022-02-20T13:51:00.000Z">
-<meta property="article:modified_time" content="2022-02-21T07:30:00.744Z">
+<meta property="article:modified_time" content="2022-02-21T08:20:50.885Z">
 <meta property="article:author" content="SrcMiLe">
 <meta property="article:tag" content="OS">
 <meta name="twitter:card" content="summary">
@@ -255,7 +256,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-keyboard-o"></i>
         <span class="post-meta-item-text">  总字数: </span>
-        <span class="post-count">4.7k字</span>
+        <span class="post-count">5.5k字</span>
       </span>
     </span>
 
@@ -264,7 +265,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-hourglass-half"></i>
         <span class="post-meta-item-text">  阅读时长: </span>
-        <span class="post-count">17分</span>
+        <span class="post-count">20分</span>
       </span>
     </span>
 </div>
@@ -342,12 +343,33 @@
 </blockquote>
 <p>既然访问内存中的段描述符很耗时间，那CPU如何提高效率呢？使用缓存。在80286的保护模式中，为了提高获取段信息的效率，对段寄存器率先应用了缓存技术，将段信息用一个寄存器来缓存，这就是<code>段描述符缓冲寄存器</code>。对程序员而言它是不可见的。CPU每次访问描述符并获取到内存段信息后，会将其存入上述缓冲寄存器中，下次访问相同段时，直接从中取就行了。</p>
 <p>另外，虽然段描述符缓冲寄存器是保护模式下的产物，但是它也可以用在实模式下。在16为的实模式下，段基址左移4位这个操作也是耗时的。因此，CPU会将段基址左移后的结果存在上述寄存器中，以后每次引用这个段时，就直接走缓冲寄存器，直到换段，也就是段寄存器被重新赋值。</p>
+<p>在进入代码解释之前按，先简单概括下描述符各属性的含义：</p>
+<p><strong>P位</strong>：存在位，P=1表示段在内存中存在；P=0表示在内存中不存在。</p>
+<p><strong>DPL</strong>：描述符特权级（Privilege Level），可以是0123，数字越小特权级越大。</p>
+<p><strong>S位</strong>：指明描述符是数据段/代码段（S=1）还是系统段/门描述符（S=0）.</p>
+<p><strong>TYPE</strong>：描述符类型，详情见下表：</p>
+<img src="https://i.bmp.ovh/imgs/2022/02/331f5d92ee10678c.png" style="zoom: 67%;" />
+
+<p>其中，当S=1时，TYPE&lt;8对应数据段，&gt;=8对应代码段；当S=0时，TYPE&lt;8对应系统段，&gt;=8对应门描述符。</p>
+<p><strong>G位</strong>：段界限粒度（Granularity）位。G=0时段界限为字节；G=1时段界限粒度为4KB。</p>
+<p><strong>D/B位</strong>：这一位比较复杂，分三种情况：</p>
+<ul>
+<li>   在可执行代码段描述符中，这一位叫做D位。D=1时，在默认情况下指令使用32位地址以及32位或8位操作数；D=0时，在默认情况下使用16位地址以及16位或8位操作数；</li>
+<li>   在向下扩展数据段的描述符中，这一位叫做B位。B=1时，段的上部界限为4GB；B=0时，段的上部界限为64KB；</li>
+<li>   在描述堆栈段（由ss寄存器指向的段）的描述符中，这一位叫做B位。B=1时，隐式的堆栈访问指令（如push、pop和call）使用32位堆栈指针寄存器esp；D=0时，隐式的堆栈访问指令（如push、pop和call）使用16位堆栈指针寄存器sp；</li>
+</ul>
+<p><strong>AVL位</strong>：保留位：可以被系统软件使用。</p>
 <h2 id="代码解释"><a href="#代码解释" class="headerlink" title="代码解释"></a>代码解释</h2><p>好了，知道保护模式和GDT的相关基础后，可以开始通过解释文初的代码来进一步学习保护模式了。</p>
 <p>代码一共分为三个部分：[SECTION .gdt]、[SECTION .s16]、[SECTION .s32]。顾名思义，第一部分定义了GDT，第二部分为16位环境下运行的代码，即实模式，第三部分为32位环境下运行的代码，即保护模式。我们一个一个看。</p>
 <h3 id="SECTION-gdt"><a href="#SECTION-gdt" class="headerlink" title="[SECTION .gdt]"></a>[SECTION .gdt]</h3><p>这个部分定义了一个数组，每一个元素都是一个<code>Descriptor</code>，很明显，这个数组就是<code>GDT</code>。其中，<code>Descriptor</code>是一个宏，这个宏用比较自动化的方法把段基址、段界限和段属性放入一个描述符中合适的位置，这个宏在pm.inc中，内容如下：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">; 描述符</span><br><span class="line">; usage: Descriptor Base, Limit, Attr</span><br><span class="line">;        Base:  dd</span><br><span class="line">;        Limit: dd (low 20 bits available)</span><br><span class="line">;        Attr:  dw (lower 4 bits of higher byte are always 0)</span><br><span class="line">%macro Descriptor 3</span><br><span class="line">	dw	%2 &amp; 0FFFFh				; 段界限 1				(2 字节)</span><br><span class="line">	dw	%1 &amp; 0FFFFh				; 段基址 1				(2 字节)</span><br><span class="line">	db	(%1 &gt;&gt; 16) &amp; 0FFh			; 段基址 2				(1 字节)</span><br><span class="line">	dw	((%2 &gt;&gt; 8) &amp; 0F00h) | (%3 &amp; 0F0FFh)	; 属性 1 + 段界限 2 + 属性 2		(2 字节)</span><br><span class="line">	db	(%1 &gt;&gt; 24) &amp; 0FFh			; 段基址 3				(1 字节)</span><br><span class="line">%endmacro ; 共 8 字节</span><br></pre></td></tr></table></figure>
 
-<p>代码的GDT中共有3个描述符，为方便起见，这里分别简称为DESC_DUMMY、DESC_CODE32和DESC_VIDEO。其中DESC_VIDEO的段基址是<code>0B800h</code>，这个地址是显存的起始地址，故该描述符指向了显存。定义完GDT后，用变量<code>GdtLen</code>存储GDT的长度，结构变量<code>GdtPtr</code>存储GDT的长度和基地址。</p>
+<p>代码的GDT中共有3个描述符，为方便起见，这里分别简称为DESC_DUMMY、DESC_CODE32和DESC_VIDEO。其中DESC_VIDEO的段基址是<code>0B800h</code>，这个地址是显存的起始地址，故该描述符指向了显存。</p>
+<p>段基址和段界限都好说，来看下段属性。DESC_CODE32的属性为<code>DA_C + DA_32</code>，DESC_VIDEO的属性为<code>DA_DRW</code>。这些值都定义在pm.inc中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">;---------------------------------------------------------------</span><br><span class="line">; 描述符类型值说明</span><br><span class="line">; 其中:</span><br><span class="line">;       DA_  : Descriptor Attribute</span><br><span class="line">;       D    : 数据段</span><br><span class="line">;       C    : 代码段</span><br><span class="line">;       S    : 系统段</span><br><span class="line">;       R    : 只读</span><br><span class="line">;       RW   : 读写</span><br><span class="line">;       A    : 已访问</span><br><span class="line">;       其它 : 可按照字面意思理解</span><br><span class="line">;---------------------------------------------------------------</span><br><span class="line">DA_32		EQU	4000h	; 32 位段</span><br><span class="line"></span><br><span class="line">DA_DPL0		EQU	  00h	; DPL = 0</span><br><span class="line">DA_DPL1		EQU	  20h	; DPL = 1</span><br><span class="line">DA_DPL2		EQU	  40h	; DPL = 2</span><br><span class="line">DA_DPL3		EQU	  60h	; DPL = 3</span><br><span class="line">;---------------------------------------------------------------</span><br><span class="line">; 存储段描述符类型值说明</span><br><span class="line">;---------------------------------------------------------------</span><br><span class="line">DA_DR		EQU	90h	; 存在的只读数据段类型值</span><br><span class="line">DA_DRW		EQU	92h	; 存在的可读写数据段属性值</span><br><span class="line">DA_DRWA		EQU	93h	; 存在的已访问可读写数据段类型值</span><br><span class="line">DA_C		EQU	98h	; 存在的只执行代码段属性值</span><br><span class="line">DA_CR		EQU	9Ah	; 存在的可执行可读代码段属性值</span><br><span class="line">DA_CCO		EQU	9Ch	; 存在的只执行一致代码段属性值</span><br><span class="line">DA_CCOR		EQU	9Eh	; 存在的可执行可读一致代码段属性值</span><br><span class="line">;---------------------------------------------------------------</span><br><span class="line">; 系统段描述符类型值说明</span><br><span class="line">;---------------------------------------------------------------</span><br><span class="line">DA_LDT		EQU	  82h	; 局部描述符表段类型值</span><br><span class="line">DA_TaskGate	EQU	  85h	; 任务门类型值</span><br><span class="line">DA_386TSS	EQU	  89h	; 可用 386 任务状态段类型值</span><br><span class="line">DA_386CGate	EQU	  8Ch	; 386 调用门类型值</span><br><span class="line">DA_386IGate	EQU	  8Eh	; 386 中断门类型值</span><br><span class="line">DA_386TGate	EQU	  8Fh	; 386 陷阱门类型值</span><br><span class="line">;---------------------------------------------------------------</span><br></pre></td></tr></table></figure>
+
+<p>DA_C + DA_32的二进制为<code>0100 0000 1001 1000</code>，更具描述符TYPE的含义可知该内存段为<strong>存在的只执行的32位代码段，DPL为0</strong>。同理可知，DESC_VIDEO段为<strong>可读写数据段</strong>。</p>
+<p>定义完GDT后，用变量<code>GdtLen</code>存储GDT的长度，结构变量<code>GdtPtr</code>存储GDT的长度和基地址。</p>
 <p>随后，开始存储后两个描述符的<code>选择子</code>，可以看到，<code>SelectorCode32</code>和<code>SelectorVideo</code>分别存储了DESC_CODE32和DESC_VIDEO相对于GDT首址的偏移，这个数就是他们各自的选择子。实际上，选择子不止是一个偏移，它的结构要稍微复杂一些，这里不详细介绍。</p>
 <p>数据结构<code>GdtPtr</code>是用来记录GDT界限和GDT基址的。前文提到过，<code>GDTR</code>寄存器要指向GDT的首址，先来看看这个寄存器的结构：</p>
 <p><img src="https://i.bmp.ovh/imgs/2022/02/71d060da237efc08.png"></p>
@@ -664,19 +686,19 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">OS</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color3">编码</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">test</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">OS</a>
               </li>
              
               <li class="article-tag-list-item">
