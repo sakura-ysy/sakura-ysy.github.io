@@ -9,28 +9,28 @@
     <link rel="dns-prefetch" href="http://example.com">
     <title>
       
-        Docker基础(三): 容器数据卷 | 
+        实模式到保护模式 | 
             SrcMiLeの杂货铺
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <meta name="description" content="想象一下，你的公司使用docker在容器中部署了一个电商项目，数据全部存在容器中。现在，你一不小心把这个容器删了，里面的数据全没了，再也无法恢复。完了，公司的核心资产被你搞没了，猜猜你能在牢里蹲多久？">
+    <meta name="description" content="在不知道保护模式之前，让我们先看一段代码，如果没有接触过保护模式，会一头雾水，不过没关系，在这种好奇心的驱使下，会学的更高效。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Docker基础(三): 容器数据卷">
-<meta property="og:url" content="http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%89-%E5%AE%B9%E5%99%A8%E6%95%B0%E6%8D%AE%E5%8D%B7/index.html">
+<meta property="og:title" content="实模式到保护模式">
+<meta property="og:url" content="http://example.com/%E5%AE%9E%E6%A8%A1%E5%BC%8F%E5%88%B0%E4%BF%9D%E6%8A%A4%E6%A8%A1%E5%BC%8F/index.html">
 <meta property="og:site_name" content="SrcMiLeの杂货铺">
-<meta property="og:description" content="想象一下，你的公司使用docker在容器中部署了一个电商项目，数据全部存在容器中。现在，你一不小心把这个容器删了，里面的数据全没了，再也无法恢复。完了，公司的核心资产被你搞没了，猜猜你能在牢里蹲多久？">
+<meta property="og:description" content="在不知道保护模式之前，让我们先看一段代码，如果没有接触过保护模式，会一头雾水，不过没关系，在这种好奇心的驱使下，会学的更高效。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/01/0569fbc976e494b7.png">
-<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/01/ccdd351da2233cae.png">
-<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/01/3aa48b47a02047be.png">
-<meta property="article:published_time" content="2022-01-23T14:19:55.000Z">
-<meta property="article:modified_time" content="2022-01-23T16:33:20.371Z">
+<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/597d1f0674ed20d5.png">
+<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/e8e4882d1409b8c8.png">
+<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/477588c3761f2737.png">
+<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/ccabd82c4185bc24.png">
+<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/71d060da237efc08.png">
+<meta property="article:published_time" content="2022-02-20T13:51:00.000Z">
+<meta property="article:modified_time" content="2022-02-21T07:30:00.744Z">
 <meta property="article:author" content="SrcMiLe">
-<meta property="article:tag" content="Docker">
-<meta property="article:tag" content="云计算">
-<meta property="article:tag" content="分布式">
+<meta property="article:tag" content="OS">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://i.bmp.ovh/imgs/2022/01/0569fbc976e494b7.png">
+<meta name="twitter:image" content="https://i.bmp.ovh/imgs/2022/02/597d1f0674ed20d5.png">
       
         <link rel="alternative" href="/atom.xml" title="SrcMiLeの杂货铺" type="application/atom+xml">
         
@@ -232,7 +232,7 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-Docker基础-三-容器数据卷"
+            <article id="post-实模式到保护模式"
   class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -240,13 +240,13 @@
         
   
     <h1 class="article-title" itemprop="name">
-      Docker基础(三): 容器数据卷
+      实模式到保护模式
     </h1>
   
 
           
-            <a href="/Docker%E5%9F%BA%E7%A1%80-%E4%B8%89-%E5%AE%B9%E5%99%A8%E6%95%B0%E6%8D%AE%E5%8D%B7/" class="archive-article-date">
-  	<time datetime="2022-01-23T14:19:55.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-01-23</time>
+            <a href="/%E5%AE%9E%E6%A8%A1%E5%BC%8F%E5%88%B0%E4%BF%9D%E6%8A%A4%E6%A8%A1%E5%BC%8F/" class="archive-article-date">
+  	<time datetime="2022-02-20T13:51:00.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-02-20</time>
 </a>
               <!-- 开始添加字数统计-->
               
@@ -255,7 +255,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-keyboard-o"></i>
         <span class="post-meta-item-text">  总字数: </span>
-        <span class="post-count">2k字</span>
+        <span class="post-count">4.7k字</span>
       </span>
     </span>
 
@@ -264,7 +264,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-hourglass-half"></i>
         <span class="post-meta-item-text">  阅读时长: </span>
-        <span class="post-count">7分</span>
+        <span class="post-count">17分</span>
       </span>
     </span>
 </div>
@@ -280,72 +280,112 @@
 
                     
 
-                          <p>想象一下，你的公司使用docker在容器中部署了一个电商项目，数据全部存在容器中。现在，你一不小心把这个容器删了，里面的数据全没了，再也无法恢复。完了，公司的核心资产被你搞没了，猜猜你能在牢里蹲多久？</p>
+                          <p>在不知道保护模式之前，让我们先看一段代码，如果没有接触过保护模式，会一头雾水，不过没关系，在这种好奇心的驱使下，会学的更高效。</p>
 <span id="more"></span>
 
-<h2 id="啥是数据卷"><a href="#啥是数据卷" class="headerlink" title="啥是数据卷"></a>啥是数据卷</h2><p>当然，一个公司业务不可能这么脆弱，但是容器天生就有数据不持久的特点，数据随容器即生即灭，那有什么方法能让其中的重要数据持久化呢？答案就是<code>备份</code>。前面讲过，docker可以通过cp命令和export将容器中的数据备份到主机上，这不失是一种方法。但是，这种操作是一次性的，也即每需要备份时都要手动执行一次，当业务大时，这是不可想象的。那么有没有一种办法，使容器中特定目录和主机之间建立一个持久性的联系，实现自动备份？有的，这就是docker容器数据卷，简称<code>容器卷</code>，或<code>数据卷</code>，或<code>卷</code>。</p>
-<p>所谓卷，就是在主机的指定目录和容器内指定目录之间建立一个<code>双向</code>的管道，二者中的数据完全相同，且任意一者的更改都会同步到另一者之中，实现实时备份与数据共享。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br></pre></td><td class="code"><pre><span class="line">; ==========================================</span><br><span class="line">; pmtest1.asm</span><br><span class="line">; 编译方法：nasm pmtest1.asm -o pmtest1.com</span><br><span class="line">; ==========================================</span><br><span class="line"></span><br><span class="line">%include	&quot;pm.inc&quot;	; 常量, 宏, 以及一些说明</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">org	07c00h</span><br><span class="line">	jmp	LABEL_BEGIN</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">[SECTION .gdt]</span><br><span class="line">; GDT</span><br><span class="line">;                                         段基址,      段界限     , 属性</span><br><span class="line"></span><br><span class="line">LABEL_GDT:		Descriptor	       0,                0, 0     		; 空描述符</span><br><span class="line">LABEL_DESC_CODE32:	Descriptor	       0, SegCode32Len - 1, DA_C + DA_32	; 非一致代码段, 32</span><br><span class="line">LABEL_DESC_VIDEO:	Descriptor	 0B8000h,           0ffffh, DA_DRW		; 显存首地址</span><br><span class="line">; GDT 结束</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">GdtLen		equ	$ - LABEL_GDT	; GDT长度</span><br><span class="line">GdtPtr		dw	GdtLen - 1	; GDT界限</span><br><span class="line">		dd	0		; GDT基地址</span><br><span class="line"></span><br><span class="line">; GDT 选择子</span><br><span class="line">SelectorCode32		equ	LABEL_DESC_CODE32	- LABEL_GDT</span><br><span class="line">SelectorVideo		equ	LABEL_DESC_VIDEO	- LABEL_GDT</span><br><span class="line">; END of [SECTION .gdt]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">[SECTION .s16]</span><br><span class="line">[BITS	16]</span><br><span class="line">LABEL_BEGIN:</span><br><span class="line"></span><br><span class="line">	mov	ax, cs</span><br><span class="line">	mov	ds, ax</span><br><span class="line">	mov	es, ax</span><br><span class="line">	mov	ss, ax</span><br><span class="line">	mov	sp, 0100h</span><br><span class="line"></span><br><span class="line">	; 初始化 32 位代码段描述符</span><br><span class="line">	; 旨在将LABEL_SEG_CODE32设为保护模式的基址</span><br><span class="line">	xor	eax, eax</span><br><span class="line">	mov	ax, cs</span><br><span class="line">	shl	eax, 4</span><br><span class="line">	add	eax, LABEL_SEG_CODE32</span><br><span class="line">	mov	word [LABEL_DESC_CODE32 + 2], ax</span><br><span class="line">	shr	eax, 16</span><br><span class="line">	mov	byte [LABEL_DESC_CODE32 + 4], al</span><br><span class="line">	mov	byte [LABEL_DESC_CODE32 + 7], ah</span><br><span class="line"></span><br><span class="line">	; 为加载 GDTR 作准备</span><br><span class="line">	xor	eax, eax</span><br><span class="line">	mov	ax, ds</span><br><span class="line">	shl	eax, 4</span><br><span class="line">	add	eax, LABEL_GDT		; eax &lt;- gdt 基地址</span><br><span class="line">	mov	dword [GdtPtr + 2], eax	; [GdtPtr + 2] &lt;- gdt 基地址</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	; 加载 GDTR</span><br><span class="line">	lgdt	[GdtPtr] ; 将GdtPtr指示的6字节加载到寄存器gdtr,其中32为GDT基地址,16为GDT界限</span><br><span class="line"></span><br><span class="line">	; 关中断</span><br><span class="line"></span><br><span class="line">	cli</span><br><span class="line"></span><br><span class="line">	; 打开地址线A20,即第20号地址位(从0开始)，超过了1MB，开机时默认关闭</span><br><span class="line">	; 只有打开才能寻1MB以外的空间</span><br><span class="line">	in	al, 92h</span><br><span class="line">	or	al, 00000010b</span><br><span class="line">	out	92h, al</span><br><span class="line"></span><br><span class="line">	; 准备切换到保护模式</span><br><span class="line">	; 将寄存器cr0的第0号位置设为1，相当于打开了保护模式的开关</span><br><span class="line">	mov	eax, cr0</span><br><span class="line">	or	eax, 1</span><br><span class="line">	mov	cr0, eax</span><br><span class="line"></span><br><span class="line">	; 真正进入保护模式</span><br><span class="line">	jmp	dword SelectorCode32:0	; 执行这一句会把 SelectorCode32 装入 cs, 并跳转到 Code32Selector:0  处</span><br><span class="line">; END of [SECTION .s16]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">[SECTION .s32]; 32 位代码段. 由实模式跳入.</span><br><span class="line">[BITS	32]</span><br><span class="line">LABEL_SEG_CODE32:</span><br><span class="line"></span><br><span class="line">	mov	ax, SelectorVideo</span><br><span class="line">	mov	gs, ax			; 视频段选择子(目的)</span><br><span class="line"></span><br><span class="line">	mov	edi, (80 * 10 + 0) * 2	; 屏幕第 10 行, 第 0 列。</span><br><span class="line">	mov	ah, 0Ch			; 0000: 黑底    1100: 红字</span><br><span class="line">	mov	al, &#x27;P&#x27;</span><br><span class="line">	mov	[gs:edi], ax</span><br><span class="line"></span><br><span class="line">	; 到此停止</span><br><span class="line">	jmp	$</span><br><span class="line">	</span><br><span class="line">SegCode32Len	equ	$ - LABEL_SEG_CODE32</span><br><span class="line">; END of [SECTION .s32]</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>这段代码会将OS从实模式跳转到保护模式，然后在屏幕的第10行第0列输出黑底红字的P，让我们先运行下看看效果，这里使用的工具为：Ubuntu虚拟机 + NASM + Bochs + FreeDos。</p>
+<p>最基础的，可以将上如代码编译为pmtest1.bin然后直接写入Boot Sector（引导扇区），这样做很方便，可以直接运行，不需要FreeDos。但是，有个很明显的缺点，就是空间有限，限制为512B，一旦代码量大了起来就不行了，所以不是长久之计。</p>
+<p>解决上述问题有两个方法，一个是写一个Boot Sector，然后是它读取我们写的程序并运行，即引导我们写的OS内核，不过难度较大。第二个方法就是借助别的东西，比如DOS，我们把程序编译成<code>COM</code>文件，然后让DOS来执行它，这里，我们使用<code>FreeDos</code>来完成这个任务。</p>
+<p>首先去Bochs官方下载一个FreeDos，主要用到其中的<code>a.img</code>。解压后，将a.img复制到工作目录，更名为<code>freedos.img</code>。</p>
+<p>用<code>bximage</code>生成一个<code>软盘镜像</code>，起名为<code>pm.img</code>。</p>
+<p>新建文件<code>bochsrc</code>，内容如下，重点为floppya、floppyb和boot：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">megs:32</span></span><br><span class="line"></span><br><span class="line"><span class="string">romimage:file=$BXSHARE/BIOS-bochs-latest</span></span><br><span class="line"></span><br><span class="line"><span class="string">vgaromimage:file=$BXSHARE/VGABIOS-lgpl-latest</span></span><br><span class="line"></span><br><span class="line"><span class="string">floppya:1_44=freedos.img,status=inserted</span></span><br><span class="line"><span class="string">floppyb:1_44=pm.img,status=inserted</span></span><br><span class="line"><span class="comment">#软盘映射</span></span><br><span class="line"><span class="string">boot:a</span></span><br><span class="line"><span class="comment">#硬盘</span></span><br><span class="line"><span class="comment">#boot:disk</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#分配HD为60M，根据分配硬盘大小，cylinders, heads, spt会变化</span></span><br><span class="line"><span class="comment">#ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14</span></span><br><span class="line"><span class="comment">#ata0-master: type=disk, mode=flat, path=&quot;boot.img&quot;, cylinders=121, heads=16, spt=63</span></span><br><span class="line"></span><br><span class="line"><span class="string">log:bochsout.txt</span></span><br></pre></td></tr></table></figure>
+
+<p>使用<code>bochs -f bochsrc</code>启动Bochs，待FreeDos启动完毕后格式化B盘：</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/02/597d1f0674ed20d5.png"></p>
+<p>这里说下为什么要用Ubuntu，因为Linux的挂载（<code>mount</code>）操作可以将宿主目录和Dos中的镜像关联起来，轻易实现将目标文件复制到Dos运行的镜像中。首先，编译出.COM文件，然后将其复制到虚拟软盘pm.img上：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">nasm pmtest1.asm -o pmtest1.com</span><br><span class="line">sudo mount -o loop pm.img /mnt/floppy</span><br><span class="line">sudo cp pmtest1.com /mnt/floppy/</span><br><span class="line">sudo umount /mnt/floppy</span><br></pre></td></tr></table></figure>
+
+<p>然后到FreeDos中，执行命令：<code>B:\pmtest1.com</code>，就运行起来了，如图所示，显示一个红色的p。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/02/e8e4882d1409b8c8.png"></p>
+<p>好了，演示完毕，接下来开始介绍各部分代码的含义，由此了解保护模式，不过更重要的，是要先了解保护模式的一些历史。</p>
+<h2 id="初始保护模式"><a href="#初始保护模式" class="headerlink" title="初始保护模式"></a>初始保护模式</h2><p>保护模式重在“保护”二字，顾名思义，其主要提供了安全上的服务，那它到底安全在哪？保护了什么？这个还在要从8086的16位寄存器时开始说起。</p>
+<p>在Intel 8086中，CPU是16位的，它有着16位的寄存器、16位的数据总线以及20位的地址总线，共1MB的寻址空间，由于数据总线是少于地址总线的，所以物理地址是又<code>段:偏移</code>组成的，两者都是16位。</p>
 <blockquote>
-<p><strong>数据卷(Data Volumes)<strong>是一个可供容器使用的特殊目录，它将主机OS目录直接映射进容器，类似于Linux的</strong>mount</strong>行为。</p>
-<p>​    ■ 数据卷可以在容器之间共享和重用，容器间传递数据将变得高效与方便；</p>
-<p>​    ■ 对数据卷内数据的修改会立马生效，无论是容器内操作还是本地操作；</p>
-<p>​    ■ 对数据卷的更新不会影响镜像，解耦开应用和数据；</p>
-<p>​    ■ 卷会一直存在，直到没有容器使用，可以安全卸载它；</p>
+<p>物理地址 = 段基址*16 + 偏移</p>
 </blockquote>
-<hr>
-<h2 id="创建数据卷"><a href="#创建数据卷" class="headerlink" title="创建数据卷"></a>创建数据卷</h2><p>Docker提供<code>volume</code>子命令来管理数据卷，如下命令可以在本地创建一个名为test的数据卷：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker volume create -d <span class="built_in">local</span> <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
+<p>上述模式就是我们后来所称的实模式，它的弊端是很大的：</p>
+<p>1&gt;    操作系统和用户程序属于同一特权级，平起平坐，没有区别；</p>
+<p>2&gt;    用户程序引用的地址直接为<code>物理地址</code>，即逻辑地址=物理地址，指哪打哪，没有限制很不安全；</p>
+<p>3&gt;    用户程序可以自由设定段基址，在1MB空间中随意访问，不安全;</p>
+<p>4&gt;    16位寄存器只能访问64KB，所以当访问的地址跨越64KB时，需要更改段基址，很麻烦;</p>
+<p>5&gt;    一次只能运行一个程序，无法充分利用计算机资源;</p>
+<p>6&gt;    最大的弊端，空间只有1MB，这在20年前就已经不够用了;</p>
+<p>其中，(1)(2)(3)是安全方面的缺陷，没有安全可言的CPU是注定不可依赖的，它从本质上决定了程序乃至操作系统的数据有被随意删改的风险。(4)(5)是使用方面的缺陷，这个再20年前似乎还能忍受，但是随着计算需求的提升必会被淘汰。最硬伤的就是(6)，1MB完全不够用，因此急需更高的寻址空间。</p>
+<p>从80286开始，Intel的CPU进入32位时代，32位CPU具有两种运行模式，分别为<code>实模式</code>和<code>保护模式</code>，可以兼容8086时代的16位运行环境。实际上，在8086时代，16位CPU根本没有实模式的概念！当时的人用的只有16位CPU，他们从没想过自己习惯的模式还要重新命名。直到CPU发展到了32位，新的运行模式和之前不大相同，但不管怎么发展，都一定要满足一个原则：<code>兼容</code>。</p>
+<p>也就是说，32位CPU具有两种模式，一种是为了克服8086运行模式弊端的新模式，即它自己的运行模式；另一种就是为了兼容8086运行模式而存在的，实模式。为了凸显前者的优势，将其称为保护模式。再强调一遍：</p>
+<blockquote>
+<p>实模式是32CPU时才提出的概念，旨在兼容8086的16位运行模式</p>
+</blockquote>
+<p>实模式的运行环境为16位，保护模式为32位。但是要注意的是，当PC运行在实模式下时，CPU依然是32位，硬件本身不会变！相当于高中生去做初中生的题，当它处在16位的运行模式时，依然可以处理32位的操作数，因为它在硬件层面上是32位的。也即：</p>
+<blockquote>
+<p>实模式指32位CPU运行在16位模式下的状态，但CPU本身是32位的，依然可以处理32位操作数</p>
+</blockquote>
+<p>了解完其基础概念后，来看看保护模式究竟从哪些方面得到了进化。</p>
+<h2 id="寄存器扩展"><a href="#寄存器扩展" class="headerlink" title="寄存器扩展"></a>寄存器扩展</h2><p>无论PC怎么发展，兼容都是最基本的要求，包括寄存器、访存方式、指令格式等的兼容。CPU发展到了32位后，地址总线和数据总线也发展到了32位，即寻址空间夸大到了4GB，一次可以处理的操作数升至32位。4GB的空间如果还用曾经的<code>段:偏移</code>法来寻址的话，段基址要左移16位，这显然很不合适。</p>
+<p>最关键的，从设计思想上将，段基址本身就应该是某个内存段的起始地址，它不应该在应用前先做个处理。在原来的16位模式下，由于数据总线小于地址总线，所以迫不得已预先将段基址*16，才产生了这种蹩脚的方式。现在，数据总线和地址总线一样宽了，就可从根本上解决这个问题——扩展寄存器到32位。</p>
+<p>寄存器要保持向下兼容，不能推翻之前的方案重来，因此要在原有16位的基础上向高位扩展16位，延申到32位，新的寄存器用前缀e表示扩展，即eax、ebx等等，如图：</p>
+ <img src="https://i.bmp.ovh/imgs/2022/02/477588c3761f2737.png" style="zoom:80%;" />
 
-<p>该数据卷存在本地主机的 <code>/var/lib/docker/volumes</code> 路径下，在该路径下会新建一个名为test的目录，就是创建的数据卷。使用<code>inspect</code>查看卷的信息：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker voulme inpect <span class="built_in">test</span></span><br></pre></td></tr></table></figure>
+<p>可以看到，通用寄存器、标志寄存器、指令指针寄存器都扩展到了32位，但是段寄存器没有，仍然只有32位，这是因为段寄存器16位就够用了，这个后面会解释到。</p>
+<p>上图中，寄存器的低16位是为了兼容实模式的，在任何模式下都可以<code>单独使用</code>，但是高16位不行，必须在引用32位寄存器时才能用到他们。</p>
+<p>之前提到过，在80286之后，引入了保护模式的概念，大大提高了安全性，其中很重要的一部分，就是对内存段的描述。它改变了段基址的实质，引入了<code>GRT(Global Descriptor Table)</code>的概念。</p>
+<h2 id="GDT"><a href="#GDT" class="headerlink" title="GDT"></a>GDT</h2><p>保护模式下，偏移地址和实模式是一样的，但是段基址不再是简单的一个地址了。之前说过，实模式下段基址可以任意设定，随意访问空间内的任何地方，很不安全。因此为了更加安全，要给它加一些约束条件，这些约束条件就是对内存段的描述信息。由于信息太多了，所以专门找了个数据结构——全局描述符表，即<code>GDT</code>。该表很大，故放在了内存中，由<code>GDTR</code>寄存器指向它的首址，这个寄存器有6字节。</p>
+<p>既然是表，那一定有表项，每一个表项就是一个<code>段描述符</code>，大小为8字节，用来描述一个内存段的段基址、段界限和段属性等等。注意，表项就是描述符，而不是描述符的索引。不过这里不会详细介绍，只浅谈一下即可，后面会专门开一篇博客专门介绍GDT和描述符。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/02/ccabd82c4185bc24.png"></p>
+<p>这样，段寄存器中保存的再也不是段基址了，里面保存的内容叫<code>选择子</code>，selector。实际上，这个选择子就是个<code>数</code>，用这个数来<code>索引</code>GDT中的段描述符。把全局描述符当成数组，选择子就像数组下标一样。</p>
+<blockquote>
+<p>1&gt; 段描述符是在内存中的，访问会很耗时</p>
+<p>2&gt; 段描述符的格式很奇怪，CPU把这些七零八落的数拼凑起来也会耗时</p>
+</blockquote>
+<p>既然访问内存中的段描述符很耗时间，那CPU如何提高效率呢？使用缓存。在80286的保护模式中，为了提高获取段信息的效率，对段寄存器率先应用了缓存技术，将段信息用一个寄存器来缓存，这就是<code>段描述符缓冲寄存器</code>。对程序员而言它是不可见的。CPU每次访问描述符并获取到内存段信息后，会将其存入上述缓冲寄存器中，下次访问相同段时，直接从中取就行了。</p>
+<p>另外，虽然段描述符缓冲寄存器是保护模式下的产物，但是它也可以用在实模式下。在16为的实模式下，段基址左移4位这个操作也是耗时的。因此，CPU会将段基址左移后的结果存在上述寄存器中，以后每次引用这个段时，就直接走缓冲寄存器，直到换段，也就是段寄存器被重新赋值。</p>
+<h2 id="代码解释"><a href="#代码解释" class="headerlink" title="代码解释"></a>代码解释</h2><p>好了，知道保护模式和GDT的相关基础后，可以开始通过解释文初的代码来进一步学习保护模式了。</p>
+<p>代码一共分为三个部分：[SECTION .gdt]、[SECTION .s16]、[SECTION .s32]。顾名思义，第一部分定义了GDT，第二部分为16位环境下运行的代码，即实模式，第三部分为32位环境下运行的代码，即保护模式。我们一个一个看。</p>
+<h3 id="SECTION-gdt"><a href="#SECTION-gdt" class="headerlink" title="[SECTION .gdt]"></a>[SECTION .gdt]</h3><p>这个部分定义了一个数组，每一个元素都是一个<code>Descriptor</code>，很明显，这个数组就是<code>GDT</code>。其中，<code>Descriptor</code>是一个宏，这个宏用比较自动化的方法把段基址、段界限和段属性放入一个描述符中合适的位置，这个宏在pm.inc中，内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">; 描述符</span><br><span class="line">; usage: Descriptor Base, Limit, Attr</span><br><span class="line">;        Base:  dd</span><br><span class="line">;        Limit: dd (low 20 bits available)</span><br><span class="line">;        Attr:  dw (lower 4 bits of higher byte are always 0)</span><br><span class="line">%macro Descriptor 3</span><br><span class="line">	dw	%2 &amp; 0FFFFh				; 段界限 1				(2 字节)</span><br><span class="line">	dw	%1 &amp; 0FFFFh				; 段基址 1				(2 字节)</span><br><span class="line">	db	(%1 &gt;&gt; 16) &amp; 0FFh			; 段基址 2				(1 字节)</span><br><span class="line">	dw	((%2 &gt;&gt; 8) &amp; 0F00h) | (%3 &amp; 0F0FFh)	; 属性 1 + 段界限 2 + 属性 2		(2 字节)</span><br><span class="line">	db	(%1 &gt;&gt; 24) &amp; 0FFh			; 段基址 3				(1 字节)</span><br><span class="line">%endmacro ; 共 8 字节</span><br></pre></td></tr></table></figure>
 
-<p>得到如下结果，</p>
-<img src="https://i.bmp.ovh/imgs/2022/01/0569fbc976e494b7.png" style="zoom: 80%;" />
+<p>代码的GDT中共有3个描述符，为方便起见，这里分别简称为DESC_DUMMY、DESC_CODE32和DESC_VIDEO。其中DESC_VIDEO的段基址是<code>0B800h</code>，这个地址是显存的起始地址，故该描述符指向了显存。定义完GDT后，用变量<code>GdtLen</code>存储GDT的长度，结构变量<code>GdtPtr</code>存储GDT的长度和基地址。</p>
+<p>随后，开始存储后两个描述符的<code>选择子</code>，可以看到，<code>SelectorCode32</code>和<code>SelectorVideo</code>分别存储了DESC_CODE32和DESC_VIDEO相对于GDT首址的偏移，这个数就是他们各自的选择子。实际上，选择子不止是一个偏移，它的结构要稍微复杂一些，这里不详细介绍。</p>
+<p>数据结构<code>GdtPtr</code>是用来记录GDT界限和GDT基址的。前文提到过，<code>GDTR</code>寄存器要指向GDT的首址，先来看看这个寄存器的结构：</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/02/71d060da237efc08.png"></p>
+<p>可以看到，这个寄存器和我们定义的<code>GdtPtr</code>结构是一样的，实际上，定义<code>GdtPtr</code>的目的就是将其赋值给<code>GDTR</code>。</p>
+<h2 id="SECTION-s32"><a href="#SECTION-s32" class="headerlink" title="[SECTION .s32]"></a>[SECTION .s32]</h2><p>这个部分为保护模式下要执行的代码，目的很简单，在指定位置打印一个红色的P。首先，把显存的内存段也就是描述符DESC_VIDEO的<code>选择子</code>写入段寄存器<code>GS</code>:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mov	ax, SelectorVideo</span><br><span class="line">mov	gs, ax			; 视频段选择子(目的)</span><br></pre></td></tr></table></figure>
 
-<p>可以看到，<code>Mountpoint</code>值为<code>/var/lib/docker/volumes/test/_data</code>，说明改卷会将选定的容器目录映射进主机的该目录中。如果想要让容器使用该卷，使用<code>run -v test:...</code>来绑定该卷即可。</p>
-<p>出来create和inspect，docker volume还支持<code>ls</code>（列出已有数据卷）、<code>prune</code>（清理无用数据卷）、<code>rm</code>（删除数据卷）等，当然这些命令都比较简单。</p>
-<hr>
-<h2 id="绑定数据卷"><a href="#绑定数据卷" class="headerlink" title="绑定数据卷"></a>绑定数据卷</h2><p>创建完数据卷后，使用<code>run</code>的<code>-v</code>（volume）选项来将容器的指定目录绑定上该数据卷，建立容器目录和主机目录之间的双向映射，以数据卷test为例，具体命令为：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -v <span class="built_in">test</span>:/data --name=r3 redits:6.0.8</span><br></pre></td></tr></table></figure>
+<p>接着，把想要显示的位置写入<code>edi</code>，然后通过<code>[gs:edi]</code>要显示的东西写入显存的对应位置中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mov	edi, (80 * 10 + 0) * 2	; 屏幕第 10 行, 第 0 列。</span><br><span class="line">mov	ah, 0Ch			; 0000: 黑底    1100: 红字</span><br><span class="line">mov	al, &#x27;P&#x27;</span><br><span class="line">mov	[gs:edi], ax</span><br></pre></td></tr></table></figure>
 
-<p>上述命令将会创建容器r3，并将r3的<code>/data</code>目录映射到主机<code>/var/lib/docker/volumes/test/_data</code>目录中，当对r3的该目录进行操作时，主机也会进行同步。</p>
-<img src="https://i.bmp.ovh/imgs/2022/01/ccdd351da2233cae.png" style="zoom:80%;" />
+<p>保护模式运行的代码到此为止，使用一个死循环来停在此处即可。可以看到，这部分并不难。核心目的就是把字符写入显存对应的位置，不过由于保护模式用<code>描述符</code>来表示各个内存段，因此需要借助<code>GDT</code>来完成。</p>
+<h2 id="SECTION-s16"><a href="#SECTION-s16" class="headerlink" title="[SECTION .s16]"></a>[SECTION .s16]</h2><p>我们知道，当PC启动时，首先进入的是实模式，只有1MB的寻址空间，要转入保护模式，就需要另做一些操作，比如打开某些开关，然后<code>jmp</code>到保护模式，[SECTION .s16]就是在实模式中做这些事的。</p>
+<p>在将cs、ds、es、ss相统一之后，开始初始化保护模式代码段描述符。因为最后要跳到保护模式所在的内存段（代码段），因此需要一个描述符来存储它，就是<code>DESC_CODE32</code>，不过由于描述符结构比较蹩脚，所以得分步来赋值。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">; 初始化 32 位代码段描述符</span><br><span class="line">xor	eax, eax</span><br><span class="line">mov	ax, cs</span><br><span class="line">shl	eax, 4</span><br><span class="line">add	eax, LABEL_SEG_CODE32</span><br><span class="line">mov	word [LABEL_DESC_CODE32 + 2], ax</span><br><span class="line">shr	eax, 16</span><br><span class="line">mov	byte [LABEL_DESC_CODE32 + 4], al</span><br><span class="line">mov	byte [LABEL_DESC_CODE32 + 7], ah</span><br></pre></td></tr></table></figure>
 
-<p>同样，在主机的对应目录下进行操作，/data也会同步。比如，前者创建一个文件或目录，后者也会跟着创建一个文件或目录，前者对某个文件进行更改，后者的该文件也会相应更新。</p>
-<p>现在你肯定想问，能不能不预先创建数据卷，直接在<code>run</code>时创建数据卷，进行目录映射，且指定主机目录？当然可以，依然使用<code>-v</code>选项，以r1的/data目录为例，命令形式为：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -v 主机目录:/data --name=r1 redits:6.0.8</span><br></pre></td></tr></table></figure>
+<p>初始化完该描述符后，开始加载GDT，即将GDT的首址和界限写入寄存器<code>GDTR</code>，期间要借助数据结构<code>GdtPtr</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">; 为加载 GDTR 作准备</span><br><span class="line">xor	eax, eax</span><br><span class="line">mov	ax, ds</span><br><span class="line">shl	eax, 4</span><br><span class="line">add	eax, LABEL_GDT		; eax &lt;- gdt 基地址</span><br><span class="line">mov	dword [GdtPtr + 2], eax	; [GdtPtr + 2] &lt;- gdt 基地址</span><br><span class="line"></span><br><span class="line">; 加载 GDTR</span><br><span class="line">lgdt	[GdtPtr]</span><br></pre></td></tr></table></figure>
 
-<p>也可以用<code>--mount</code>选项来进行绑定。比如，使用 training/webapp 镜像创建 Web 容器，并创建一个数据卷挂载到容器的/opt/webapp 目录：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -P --name web --mount <span class="built_in">type</span>=<span class="built_in">bind</span>,<span class="built_in">source</span>=/webapp,destination=/opt/ </span><br><span class="line">webapp training/webapp python app.py</span><br></pre></td></tr></table></figure>
+<p>最后一行的<code>lgdt</code>的作用是将以GdtPtr为首址的6字节加载到寄存器<code>GDTR</code>中。</p>
+<p>接下来就是关中断，因为保护模式下中断处理的机制是不同的，不关掉会出错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">; 关中断</span><br><span class="line">cli</span><br></pre></td></tr></table></figure>
 
-<p>另外，<code>-v</code>是可以同时创建多个数据卷的，完成多对目录的映射（–mount应该也可以，没试过）。命令形式也很间，用多个-v就行了：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -v 主机目录1:容器目录1 -v 主机目录2:容器目录2 --name=r1 redits:6.0.8</span><br></pre></td></tr></table></figure>
+<p>再下面几行的作用就是打开<code>A20</code>地址线，这里简单介绍下什么时候A20地址线。在8086中，地址线只有20位，空间为1MB，那么如果试图访问1MB之外的空间呢？系统并不会发生异常，而是<code>回卷</code>，重新从0地址开始。但是到了80286时，空间变成了4GB，访问1MB之外不再需要回卷了，这就造成了和旧模式的不兼容，怎么办呢？IBM想出一个办法，使用8042键盘控制器来控制第20号（从0开始）地址位，这就是<code>A20</code>地址线，如果不被打开，默认为0，地址会回卷。也即，<code>A20</code>是程序或OS能够访问到1MB之外的空间，可以认为是进入保护模式的第一步。代码通过操作端口92h来打开它：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">; 打开地址线A20</span><br><span class="line">in	al, 92h</span><br><span class="line">or	al, 00000010b</span><br><span class="line">out	92h, al</span><br></pre></td></tr></table></figure>
 
-<p>这里建议，在使用存储类服务时，一定要记得用数据卷，尤其是<strong>mysql</strong>这种！在用mysql创建容器时，一般都会将<code>log</code>、<code>data</code>、<code>config</code>均创建一个数据卷进行备份，因此，创建mysql容器通常用命令：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">docker run -p 3307:3306 --name mysql-master \</span><br><span class="line">-v /mydata/mysql-master/<span class="built_in">log</span>:/var/<span class="built_in">log</span>/mysql \</span><br><span class="line">-v /mydata/mysql-master/data:/var/lib/mysql \</span><br><span class="line">-v /mydata/mysql-master/conf:/etc/mysql \</span><br><span class="line">-e MYSQL_ROOT_PASSWORD=root  \</span><br><span class="line">-d mysql</span><br></pre></td></tr></table></figure>
+<p>接下来，离最后的<code>jmp</code>就只差一步了，那就是打开保护模式的开关：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">; 准备切换到保护模式</span><br><span class="line">mov	eax, cr0</span><br><span class="line">or	eax, 1</span><br><span class="line">mov	cr0, eax</span><br></pre></td></tr></table></figure>
 
-<hr>
-<h2 id="权限"><a href="#权限" class="headerlink" title="权限"></a>权限</h2><p>数据卷有两种权限，一是<code>rw</code>（读写），一是<code>ro</code>（只读）。这里的权限是只针对容器而不针对主机的。比如，<code>rw</code>指容器对主机相应目录可读可写，<code>ro</code>指容器对主机相应目录只能读不能写。</p>
-<p>容器使用数据卷的默认权限是<code>rw</code>，如果想要用<code>ro</code>，对命令进行如下更改即可：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -v 主机目录:/data:ro --name=r1 redits:6.0.8</span><br></pre></td></tr></table></figure>
+<p>上述代码很简单，就是把<code>cr0</code>寄存器的第0位设1。寄存器<code>cr0</code>的第0位是PE位，此位为0时，CPU运行于实模式，为1时，CPU运行于保护模式。因此，这一步打开了进入保护模式的开关。</p>
+<p>此时，系统已经进入了保护模式，但是<code>cs</code>仍然是实模式的值，即依然停留在实模式的代码处。因此，需要将其更改为保护模式的代码段，那就是<code>jmp</code>。通过之前定义的DESC_CODE32的选择子<code>SelectorCode32</code>，来执行保护模式处的代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">; 真正进入保护模式</span><br><span class="line">	jmp	dword SelectorCode32:0	; 执行这一句会把 SelectorCode32 装入 cs, 并跳转到 Code32Selector:0  处</span><br></pre></td></tr></table></figure>
 
-<p>注意，当使用<code>ro</code>后，不是指容器内的写操作不会被映射，而是指容器已经无法对该目录（容器内）进行任何写操作了，因为它是一个<code>Read-only file system</code>。</p>
-<p><img src="https://i.bmp.ovh/imgs/2022/01/3aa48b47a02047be.png"></p>
-<hr>
-<h2 id="数据卷容器"><a href="#数据卷容器" class="headerlink" title="数据卷容器"></a>数据卷容器</h2><p>如果你需要在多个容器之间共享一些持续更新的数据，最简单的方式是使用数据卷容器。数据卷容器也是一个容器，但是它的目的是专门提供数据卷给其他容器挂载。</p>
-<p>首先，创建一个容器dbdata，并在其中创建一个数据卷挂载到主机的/dbdata目录下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -it -v /dbdata:/ --name dbdata ubuntu</span><br></pre></td></tr></table></figure>
-
-<p>然后，可以在其他容器中使用<code>--volumes-from</code>来挂载dbdata容器中的数据卷，例如创建db1和db2两个容器，并从dbdata容器挂载数据卷：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker run -it --volumes-from dbdata --name db1 ubuntu</span><br><span class="line">docker run -it --volumes-from dbdata --name db2 ubuntu</span><br></pre></td></tr></table></figure>
-
-<p>此时，容器db1和db2都挂载同一个数据卷到相同的/dbdata目录中，三个容器任何一方在该目录下的写入，其他容器都可以看到，当然，主机也能看到。</p>
-<p>从<code>--volumes-from</code>这个名字就可以看出来，这种关系可以理解为数据卷的<strong>继承</strong>。既然如此，那么可不可以层层继承？答案是可以的。比如，在上面的基础上，我们可以在创建一个容器db3，它将从db1处继承容器卷，这样一来，四台容器和主机都会互相连通。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -it --volumes-from db1 --name db3 ubuntu</span><br></pre></td></tr></table></figure>
-
-<p>如果删除了”父类“容器（包括dbdata、db1和db2），数据卷并不会被删除，这意味着db3依然能够通过其与主机进行映射，即使其”父类“已经消失了。更好玩的是，当你停止了dbdata、db1和db2（并没有删除），然后在主机相应目录或db3相应目录进行写入，比如创建一个a.txt。然后再打开上面上个容器，它们仍然会同步这些数据，即出现a.txt。</p>
-<hr>
-<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>我挺好奇数据卷的实现原理的，比如它到底是对多个空间进行相互拷贝还是建立了一个共享空间，又比如它不属于联合文件系统（Union File System）到底是什么意思，这点我还没搞懂，而且也没查到相关的资料。等我搞懂了会补上，如果有大佬知道千万要告诉我，蟹蟹!</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>至此，成功进入了保护模式，下面总结一下进入保护模式的主要步骤：</p>
+<p>1&gt;    准备GDT；</p>
+<p>2&gt;    用lgdt加载gdtr；</p>
+<p>3&gt;    打开A20；</p>
+<p>4&gt;    置cr0的PE位，使系统处于保护模式；</p>
+<p>5&gt;    跳转，进入保护模式；</p>
 
                             
 
@@ -388,15 +428,7 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Docker</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">云计算</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">分布式</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">OS</a>
         		</li>
       		
 		</ul>
@@ -452,7 +484,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=http://example.com/Docker%E5%9F%BA%E7%A1%80-%E4%B8%89-%E5%AE%B9%E5%99%A8%E6%95%B0%E6%8D%AE%E5%8D%B7/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=http://example.com/%E5%AE%9E%E6%A8%A1%E5%BC%8F%E5%88%B0%E4%BF%9D%E6%8A%A4%E6%A8%A1%E5%BC%8F/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -466,18 +498,9 @@
   
 <nav id="article-nav">
   
-    <a href="/Linux%E8%BD%AF%E7%A1%AC%E9%93%BE%E6%8E%A5/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          Linux软硬链接
-        
-      </div>
-    </a>
   
-  
-    <a href="/Docker%E5%9F%BA%E7%A1%80-%E4%BA%8C-%E5%9F%BA%E7%A1%80%E5%91%BD%E4%BB%A4/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">Docker基础(二): 基础命令</div>
+    <a href="/Unicode%E5%92%8CUTF-8/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Unicode和UTF-8</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -504,7 +527,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%95%A5%E6%98%AF%E6%95%B0%E6%8D%AE%E5%8D%B7"><span class="toc-number">1.</span> <span class="toc-text">啥是数据卷</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%95%B0%E6%8D%AE%E5%8D%B7"><span class="toc-number">2.</span> <span class="toc-text">创建数据卷</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%91%E5%AE%9A%E6%95%B0%E6%8D%AE%E5%8D%B7"><span class="toc-number">3.</span> <span class="toc-text">绑定数据卷</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9D%83%E9%99%90"><span class="toc-number">4.</span> <span class="toc-text">权限</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%8D%B7%E5%AE%B9%E5%99%A8"><span class="toc-number">5.</span> <span class="toc-text">数据卷容器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="toc-number">6.</span> <span class="toc-text">实现原理</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E4%BF%9D%E6%8A%A4%E6%A8%A1%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">初始保护模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%84%E5%AD%98%E5%99%A8%E6%89%A9%E5%B1%95"><span class="toc-number">2.</span> <span class="toc-text">寄存器扩展</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GDT"><span class="toc-number">3.</span> <span class="toc-text">GDT</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E8%A7%A3%E9%87%8A"><span class="toc-number">4.</span> <span class="toc-text">代码解释</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SECTION-gdt"><span class="toc-number">4.1.</span> <span class="toc-text">[SECTION .gdt]</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SECTION-s32"><span class="toc-number">5.</span> <span class="toc-text">[SECTION .s32]</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SECTION-s16"><span class="toc-number">6.</span> <span class="toc-text">[SECTION .s16]</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">7.</span> <span class="toc-text">总结</span></a></li></ol>
                     </div>
                 </span>
             </div>
