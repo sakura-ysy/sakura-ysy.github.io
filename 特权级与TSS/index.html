@@ -13,16 +13,21 @@
             SrcMiLeの杂货铺
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <meta property="og:type" content="article">
+    <meta name="description" content="整个计算机世界其实可以分为两个部分，访问者和受访者。访问者是动态的，具有能动性，它主动去访问各种资源。受访者是静态的，它就是被访问的资源，只能干坐着等待访问者光顾。访问者的特权级可变，受访者的特权级不可变。">
+<meta property="og:type" content="article">
 <meta property="og:title" content="特权级与TSS">
 <meta property="og:url" content="http://example.com/%E7%89%B9%E6%9D%83%E7%BA%A7%E4%B8%8ETSS/index.html">
 <meta property="og:site_name" content="SrcMiLeの杂货铺">
+<meta property="og:description" content="整个计算机世界其实可以分为两个部分，访问者和受访者。访问者是动态的，具有能动性，它主动去访问各种资源。受访者是静态的，它就是被访问的资源，只能干坐着等待访问者光顾。访问者的特权级可变，受访者的特权级不可变。">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/10468c6c38f2834f.png">
+<meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/c95bebd5c32659c5.png">
 <meta property="article:published_time" content="2022-02-26T08:44:16.000Z">
-<meta property="article:modified_time" content="2022-02-26T08:45:28.612Z">
+<meta property="article:modified_time" content="2022-02-27T07:19:51.038Z">
 <meta property="article:author" content="SrcMiLe">
 <meta property="article:tag" content="OS">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.bmp.ovh/imgs/2022/02/10468c6c38f2834f.png">
       
         <link rel="alternative" href="/atom.xml" title="SrcMiLeの杂货铺" type="application/atom+xml">
         
@@ -247,7 +252,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-keyboard-o"></i>
         <span class="post-meta-item-text">  总字数: </span>
-        <span class="post-count">0字</span>
+        <span class="post-count">2k字</span>
       </span>
     </span>
 
@@ -256,7 +261,7 @@
       <span class="post-meta-item-icon">
         <i class="fa fa-hourglass-half"></i>
         <span class="post-meta-item-text">  阅读时长: </span>
-        <span class="post-count">1分</span>
+        <span class="post-count">7分</span>
       </span>
     </span>
 </div>
@@ -272,7 +277,37 @@
 
                     
 
-                          
+                          <p>整个计算机世界其实可以分为两个部分，<code>访问者</code>和<code>受访者</code>。访问者是动态的，具有能动性，它主动去访问各种资源。受访者是静态的，它就是被访问的资源，只能干坐着等待访问者光顾。访问者的特权级<code>可变</code>，受访者的特权级<code>不可变</code>。</p>
+<span id="more"></span>
+
+<p>CPU即是大脑，又是守卫，它负责维护计算机内的安全，将程序分为四个特权级，从高到低依次为<code>0,1,2,3</code>级，数字越小，特权越大。0特权级是<code>OS内核</code>所在的特权级，PC在启动之处就以0级运行，当MBR从BIOS那接完棒后，就像神一样处于最高特权级。</p>
+<img src="https://i.bmp.ovh/imgs/2022/02/10468c6c38f2834f.png" style="zoom:50%;" />
+
+<p>OS位于最内环的0级特权，它要直接控制硬件，掌控各种核心数据，权力最大。系统程序分别为于1级和2级，运行在这两层的一般是<code>虚拟机</code>、<code>驱动程序</code>等系统服务。在最外层的是3级特权级，我们的用户程序就运行在此层，它不需要太大的能力，权力最弱。当用户程序需要完成更深层的功能时，应当进行特权级跨越，进入系统服务层或OS内核来执行。</p>
+<h2 id="TSS简介"><a href="#TSS简介" class="headerlink" title="TSS简介"></a>TSS简介</h2><p>TSS，即<code>Task State Segment</code>，意为任务状态段，和特权级有着密不可分的联系。TSS是处理器在<code>硬件层面</code>上原生支持<code>多任务</code>的一种数据结构，也就是说，CPU在硬件上就已经为OS提供了完成多任务的一种解决方法（不过后来OS并不买账）。</p>
+<p>就像每个任务都有自己的<code>LDT</code>一样，任何一个任务都有独自的<code>TSS</code>，它用于标识一个任务并存储相关信息，相当于身份证，任务拥有此结构才能运行。注意，TSS是处理器硬件上用于任务管理的系统结构，处理器能够<code>自动</code>识别其中每一个字段代表什么，因此开发者只需按意义指定每个字段的值即可，其结构为：</p>
+<img src = 'https://i.bmp.ovh/imgs/2022/02/72036687bde47a0d.png' style="zoom:67%;" />
+
+<p>这个结构看上去很复杂，一共26个字段，104字节。实际上，104字节只是TSS的最小尺寸，按照需要还可以再接上个IO位图，不过这些现在不考虑。这里简单介绍一下第28字节及以上的一些字段：</p>
+<p><code>cr3</code>字段同理cr3寄存器，指向该任务所用的<code>页目录</code>基址。<code>ESP</code>为该任务的堆栈段的栈顶指针，即该任务的LDT中的堆栈段的栈顶地址。<code>CS</code>为该任务的代码段，即LDT中代码段的<code>选择子</code>、<code>SS</code>为该任务的堆栈段，即LDT中堆栈段的<code>选择子</code>。顾名思义，<code>LDT</code>就是该任务的LDT<code>选择子</code>。这里给出一个简单的任务TSS示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">[SECTION .TSSB]</span><br><span class="line">ALIGN	32</span><br><span class="line">[BITS	32]</span><br><span class="line">LABEL_TSSB:</span><br><span class="line">		DD	0				; Back</span><br><span class="line">		DD	TopOfStackB		; 0 级堆栈</span><br><span class="line">		DD	SelectorStackB	; </span><br><span class="line">		DD	0				; 1 级堆栈</span><br><span class="line">		DD	0				; </span><br><span class="line">		DD	0				; 2 级堆栈</span><br><span class="line">		DD	0				; </span><br><span class="line">		DD	PageDirBase1			; CR3</span><br><span class="line">		DD	0			; EIP</span><br><span class="line">		DD	0			; EFLAGS</span><br><span class="line">		DD	0			; EAX</span><br><span class="line">		DD	0			; ECX</span><br><span class="line">		DD	0			; EDX</span><br><span class="line">		DD	0			; EBX</span><br><span class="line">		DD	TopOfStackLDTB			; ESP</span><br><span class="line">		DD	0			; EBP</span><br><span class="line">		DD	0			; ESI</span><br><span class="line">		DD	0			; EDI</span><br><span class="line">		DD	0			; ES</span><br><span class="line">		DD	SelectorLDTBCodeB			; CS</span><br><span class="line">		DD	SelectorLDTBStack		; SS</span><br><span class="line">		DD	0			; DS</span><br><span class="line">		DD	0			; FS</span><br><span class="line">		DD	0			; GS</span><br><span class="line">		DD	SelectorLDTB			; LDT</span><br><span class="line">		DW	0			; 调试陷阱标志</span><br><span class="line">		DW	$ - LABEL_TSSB + 2	; I/O位图基址</span><br><span class="line">		DB	0ffh			; I/O位图结束标志</span><br><span class="line">TSSBLen		equ	$ - LABEL_TSSB</span><br></pre></td></tr></table></figure>
+
+<p>而真正和特权级相关联的，是28字节一下的内容，即3个堆栈段选择子和3个栈偏移，这里着重介绍下这6个字段。</p>
+<p>在没有操作系统的情况下，可以认为进程就是任务，任务就是一段在处理器上运行的程序，相当于某个计算机高手在能够脱离OS执行代码，直接控制硬件。但是有了OS之后，程序被分为了<code>用户程序</code>和<code>操作系统内核程序</code>，故，一个完整的任务也被分为<code>用户部分</code>和<code>内核部分</code>两部分。由于内核程序位于0特权级，用户程序位于3特权级，所以，一个任务按特权级来划分的话，实质上是被分成了3特权级的用户程序和0特权级的内核程序，这两部分加在一起才是能让处理器完整运行的程序，也就是说，<code>完整的任务要经历这两种特权级的变化</code>。所以，我们平时在Linux下所写的程序只是个<strong>半成品</strong>，咱们只负责完成用户态下的部分，内核的部分由操作系统提供。</p>
+<p>任务是由处理器执行的，任务在特权级变换时，本质上是处理器的<code>当前特权级CPL</code>在变换，由一个特权级变成了另一个特权级，这就开始涉及栈的问题了。处理器固定，在不同的特权级下，应该用不同特权级的栈，原因是如果在同一个栈中容纳所有特权级的的数据时，这种交叉引用会使栈变得非常混乱。并且，用一个栈容纳多个特权级下的数据，栈容量有限，这很容易溢出。因此，一个任务在每个特权级下只能用该特权级的栈。</p>
+<p>每个任务的每个特权级下只能有一个栈，也就是说，一共4个特权级，一个任务最多4个栈，那么为什么TSS中只有3对堆栈段选择子和栈偏移呢？要搞清楚这个问题，得先弄明白TSS中记录的3个栈是用来干什么的。</p>
+<p>刚才说过，当处理器要进入不同的的特权级时，它自动在TSS中找到同特权级（目标特权级）的栈，由于TSS是硬件结构，所以处理器可以直接识别各字段的意义。</p>
+<p>特权级转移分为两类：</p>
+<p>1&gt; 由<code>中断门</code>、<code>调用门</code>等手段实现低特权级向高特权级转移；</p>
+<p>2&gt; 由<code>调用返回指令</code>从高特权级返回到低特权级，这是<strong>唯一</strong>能够处理器降低特权级的情况；</p>
+<p>对于第1种，当处理器要从低向高跳转时，会提前将目标栈记录在某个地方，当实行跳转时再从中取出来加载到<code>SS</code>和<code>ESP</code>中以转换栈，TSS中的3对栈字段就是那个用来存放的地方。由于除了返回指令，处理器只能<code>由低到高</code>跳转，所以TSS中所记录的栈是转移后的高特权级目标栈，所以它一定要比当前特权级要高。这样就明白了，TSS中不会记录第3特权级的栈，因为没有更低特权级向它转移。</p>
+<p>对于第2种，由高特权级返回到低特权级，处理器已经不需要从TSS中找对应的目标栈了，因为此时要返回到的低特权级的地址其实已经被暂存起来了，这就是由转移指令（<code>int</code>、<code>call</code>）的机制来决定的，换句话说，处理器知道去哪里找低特权级的目标栈。</p>
+<img src="https://i.bmp.ovh/imgs/2022/02/c95bebd5c32659c5.png" style="zoom:67%;" />
+
+<p>如上图所示，当处理器由低特权级向高特权级跳转时，会自动的当时低特权级的栈地址（<code>ss</code>和<code>esp</code>）压入了转移后的高特权级所在的栈中。当返回指令如<code>retf</code>或<code>iret</code>从高特权级向低特权级中返回时，处理器可以从当前使用的高特权级的栈中获取低特权级的栈段选择子以及偏移量。具体过程参考<code>call-ret</code>的机制。</p>
+<p>那处理器是怎么找到TSS的呢？</p>
+<p>TSS是硬件支持的数据结构，它和GDT等一样，由软件填写其内容，由硬件使用。GDT要加载到寄存器<code>GDTR</code>中才能处理器找到，TSS也一样，由<code>TR (Task Register)</code>寄存器加载的，每次处理器执行不同任务时，将TR寄存器加载不同任务的TSS就行了。</p>
+
                             
 
 
@@ -413,7 +448,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    目录，不存在的…
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#TSS%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">TSS简介</span></a></li></ol>
                     </div>
                 </span>
             </div>
@@ -554,15 +589,15 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">编码</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">Linux</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">test</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">编码</a>
               </li>
              
               <li class="article-tag-list-item">
