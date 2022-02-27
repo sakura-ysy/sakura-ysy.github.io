@@ -27,7 +27,7 @@
 <meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/331f5d92ee10678c.png">
 <meta property="og:image" content="https://i.bmp.ovh/imgs/2022/02/71d060da237efc08.png">
 <meta property="article:published_time" content="2022-02-20T13:51:00.000Z">
-<meta property="article:modified_time" content="2022-02-21T08:20:50.885Z">
+<meta property="article:modified_time" content="2022-02-21T09:57:07.534Z">
 <meta property="article:author" content="SrcMiLe">
 <meta property="article:tag" content="OS">
 <meta name="twitter:card" content="summary">
@@ -108,7 +108,7 @@
 
                     <br/>
 					<nav>
-						<p>文章数: 12</p>
+						<p>文章数: 16</p>
 					</nav>
 
 					<nav class="header-smart-menu">
@@ -360,7 +360,7 @@
 </ul>
 <p><strong>AVL位</strong>：保留位：可以被系统软件使用。</p>
 <h2 id="代码解释"><a href="#代码解释" class="headerlink" title="代码解释"></a>代码解释</h2><p>好了，知道保护模式和GDT的相关基础后，可以开始通过解释文初的代码来进一步学习保护模式了。</p>
-<p>代码一共分为三个部分：[SECTION .gdt]、[SECTION .s16]、[SECTION .s32]。顾名思义，第一部分定义了GDT，第二部分为16位环境下运行的代码，即实模式，第三部分为32位环境下运行的代码，即保护模式。我们一个一个看。</p>
+<p>代码一共分为三个部分，即三个段：[SECTION .gdt]、[SECTION .s16]、[SECTION .s32]。顾名思义，第一部分定义了GDT，第二部分为16位环境下运行的代码，即实模式，第三部分为32位环境下运行的代码，即保护模式。我们一个一个看。</p>
 <h3 id="SECTION-gdt"><a href="#SECTION-gdt" class="headerlink" title="[SECTION .gdt]"></a>[SECTION .gdt]</h3><p>这个部分定义了一个数组，每一个元素都是一个<code>Descriptor</code>，很明显，这个数组就是<code>GDT</code>。其中，<code>Descriptor</code>是一个宏，这个宏用比较自动化的方法把段基址、段界限和段属性放入一个描述符中合适的位置，这个宏在pm.inc中，内容如下：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">; 描述符</span><br><span class="line">; usage: Descriptor Base, Limit, Attr</span><br><span class="line">;        Base:  dd</span><br><span class="line">;        Limit: dd (low 20 bits available)</span><br><span class="line">;        Attr:  dw (lower 4 bits of higher byte are always 0)</span><br><span class="line">%macro Descriptor 3</span><br><span class="line">	dw	%2 &amp; 0FFFFh				; 段界限 1				(2 字节)</span><br><span class="line">	dw	%1 &amp; 0FFFFh				; 段基址 1				(2 字节)</span><br><span class="line">	db	(%1 &gt;&gt; 16) &amp; 0FFh			; 段基址 2				(1 字节)</span><br><span class="line">	dw	((%2 &gt;&gt; 8) &amp; 0F00h) | (%3 &amp; 0F0FFh)	; 属性 1 + 段界限 2 + 属性 2		(2 字节)</span><br><span class="line">	db	(%1 &gt;&gt; 24) &amp; 0FFh			; 段基址 3				(1 字节)</span><br><span class="line">%endmacro ; 共 8 字节</span><br></pre></td></tr></table></figure>
 
@@ -520,6 +520,15 @@
   
 <nav id="article-nav">
   
+    <a href="/GDT%E4%B8%8E%E6%8F%8F%E8%BF%B0%E7%AC%A6/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          GDT与描述符
+        
+      </div>
+    </a>
+  
   
     <a href="/Unicode%E5%92%8CUTF-8/" id="article-nav-older" class="article-nav-link-wrap">
       <div class="article-nav-title">Unicode和UTF-8</div>
@@ -678,6 +687,10 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
               </li>
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">OS</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">Hexo</a>
               </li>
              
@@ -690,15 +703,11 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">test</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">Linux</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">OS</a>
+                <a href="javascript:void(0)" class="js-tag color5">test</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -775,6 +784,18 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
           
             <li class="search-li">
               <a href="http://159.75.112.81:8090/#" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>凯凯的博客</a>
+            </li>
+          
+            <li class="search-li">
+              <a href="http://tanzhilang.xyz" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>xp的博客</a>
+            </li>
+          
+            <li class="search-li">
+              <a href="http://bosshhh.top" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>boss的博客</a>
+            </li>
+          
+            <li class="search-li">
+              <a href="https://yunf194.github.io/" target="_blank" class="search-title"><i class="icon-quo-left icon"></i>阿云的博客</a>
             </li>
           
         </ul>
