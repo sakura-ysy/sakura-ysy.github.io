@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="实模式到保护模式, SrcMiLeの杂货铺">
+    <meta name="keywords" content="k8s资源清单, SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>实模式到保护模式 | SrcMiLeの杂货铺</title>
+    <title>k8s资源清单 | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -379,12 +379,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/1.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/22.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">实模式到保护模式</h1>
+                    <h1 class="description center-align post-title">k8s资源清单</h1>
                 </div>
             </div>
         </div>
@@ -500,8 +500,12 @@
                     
                     <div class="article-tag">
                         
-                            <a href="/tags/OS/">
-                                <span class="chip bg-color">OS</span>
+                            <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
+                                <span class="chip bg-color">云计算</span>
+                            </a>
+                        
+                            <a href="/tags/k8s/">
+                                <span class="chip bg-color">k8s</span>
                             </a>
                         
                     </div>
@@ -516,7 +520,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2022-02-20
+                    2022-02-28
                 </div>
                 
 
@@ -525,7 +529,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    5.6k
+                    3.4k
                 </div>
                 
 
@@ -545,333 +549,288 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <p>在不知道保护模式之前，让我们先看一段代码，如果没有接触过保护模式，会一头雾水，不过没关系，在这种好奇心的驱使下，会学的更高效。</p>
+                <p>搭建好k8s之后，就可以在集群中跑一些应用啦，不过在跑之前，要先知道几个概念。</p>
 <span id="more"></span>
 
-<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;
-; pmtest1.asm
-; 编译方法：nasm pmtest1.asm -o pmtest1.com
-; &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;
+<p>第一个当然就是应用的<code>镜像</code>，因为我们在集群中运行的是容器，所以首先需要将我们的应用打包成镜像，或者直接从仓库中拉，很简单，这里就不再赘述了。</p>
+<p>镜像准备好了，k8s 集群也准备好了，我们就可以把应用部署到集群中了。但是镜像到集群中运行这个过程如何完成呢？</p>
+<p>在之前 Docker 环境下面我们是直接通过命令 <code>docker run</code> 来运行我们的应用的，在 k8s环境下面我们同样也可以用类似 <code>kubectl run</code> 这样的命令来运行我们的应用，但是在 k8s中却是不推荐使用命令行的方式，而是希望使用我们称为<code>资源清单</code>的东西来描述应用，资源清单可以用 YAML 或者 JSON 文件来编写，一般来说 YAML 文件更方便阅读和理解，所以我们的课程中都会使用 YAML 文件来进行描述。</p>
+<p>实际上，我们在集群中部署的应用，就是一个<code>Kubernetes Object</code>，或者叫<code>API Object</code>。在创建k8s对象时，必须提供对象的规约，用来描述该对象的期望状态，以及关于对象的一些基本信息（例如名称）。当使用<code>Kubernetes API</code>创建对象时（或直接创建，或基于kubectl），API请求必须在请求体中包含<code>JSON</code>格式的信息，就是上面说的JSON文件。而当使用YAML文件作资源清单时，kubectl会在发起API请求时自动将这些信息转换成JSON格式。</p>
+<p>通过一个资源清单文件来定义好一个应用后，我们就可以通过<code>kubectl</code>工具来直接运行它</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl create -f xxxx.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-%include	&quot;pm.inc&quot;	; 常量, 宏, 以及一些说明
+<p>我们知道 kubectl 是直接操作 <code>APIServer</code> 的，所以就相当于把我们的清单提交给了 APIServer，然后集群获取到清单描述的应用信息后存入到 <code>etcd</code> 数据库中，然后 <code>kube-scheduler</code> 组件发现这个时候有一个 <code>Pod</code> 还没有绑定到节点上，就会对这个 Pod 进行一系列的调度，把它调度到一个最合适的节点上，然后把这个节点和 Pod 绑定到一起（写回到 etcd），然后节点上的 kubelet 组件这个时候 watch 到有一个 Pod 被分配过来了，就去把这个 Pod 的信息拉取下来，然后根据描述通过容器运行时把容器创建出来，最后当然同样把 Pod 状态再写回到 etcd 中去，这样就完成了一整个的创建流程。</p>
+<hr>
+<h2 id="第一个容器化应用"><a href="#第一个容器化应用" class="headerlink" title="第一个容器化应用"></a>第一个容器化应用</h2><p>我们创建一个建议的nginx应用，是一个<code>Deployments</code>类型的API对象，其YAML资源清单文件如下，文件名为nginx-deployment.yaml。</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1  <span class="token comment"># API版本</span>
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment  <span class="token comment"># API对象类型</span>
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>deploy
+  <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+    <span class="token key atrule">chapter</span><span class="token punctuation">:</span> first<span class="token punctuation">-</span>app
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
+    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span>
+      <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx
+  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">2</span>  <span class="token comment"># tells deployment to run 2 pods matching the template</span>
+  <span class="token key atrule">template</span><span class="token punctuation">:</span>  <span class="token comment"># Pod template</span>
+    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+      <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+        <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx
+    <span class="token key atrule">spec</span><span class="token punctuation">:</span>
+      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx
+        <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx<span class="token punctuation">:</span>1.7.9
+        <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">80</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-
-org	07c00h
-	jmp	LABEL_BEGIN
-
-
-
-[SECTION .gdt]
-; GDT
-;                                         段基址,      段界限     , 属性
-
-LABEL_GDT:		Descriptor	       0,                0, 0     		; 空描述符
-LABEL_DESC_CODE32:	Descriptor	       0, SegCode32Len - 1, DA_C + DA_32	; 非一致代码段, 32
-LABEL_DESC_VIDEO:	Descriptor	 0B8000h,           0ffffh, DA_DRW		; 显存首地址
-; GDT 结束
-
-
-GdtLen		equ	$ - LABEL_GDT	; GDT长度
-GdtPtr		dw	GdtLen - 1	; GDT界限
-		dd	0		; GDT基地址
-
-; GDT 选择子
-SelectorCode32		equ	LABEL_DESC_CODE32	- LABEL_GDT
-SelectorVideo		equ	LABEL_DESC_VIDEO	- LABEL_GDT
-; END of [SECTION .gdt]
-
-
-[SECTION .s16]
-[BITS	16]
-LABEL_BEGIN:
-
-	mov	ax, cs
-	mov	ds, ax
-	mov	es, ax
-	mov	ss, ax
-	mov	sp, 0100h
-
-	; 初始化 32 位代码段描述符
-	; 旨在将LABEL_SEG_CODE32设为保护模式的基址
-	xor	eax, eax
-	mov	ax, cs
-	shl	eax, 4
-	add	eax, LABEL_SEG_CODE32
-	mov	word [LABEL_DESC_CODE32 + 2], ax
-	shr	eax, 16
-	mov	byte [LABEL_DESC_CODE32 + 4], al
-	mov	byte [LABEL_DESC_CODE32 + 7], ah
-
-	; 为加载 GDTR 作准备
-	xor	eax, eax
-	mov	ax, ds
-	shl	eax, 4
-	add	eax, LABEL_GDT		; eax &lt;- gdt 基地址
-	mov	dword [GdtPtr + 2], eax	; [GdtPtr + 2] &lt;- gdt 基地址
-
-
-
-	; 加载 GDTR
-	lgdt	[GdtPtr] ; 将GdtPtr指示的6字节加载到寄存器gdtr,其中32为GDT基地址,16为GDT界限
-
-	; 关中断
-
-	cli
-
-	; 打开地址线A20,即第20号地址位(从0开始)，超过了1MB，开机时默认关闭
-	; 只有打开才能寻1MB以外的空间
-	in	al, 92h
-	or	al, 00000010b
-	out	92h, al
-
-	; 准备切换到保护模式
-	; 将寄存器cr0的第0号位置设为1，相当于打开了保护模式的开关
-	mov	eax, cr0
-	or	eax, 1
-	mov	cr0, eax
-
-	; 真正进入保护模式
-	jmp	dword SelectorCode32:0	; 执行这一句会把 SelectorCode32 装入 cs, 并跳转到 Code32Selector:0  处
-; END of [SECTION .s16]
-
-
-[SECTION .s32]; 32 位代码段. 由实模式跳入.
-[BITS	32]
-LABEL_SEG_CODE32:
-
-	mov	ax, SelectorVideo
-	mov	gs, ax			; 视频段选择子(目的)
-
-	mov	edi, (80 * 10 + 0) * 2	; 屏幕第 10 行, 第 0 列。
-	mov	ah, 0Ch			; 0000: 黑底    1100: 红字
-	mov	al, &#39;P&#39;
-	mov	[gs:edi], ax
-
-	; 到此停止
-	jmp	$
-	
-SegCode32Len	equ	$ - LABEL_SEG_CODE32
-; END of [SECTION .s32]
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这段代码会将OS从实模式跳转到保护模式，然后在屏幕的第10行第0列输出黑底红字的P，让我们先运行下看看效果，这里使用的工具为：Ubuntu虚拟机 + NASM + Bochs + FreeDos。</p>
-<p>最基础的，可以将上如代码编译为pmtest1.bin然后直接写入Boot Sector（引导扇区），这样做很方便，可以直接运行，不需要FreeDos。但是，有个很明显的缺点，就是空间有限，限制为512B，一旦代码量大了起来就不行了，所以不是长久之计。</p>
-<p>解决上述问题有两个方法，一个是写一个Boot Sector，然后是它读取我们写的程序并运行，即引导我们写的OS内核，不过难度较大。第二个方法就是借助别的东西，比如DOS，我们把程序编译成<code>COM</code>文件，然后让DOS来执行它，这里，我们使用<code>FreeDos</code>来完成这个任务。</p>
-<p>首先去Bochs官方下载一个FreeDos，主要用到其中的<code>a.img</code>。解压后，将a.img复制到工作目录，更名为<code>freedos.img</code>。</p>
-<p>用<code>bximage</code>生成一个<code>软盘镜像</code>，起名为<code>pm.img</code>。</p>
-<p>新建文件<code>bochsrc</code>，内容如下，重点为floppya、floppyb和boot：</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">megs<span class="token punctuation">:</span><span class="token number">32</span>
-
-romimage<span class="token punctuation">:</span>file=$BXSHARE/BIOS<span class="token punctuation">-</span>bochs<span class="token punctuation">-</span>latest
-
-vgaromimage<span class="token punctuation">:</span>file=$BXSHARE/VGABIOS<span class="token punctuation">-</span>lgpl<span class="token punctuation">-</span>latest
-
-floppya<span class="token punctuation">:</span>1_44=freedos.img<span class="token punctuation">,</span>status=inserted
-floppyb<span class="token punctuation">:</span>1_44=pm.img<span class="token punctuation">,</span>status=inserted
-<span class="token comment">#软盘映射</span>
-boot<span class="token punctuation">:</span>a
-<span class="token comment">#硬盘</span>
-<span class="token comment">#boot:disk</span>
-
-<span class="token comment">#分配HD为60M，根据分配硬盘大小，cylinders, heads, spt会变化</span>
-<span class="token comment">#ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14</span>
-<span class="token comment">#ata0-master: type=disk, mode=flat, path="boot.img", cylinders=121, heads=16, spt=63</span>
-
-log<span class="token punctuation">:</span>bochsout.txt<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>使用<code>bochs -f bochsrc</code>启动Bochs，待FreeDos启动完毕后格式化B盘：</p>
-<p><img src="https://i.bmp.ovh/imgs/2022/02/597d1f0674ed20d5.png"></p>
-<p>这里说下为什么要用Ubuntu，因为Linux的挂载（<code>mount</code>）操作可以将宿主目录和Dos中的镜像关联起来，轻易实现将目标文件复制到Dos运行的镜像中。首先，编译出.COM文件，然后将其复制到虚拟软盘pm.img上：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">nasm pmtest1.asm -o pmtest1.com
-<span class="token function">sudo</span> <span class="token function">mount</span> -o loop pm.img /mnt/floppy
-<span class="token function">sudo</span> <span class="token function">cp</span> pmtest1.com /mnt/floppy/
-<span class="token function">sudo</span> <span class="token function">umount</span> /mnt/floppy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>然后到FreeDos中，执行命令：<code>B:\pmtest1.com</code>，就运行起来了，如图所示，显示一个红色的p。</p>
-<p><img src="https://i.bmp.ovh/imgs/2022/02/e8e4882d1409b8c8.png"></p>
-<p>好了，演示完毕，接下来开始介绍各部分代码的含义，由此了解保护模式，不过更重要的，是要先了解保护模式的一些历史。</p>
-<h2 id="初始保护模式"><a href="#初始保护模式" class="headerlink" title="初始保护模式"></a>初始保护模式</h2><p>保护模式重在“保护”二字，顾名思义，其主要提供了安全上的服务，那它到底安全在哪？保护了什么？这个还在要从8086的16位寄存器时开始说起。</p>
-<p>在Intel 8086中，CPU是16位的，它有着16位的寄存器、16位的数据总线以及20位的地址总线，共1MB的寻址空间，由于数据总线是少于地址总线的，所以物理地址是又<code>段:偏移</code>组成的，两者都是16位。</p>
 <blockquote>
-<p>物理地址 = 段基址*16 + 偏移</p>
-</blockquote>
-<p>上述模式就是我们后来所称的实模式，它的弊端是很大的：</p>
-<p>1&gt;    操作系统和用户程序属于同一特权级，平起平坐，没有区别；</p>
-<p>2&gt;    用户程序引用的地址直接为<code>物理地址</code>，即逻辑地址=物理地址，指哪打哪，没有限制很不安全；</p>
-<p>3&gt;    用户程序可以自由设定段基址，在1MB空间中随意访问，不安全;</p>
-<p>4&gt;    16位寄存器只能访问64KB，所以当访问的地址跨越64KB时，需要更改段基址，很麻烦;</p>
-<p>5&gt;    一次只能运行一个程序，无法充分利用计算机资源;</p>
-<p>6&gt;    最大的弊端，空间只有1MB，这在20年前就已经不够用了;</p>
-<p>其中，(1)(2)(3)是安全方面的缺陷，没有安全可言的CPU是注定不可依赖的，它从本质上决定了程序乃至操作系统的数据有被随意删改的风险。(4)(5)是使用方面的缺陷，这个再20年前似乎还能忍受，但是随着计算需求的提升必会被淘汰。最硬伤的就是(6)，1MB完全不够用，因此急需更高的寻址空间。</p>
-<p>从80286开始，Intel的CPU进入32位时代，32位CPU具有两种运行模式，分别为<code>实模式</code>和<code>保护模式</code>，可以兼容8086时代的16位运行环境。实际上，在8086时代，16位CPU根本没有实模式的概念！当时的人用的只有16位CPU，他们从没想过自己习惯的模式还要重新命名。直到CPU发展到了32位，新的运行模式和之前不大相同，但不管怎么发展，都一定要满足一个原则：<code>兼容</code>。</p>
-<p>也就是说，32位CPU具有两种模式，一种是为了克服8086运行模式弊端的新模式，即它自己的运行模式；另一种就是为了兼容8086运行模式而存在的，实模式。为了凸显前者的优势，将其称为保护模式。再强调一遍：</p>
-<blockquote>
-<p>实模式是32CPU时才提出的概念，旨在兼容8086的16位运行模式</p>
-</blockquote>
-<p>实模式的运行环境为16位，保护模式为32位。但是要注意的是，当PC运行在实模式下时，CPU依然是32位，硬件本身不会变！相当于高中生去做初中生的题，当它处在16位的运行模式时，依然可以处理32位的操作数，因为它在硬件层面上是32位的。也即：</p>
-<blockquote>
-<p>实模式指32位CPU运行在16位模式下的状态，但CPU本身是32位的，依然可以处理32位操作数</p>
-</blockquote>
-<p>了解完其基础概念后，来看看保护模式究竟从哪些方面得到了进化。</p>
-<h2 id="寄存器扩展"><a href="#寄存器扩展" class="headerlink" title="寄存器扩展"></a>寄存器扩展</h2><p>无论PC怎么发展，兼容都是最基本的要求，包括寄存器、访存方式、指令格式等的兼容。CPU发展到了32位后，地址总线和数据总线也发展到了32位，即寻址空间夸大到了4GB，一次可以处理的操作数升至32位。4GB的空间如果还用曾经的<code>段:偏移</code>法来寻址的话，段基址要左移16位，这显然很不合适。</p>
-<p>最关键的，从设计思想上将，段基址本身就应该是某个内存段的起始地址，它不应该在应用前先做个处理。在原来的16位模式下，由于数据总线小于地址总线，所以迫不得已预先将段基址*16，才产生了这种蹩脚的方式。现在，数据总线和地址总线一样宽了，就可从根本上解决这个问题——扩展寄存器到32位。</p>
-<p>寄存器要保持向下兼容，不能推翻之前的方案重来，因此要在原有16位的基础上向高位扩展16位，延申到32位，新的寄存器用前缀e表示扩展，即eax、ebx等等，如图：</p>
- <img src="https://i.bmp.ovh/imgs/2022/02/477588c3761f2737.png" style="zoom:80%;" />
-
-<p>可以看到，通用寄存器、标志寄存器、指令指针寄存器都扩展到了32位，但是段寄存器没有，仍然只有32位，这是因为段寄存器16位就够用了，这个后面会解释到。</p>
-<p>上图中，寄存器的低16位是为了兼容实模式的，在任何模式下都可以<code>单独使用</code>，但是高16位不行，必须在引用32位寄存器时才能用到他们。</p>
-<p>之前提到过，在80286之后，引入了保护模式的概念，大大提高了安全性，其中很重要的一部分，就是对内存段的描述。它改变了段基址的实质，引入了<code>GRT(Global Descriptor Table)</code>的概念。</p>
-<h2 id="GDT"><a href="#GDT" class="headerlink" title="GDT"></a>GDT</h2><p>保护模式下，偏移地址和实模式是一样的，但是段基址不再是简单的一个地址了。之前说过，实模式下段基址可以任意设定，随意访问空间内的任何地方，很不安全。因此为了更加安全，要给它加一些约束条件，这些约束条件就是对内存段的描述信息。由于信息太多了，所以专门找了个数据结构——全局描述符表，即<code>GDT</code>。该表很大，故放在了内存中，由<code>GDTR</code>寄存器指向它的首址，这个寄存器有6字节。</p>
-<p>既然是表，那一定有表项，每一个表项就是一个<code>段描述符</code>，大小为8字节，用来描述一个内存段的段基址、段界限和段属性等等。注意，表项就是描述符，而不是描述符的索引。不过这里不会详细介绍，只浅谈一下即可，后面会专门开一篇博客专门介绍GDT和描述符。</p>
-<p><img src="https://i.bmp.ovh/imgs/2022/02/ccabd82c4185bc24.png"></p>
-<p>这样，段寄存器中保存的再也不是段基址了，里面保存的内容叫<code>选择子</code>，selector。实际上，这个选择子就是个<code>数</code>，用这个数来<code>索引</code>GDT中的段描述符。把全局描述符当成数组，选择子就像数组下标一样。</p>
-<blockquote>
-<p>1&gt; 段描述符是在内存中的，访问会很耗时</p>
-<p>2&gt; 段描述符的格式很奇怪，CPU把这些七零八落的数拼凑起来也会耗时</p>
-</blockquote>
-<p>既然访问内存中的段描述符很耗时间，那CPU如何提高效率呢？使用缓存。在80286的保护模式中，为了提高获取段信息的效率，对段寄存器率先应用了缓存技术，将段信息用一个寄存器来缓存，这就是<code>段描述符缓冲寄存器</code>。对程序员而言它是不可见的。CPU每次访问描述符并获取到内存段信息后，会将其存入上述缓冲寄存器中，下次访问相同段时，直接从中取就行了。</p>
-<p>另外，虽然段描述符缓冲寄存器是保护模式下的产物，但是它也可以用在实模式下。在16为的实模式下，段基址左移4位这个操作也是耗时的。因此，CPU会将段基址左移后的结果存在上述寄存器中，以后每次引用这个段时，就直接走缓冲寄存器，直到换段，也就是段寄存器被重新赋值。</p>
-<p>在进入代码解释之前按，先简单概括下描述符各属性的含义：</p>
-<p><strong>P位</strong>：存在位，P=1表示段在内存中存在；P=0表示在内存中不存在。</p>
-<p><strong>DPL</strong>：描述符特权级（Privilege Level），可以是0123，数字越小特权级越大。</p>
-<p><strong>S位</strong>：指明描述符是数据段/代码段（S=1）还是系统段/门描述符（S=0）.</p>
-<p><strong>TYPE</strong>：描述符类型，详情见下表：</p>
-<img src="https://i.bmp.ovh/imgs/2022/02/331f5d92ee10678c.png" style="zoom: 67%;" />
-
-<p>其中，当S=1时，TYPE&lt;8对应数据段，&gt;=8对应代码段；当S=0时，TYPE&lt;8对应系统段，&gt;=8对应门描述符。</p>
-<p><strong>G位</strong>：段界限粒度（Granularity）位。G=0时段界限为字节；G=1时段界限粒度为4KB。</p>
-<p><strong>D/B位</strong>：这一位比较复杂，分三种情况：</p>
+<p>Deployment对象，顾名思义，是用于部署应用的对象。它为Pod和ReplicaSet提供了一个声明式定义(declarative)方法，用来替代以前的<a target="_blank" rel="noopener" href="https://www.kubernetes.org.cn/replication-controller-kubernetes">ReplicationController</a>来方便的管理应用。典型的应用场景包括：</p>
 <ul>
-<li>   在可执行代码段描述符中，这一位叫做D位。D=1时，在默认情况下指令使用32位地址以及32位或8位操作数；D=0时，在默认情况下使用16位地址以及16位或8位操作数；</li>
-<li>   在向下扩展数据段的描述符中，这一位叫做B位。B=1时，段的上部界限为4GB；B=0时，段的上部界限为64KB；</li>
-<li>   在描述堆栈段（由ss寄存器指向的段）的描述符中，这一位叫做B位。B=1时，隐式的堆栈访问指令（如push、pop和call）使用32位堆栈指针寄存器esp；D=0时，隐式的堆栈访问指令（如push、pop和call）使用16位堆栈指针寄存器sp；</li>
+<li>定义Deployment来创建Pod和ReplicaSet</li>
+<li>滚动升级和回滚应用</li>
+<li>扩容和缩容</li>
+<li>暂停和继续Deployment</li>
 </ul>
-<p><strong>AVL位</strong>：保留位：可以被系统软件使用。</p>
-<h2 id="代码解释"><a href="#代码解释" class="headerlink" title="代码解释"></a>代码解释</h2><p>好了，知道保护模式和GDT的相关基础后，可以开始通过解释文初的代码来进一步学习保护模式了。</p>
-<p>代码一共分为三个部分，即三个段：[SECTION .gdt]、[SECTION .s16]、[SECTION .s32]。顾名思义，第一部分定义了GDT，第二部分为16位环境下运行的代码，即实模式，第三部分为32位环境下运行的代码，即保护模式。我们一个一个看。</p>
-<h3 id="SECTION-gdt"><a href="#SECTION-gdt" class="headerlink" title="[SECTION .gdt]"></a>[SECTION .gdt]</h3><p>这个部分定义了一个数组，每一个元素都是一个<code>Descriptor</code>，很明显，这个数组就是<code>GDT</code>。其中，<code>Descriptor</code>是一个宏，这个宏用比较自动化的方法把段基址、段界限和段属性放入一个描述符中合适的位置，这个宏在pm.inc中，内容如下：</p>
-<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 描述符
-; usage: Descriptor Base, Limit, Attr
-;        Base:  dd
-;        Limit: dd (low 20 bits available)
-;        Attr:  dw (lower 4 bits of higher byte are always 0)
-%macro Descriptor 3
-	dw	%2 &amp; 0FFFFh				; 段界限 1				(2 字节)
-	dw	%1 &amp; 0FFFFh				; 段基址 1				(2 字节)
-	db	(%1 &gt;&gt; 16) &amp; 0FFh			; 段基址 2				(1 字节)
-	dw	((%2 &gt;&gt; 8) &amp; 0F00h) | (%3 &amp; 0F0FFh)	; 属性 1 + 段界限 2 + 属性 2		(2 字节)
-	db	(%1 &gt;&gt; 24) &amp; 0FFh			; 段基址 3				(1 字节)
-%endmacro ; 共 8 字节<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+</blockquote>
+<p>写完yaml文件后，就可以用<code>kubectl apply</code>来创建上述对象：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl apply -f 
+deployment.apps/nginx-deployment created
+$ kubectl get pods
+NAME                            READY   STATUS    RESTARTS   AGE
+nginx-deploy-786b576769-6lcpn   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          108s
+nginx-deploy-786b576769-cz2f6   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          108s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>代码的GDT中共有3个描述符，为方便起见，这里分别简称为DESC_DUMMY、DESC_CODE32和DESC_VIDEO。其中DESC_VIDEO的段基址是<code>0B800h</code>，这个地址是显存的起始地址，故该描述符指向了显存。</p>
-<p>段基址和段界限都好说，来看下段属性。DESC_CODE32的属性为<code>DA_C + DA_32</code>，DESC_VIDEO的属性为<code>DA_DRW</code>。这些值都定义在pm.inc中：</p>
-<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">;---------------------------------------------------------------
-; 描述符类型值说明
-; 其中:
-;       DA_  : Descriptor Attribute
-;       D    : 数据段
-;       C    : 代码段
-;       S    : 系统段
-;       R    : 只读
-;       RW   : 读写
-;       A    : 已访问
-;       其它 : 可按照字面意思理解
-;---------------------------------------------------------------
-DA_32		EQU	4000h	; 32 位段
+<p>可以看到，上述的Deployment创建出了两个Pod，因为资源清单里指令了字段<code>replicas: 2</code>。当然，Deployment本身也是个对象，因此我们也可以通过kubctl来查看到它的状态：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl get deployment
+NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deploy   <span class="token number">2</span>/2     <span class="token number">2</span>            <span class="token number">2</span>           12m<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
-DA_DPL0		EQU	  00h	; DPL &#x3D; 0
-DA_DPL1		EQU	  20h	; DPL &#x3D; 1
-DA_DPL2		EQU	  40h	; DPL &#x3D; 2
-DA_DPL3		EQU	  60h	; DPL &#x3D; 3
-;---------------------------------------------------------------
-; 存储段描述符类型值说明
-;---------------------------------------------------------------
-DA_DR		EQU	90h	; 存在的只读数据段类型值
-DA_DRW		EQU	92h	; 存在的可读写数据段属性值
-DA_DRWA		EQU	93h	; 存在的已访问可读写数据段类型值
-DA_C		EQU	98h	; 存在的只执行代码段属性值
-DA_CR		EQU	9Ah	; 存在的可执行可读代码段属性值
-DA_CCO		EQU	9Ch	; 存在的只执行一致代码段属性值
-DA_CCOR		EQU	9Eh	; 存在的可执行可读一致代码段属性值
-;---------------------------------------------------------------
-; 系统段描述符类型值说明
-;---------------------------------------------------------------
-DA_LDT		EQU	  82h	; 局部描述符表段类型值
-DA_TaskGate	EQU	  85h	; 任务门类型值
-DA_386TSS	EQU	  89h	; 可用 386 任务状态段类型值
-DA_386CGate	EQU	  8Ch	; 386 调用门类型值
-DA_386IGate	EQU	  8Eh	; 386 中断门类型值
-DA_386TGate	EQU	  8Fh	; 386 陷阱门类型值
-;---------------------------------------------------------------<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>其中，<code>READY 2/2</code>指该Deployment期望创建2个副本，实际创建了2个副本，这里的副本就是Pod。<code>UP-TO-DATE</code>指有多少个副本已更新到最新状态，这里两个Pod都是最新的。</p>
+<p>这个模板中定义了我们的 Pod 中只有一个名为 nginx 的容器，容器使用的镜像是 <code>nginx:1.7.9</code>（spec.containers[0].image），并且这个容器监听的端口是 80（spec.containers[0].ports[0].containerPort），另外我们还为 Pod 添加了一个<code>app: nginx</code>这样的 Label 标签，这里需要非常注意的是上面的 <code>selector.matchLabels</code> 区域就是来表示我们的 Deployment 来管理哪些 Pod 的，所以这个地方需要和 Pod 模板中的 Label 标签保持一致，非常重要的。</p>
+<p>另外我们也可以发现每个 API 对象都有一个 <code>Metadata</code> 的字段，用来表示该对象的元数据的，比如定义 name、namespace 等，比如上面 Deployment 和 Pod 模板中都有这个字段，至于为什么 Pod 模板中没有 name 这个元信息呢，这是因为 Deployment 这个控制器会自动在他自己的 name 基础上生成 Pod 名，不过 Deployment 下面定义的 Label 标签就没有 Pod 中定义的 Label 标签那么重要了，只是起到一个对该对象标识和过滤的作用。比如我们在查询对象的时候可以带上标签来进行过滤：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl get deployment -l <span class="token assign-left variable">chapter</span><span class="token operator">=</span>first-app
+NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deploy   <span class="token number">2</span>/2     <span class="token number">2</span>            <span class="token number">2</span>           51m
+$ kubectl get pods -l <span class="token assign-left variable">app</span><span class="token operator">=</span>nginx
+NAME                            READY   STATUS    RESTARTS   AGE
+nginx-deploy-786b576769-6lcpn   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          22m
+nginx-deploy-786b576769-cz2f6   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          22m<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>DA_C + DA_32的二进制为<code>0100 0000 1001 1000</code>，更具描述符TYPE的含义可知该内存段为<strong>存在的只执行的32位代码段，DPL为0</strong>。同理可知，DESC_VIDEO段为<strong>可读写数据段</strong>。</p>
-<p>定义完GDT后，用变量<code>GdtLen</code>存储GDT的长度，结构变量<code>GdtPtr</code>存储GDT的长度和基地址。</p>
-<p>随后，开始存储后两个描述符的<code>选择子</code>，可以看到，<code>SelectorCode32</code>和<code>SelectorVideo</code>分别存储了DESC_CODE32和DESC_VIDEO相对于GDT首址的偏移，这个数就是他们各自的选择子。实际上，选择子不止是一个偏移，它的结构要稍微复杂一些，这里不详细介绍。</p>
-<p>数据结构<code>GdtPtr</code>是用来记录GDT界限和GDT基址的。前文提到过，<code>GDTR</code>寄存器要指向GDT的首址，先来看看这个寄存器的结构：</p>
-<p><img src="https://i.bmp.ovh/imgs/2022/02/71d060da237efc08.png"></p>
-<p>可以看到，这个寄存器和我们定义的<code>GdtPtr</code>结构是一样的，实际上，定义<code>GdtPtr</code>的目的就是将其赋值给<code>GDTR</code>。</p>
-<h2 id="SECTION-s32"><a href="#SECTION-s32" class="headerlink" title="[SECTION .s32]"></a>[SECTION .s32]</h2><p>这个部分为保护模式下要执行的代码，目的很简单，在指定位置打印一个红色的P。首先，把显存的内存段也就是描述符DESC_VIDEO的<code>选择子</code>写入段寄存器<code>GS</code>:</p>
-<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">mov	ax, SelectorVideo
-mov	gs, ax			; 视频段选择子(目的)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>到这里我们就完成了我们的第一个应用的容器化部署，但是往往我们在部署应用的过程中或多或少会遇到一些问题，这个时候我们可以使用一个 <code>kubectl describe</code> 命令来查看资源对象的详细信息，比如我们用下面的命令来查看 Pod 的详细信息：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl describe pod nginx-deploy-786b576769-6lcpn
+Name:         nginx-deploy-786b576769-6lcpn
+Namespace:    default
+Priority:     <span class="token number">0</span>
+Node:         node1/192.168.186.150
+Start Time:   Mon, <span class="token number">28</span> Feb <span class="token number">2022</span> <span class="token number">21</span>:07:03 +0800
+Labels:       <span class="token assign-left variable">app</span><span class="token operator">=</span>nginx
+              pod-template-hash<span class="token operator">=</span>786b576769
+Annotations:  <span class="token operator">&lt;</span>none<span class="token operator">></span>
+Status:       Running
+IP:           <span class="token number">10.244</span>.2.4
+IPs:
+  IP:           <span class="token number">10.244</span>.2.4
+Controlled By:  ReplicaSet/nginx-deploy-786b576769
+Containers:
+  nginx:
+    Container ID:   docker://59159005469e5cb0ee5dd544bb11f06bf16bd04290d01d6b0f39a81962f9ef52
+    Image:          nginx:latest
+    Image ID:       docker-pullable://nginx@sha256:0d17b565c37bcbd895e9d92315a05c1c3c9a29f762b011a10c54a66cd53c9b31
+    Port:           <span class="token number">80</span>/TCP
+    Host Port:      <span class="token number">0</span>/TCP
+    State:          Running
+      Started:      Mon, <span class="token number">28</span> Feb <span class="token number">2022</span> <span class="token number">21</span>:07:04 +0800
+    Ready:          True
+    Restart Count:  <span class="token number">0</span>
+    Environment:    <span class="token operator">&lt;</span>none<span class="token operator">></span>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-fkt88 <span class="token punctuation">(</span>ro<span class="token punctuation">)</span>
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  default-token-fkt88:
+    Type:        Secret <span class="token punctuation">(</span>a volume populated by a Secret<span class="token punctuation">)</span>
+    SecretName:  default-token-fkt88
+    Optional:    <span class="token boolean">false</span>
+QoS Class:       BestEffort
+Node-Selectors:  <span class="token operator">&lt;</span>none<span class="token operator">></span>
+Tolerations:     node.kubernetes.io/not-ready:NoExecute <span class="token keyword">for</span> 300s
+                 node.kubernetes.io/unreachable:NoExecute <span class="token keyword">for</span> 300s
+Events:
+  Type    Reason     Age        From               Message
+  ----    ------     ----       ----               -------
+  Normal  Scheduled  <span class="token operator">&lt;</span>unknown<span class="token operator">></span>  default-scheduler  Successfully assigned default/nginx-deploy-786b576769-6lcpn to node1
+  Normal  Pulled     22m        kubelet, node1     Container image <span class="token string">"nginx:latest"</span> already present on machine
+  Normal  Created    22m        kubelet, node1     Created container nginx
+  Normal  Started    22m        kubelet, node1     Started container nginx<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>接着，把想要显示的位置写入<code>edi</code>，然后通过<code>[gs:edi]</code>要显示的东西写入显存的对应位置中：</p>
-<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">mov	edi, (80 * 10 + 0) * 2	; 屏幕第 10 行, 第 0 列。
-mov	ah, 0Ch			; 0000: 黑底    1100: 红字
-mov	al, &#39;P&#39;
-mov	[gs:edi], ax<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们可以看到看到很多这个 Pod 的详细信息，比如调度到的节点、状态、IP 等，一般我们比较关心的是下面的 <code>Events</code> 部分，就是我们说的<strong>事件</strong>。在 Kubernetes 创建资源对象的过程中，对该对象的一些重要操作，都会被记录在这个对象的 <code>Events</code> 里面，可以通过 <code>kubectl describe</code> 指令查看对应的结果，所以这个指令会使以后排错过程中经常使用的指令。</p>
+<p><code>Events</code>中越往后的信息越新。比如上面的这个 Pod，可以看到它被创建之后，被调度器调度（Successfully assigned）到了 node1 节点上，然后指定的镜像已经在该节点上存在了，所以没有再去拉取镜像，然后创建我们定义的 nginx 容器，最后启动定义的容器。</p>
+<p>前面说过Deployment支持滚动升级，也就是滚动更新。当我们需要更新Deployment时，可以直接该上述yaml文件。比如这里要将Pod的nginx镜像版本改为latest：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token punctuation">...</span>    
+    <span class="token key atrule">spec</span><span class="token punctuation">:</span>
+      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx
+        <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx<span class="token punctuation">:</span>latest  <span class="token comment"># 这里被从 1.7.9 修改为latest</span>
+        <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">80</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>保护模式运行的代码到此为止，使用一个死循环来停在此处即可。可以看到，这部分并不难。核心目的就是把字符写入显存对应的位置，不过由于保护模式用<code>描述符</code>来表示各个内存段，因此需要借助<code>GDT</code>来完成。</p>
-<h2 id="SECTION-s16"><a href="#SECTION-s16" class="headerlink" title="[SECTION .s16]"></a>[SECTION .s16]</h2><p>我们知道，当PC启动时，首先进入的是实模式，只有1MB的寻址空间，要转入保护模式，就需要另做一些操作，比如打开某些开关，然后<code>jmp</code>到保护模式，[SECTION .s16]就是在实模式中做这些事的。</p>
-<p>在将cs、ds、es、ss相统一之后，开始初始化保护模式代码段描述符。因为最后要跳到保护模式所在的内存段（代码段），因此需要一个描述符来存储它，就是<code>DESC_CODE32</code>，不过由于描述符结构比较蹩脚，所以得分步来赋值。</p>
-<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 初始化 32 位代码段描述符
-xor	eax, eax
-mov	ax, cs
-shl	eax, 4
-add	eax, LABEL_SEG_CODE32
-mov	word [LABEL_DESC_CODE32 + 2], ax
-shr	eax, 16
-mov	byte [LABEL_DESC_CODE32 + 4], al
-mov	byte [LABEL_DESC_CODE32 + 7], ah<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>然后再重新执行一次<code>kubectl apply</code>即可更新。我们不必担心当前的操作是创建，还是更新，k8s会更新yaml文件的内容变化自动处理。也就是，不管是创建还是更新，都可用命令：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl apply -f nginx-deployment.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p>初始化完该描述符后，开始加载GDT，即将GDT的首址和界限写入寄存器<code>GDTR</code>，期间要借助数据结构<code>GdtPtr</code>：</p>
-<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 为加载 GDTR 作准备
-xor	eax, eax
-mov	ax, ds
-shl	eax, 4
-add	eax, LABEL_GDT		; eax &lt;- gdt 基地址
-mov	dword [GdtPtr + 2], eax	; [GdtPtr + 2] &lt;- gdt 基地址
+<hr>
+<h2 id="YAML文件"><a href="#YAML文件" class="headerlink" title="YAML文件"></a>YAML文件</h2><p>YAML是专门用来写配置文件的语言，非常简洁和强大，远比JSON格式方便，它实质上是一种通用的数据串行化格式。其基本语法规则为：</p>
+<blockquote>
+<ul>
+<li>大小写敏感</li>
+<li>使用缩进表示层级关系</li>
+<li>缩进时不允许使用<code>Tab</code>键，只允许使用空格</li>
+<li>缩进的空格数目不重要，只要相同层级的元素左侧对齐即可</li>
+<li><code>#</code> 表示注释，从这个字符一直到行尾，都会被解析器忽略</li>
+</ul>
+</blockquote>
+<p>在 Kubernetes 中，我们只需要了解两种结构类型就行了：</p>
+<blockquote>
+<ul>
+<li>Lists</li>
+<li>Maps</li>
+</ul>
+</blockquote>
+<p>也就说，我们编写的资源文件，基本都是Lists和Maps的嵌套。</p>
+<h3 id="MAPS"><a href="#MAPS" class="headerlink" title="MAPS"></a>MAPS</h3><p>就是多个<code>key-value</code>，例如：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token punctuation">---</span>
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Pod<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
-; 加载 GDTR
-lgdt	[GdtPtr]<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意，首行的<code>---</code>是有意义的，但这里非必须。它是分隔符，在yaml中可以用它区分多个文件，这就意味着，在一个yaml文件中可以进行多个对象的描述，互相之间用<code>---</code>分隔即可。</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token punctuation">---</span>
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Pod
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> ydzs<span class="token punctuation">-</span>site
+  <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> web<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>最后一行的<code>lgdt</code>的作用是将以GdtPtr为首址的6字节加载到寄存器<code>GDTR</code>中。</p>
-<p>接下来就是关中断，因为保护模式下中断处理的机制是不同的，不关掉会出错误：</p>
-<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 关中断
-cli<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>上面的 YAML 文件，metadata 这个 KEY 对应的值就是一个 <code>Maps</code> 了，而且嵌套的 labels 这个 KEY 的值又是一个 Map，可以根据需求多层嵌套。</p>
+<p>YAML 根据行缩进来知道内容之间的嗯关联性的。比如上面的 YAML 文件，用了两个空格作为缩进，空格的数量并不重要，但是你得保持一致，并且至少要求一个空格（什么意思？就是你别一会缩进两个空格，一会缩进4个空格）。我们可以看到 name 和 labels 是相同级别的缩进，所以 YAML 处理器就知道了他们属于同一个 Map，而 app 是 labels 的值是因为 app 的缩进更大。</p>
+<blockquote>
+<p>注意！ 在 YAML 文件中绝对不要使用 tab 键来进行缩进，只能空格。</p>
+</blockquote>
+<h3 id="Lists"><a href="#Lists" class="headerlink" title="Lists"></a>Lists</h3><p><code>Lists</code>就是列表，说白了就是数组，在 YAML 文件中我们可以这样定义：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">args
+  <span class="token punctuation">-</span> Cat
+  <span class="token punctuation">-</span> Dog
+  <span class="token punctuation">-</span> Fish<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>再下面几行的作用就是打开<code>A20</code>地址线，这里简单介绍下什么时候A20地址线。在8086中，地址线只有20位，空间为1MB，那么如果试图访问1MB之外的空间呢？系统并不会发生异常，而是<code>回卷</code>，重新从0地址开始。但是到了80286时，空间变成了4GB，访问1MB之外不再需要回卷了，这就造成了和旧模式的不兼容，怎么办呢？IBM想出一个办法，使用8042键盘控制器来控制第20号（从0开始）地址位，这就是<code>A20</code>地址线，如果不被打开，默认为0，地址会回卷。也即，<code>A20</code>是程序或OS能够访问到1MB之外的空间，可以认为是进入保护模式的第一步。代码通过操作端口92h来打开它：</p>
-<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 打开地址线A20
-in	al, 92h
-or	al, 00000010b
-out	92h, al<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>当然，Lists 的子项也可以是 Maps，Maps 的子项也可以是 Lists 如下所示：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token punctuation">---</span>
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Pod
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> ydzs<span class="token punctuation">-</span>site
+  <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> web
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">containers</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> front<span class="token punctuation">-</span>end
+      <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx
+      <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">80</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> flaskapp<span class="token punctuation">-</span>demo
+      <span class="token key atrule">image</span><span class="token punctuation">:</span> cnych/flaskapp
+      <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">5000</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>接下来，离最后的<code>jmp</code>就只差一步了，那就是打开保护模式的开关：</p>
-<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 准备切换到保护模式
-mov	eax, cr0
-or	eax, 1
-mov	cr0, eax<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>上面这个 YAML 文件，定义了一个叫 containers 的 List 对象，每个子项都由 name、image、ports 组成，每个 ports 都有一个 key 为 containerPort 的 Map 组成。</p>
+<hr>
+<h2 id="帮助命令"><a href="#帮助命令" class="headerlink" title="帮助命令"></a>帮助命令</h2><p>那么，我们该如何知道诸如Pod、Deployment这些API对象的资源清单该怎么写呢？有哪些字段需要指定，该怎么指定呢？答案就是官网 =&gt; <a target="_blank" rel="noopener" href="https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/">Workload Resources</a>。诸如Pod、ReplicaSet、Deployment这些都属于API对象的<code>Workload Resources</code>，官网会列出他们：</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/02/3630664c03276690.png"></p>
+<p>点进想看的对象中，即可看见每个字段的意义。比如点进Deployment，可以看到apiVersion、kind、metadata、spec、selector等等。注意，如果字段后面标注了<code>requested</code>，就说明该字段是必须的，不能少。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/02/644e59ffc3fbe62a.png"></p>
+<p>差Web文档固然是个好方法，但是如果平时我们编写资源清单的时候都这样去查找文档，势必会效率低下。Kubernetes 也考虑到了这点，我们可以直接通过 kubectl 命令行工具来获取这些字段信息，同样的，比如我们要获取 Deployment 的字段信息，我们可以通过 <code>kubectl explain</code> 命令来了解：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl explain deployment
+KIND:     Deployment
+VERSION:  apps/v1
 
-<p>上述代码很简单，就是把<code>cr0</code>寄存器的第0位设1。寄存器<code>cr0</code>的第0位是PE位，此位为0时，CPU运行于实模式，为1时，CPU运行于保护模式。因此，这一步打开了进入保护模式的开关。</p>
-<p>此时，系统已经进入了保护模式，但是<code>cs</code>仍然是实模式的值，即依然停留在实模式的代码处。因此，需要将其更改为保护模式的代码段，那就是<code>jmp</code>。通过之前定义的DESC_CODE32的选择子<code>SelectorCode32</code>，来执行保护模式处的代码：</p>
-<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 真正进入保护模式
-	jmp	dword SelectorCode32:0	; 执行这一句会把 SelectorCode32 装入 cs, 并跳转到 Code32Selector:0  处<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+DESCRIPTION:
+     Deployment enables declarative updates <span class="token keyword">for</span> Pods and ReplicaSets.
 
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>至此，成功进入了保护模式，下面总结一下进入保护模式的主要步骤：</p>
-<p>1&gt;    准备GDT；</p>
-<p>2&gt;    用lgdt加载gdtr；</p>
-<p>3&gt;    打开A20；</p>
-<p>4&gt;    置cr0的PE位，使系统处于保护模式；</p>
-<p>5&gt;    跳转，进入保护模式；</p>
+FIELDS:
+   apiVersion   <span class="token operator">&lt;</span>string<span class="token operator">></span>
+     APIVersion defines the versioned schema of this representation of an
+     object. Servers should convert recognized schemas to the latest internal
+     value, and may reject unrecognized values. More info:
+     https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md<span class="token comment">#resources</span>
+
+   kind <span class="token operator">&lt;</span>string<span class="token operator">></span>
+     Kind is a string value representing the REST resource this object
+     represents. Servers may infer this from the endpoint the client submits
+     requests to. Cannot be updated. In CamelCase. More info:
+     https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md<span class="token comment">#types-kinds</span>
+
+   metadata <span class="token operator">&lt;</span>Object<span class="token operator">></span>
+     Standard object metadata.
+
+   spec <span class="token operator">&lt;</span>Object<span class="token operator">></span>
+     Specification of the desired behavior of the Deployment.
+
+   status   <span class="token operator">&lt;</span>Object<span class="token operator">></span>
+     Most recently observed status of the Deployment.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>我们可以看到上面的信息和我们在 API 文档中查看到的基本一致，比如我们看到其中 <code>spec</code> 字段是一个 <code>&lt;Object&gt;</code> 类型的，证明该字段下面是一个对象，我们可以继续去查看这个字段下面的详细信息：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl explain deployment.spec
+KIND:     Deployment
+VERSION:  apps/v1
+
+RESOURCE: spec <span class="token operator">&lt;</span>Object<span class="token operator">></span>
+
+DESCRIPTION:
+     Specification of the desired behavior of the Deployment.
+
+     DeploymentSpec is the specification of the desired behavior of the
+     Deployment.
+
+FIELDS:
+   minReadySeconds  <span class="token operator">&lt;</span>integer<span class="token operator">></span>
+     Minimum number of seconds <span class="token keyword">for</span> <span class="token function">which</span> a newly created pod should be ready
+     without any of its container crashing, <span class="token keyword">for</span> it to be considered available.
+     Defaults to <span class="token number">0</span> <span class="token punctuation">(</span>pod will be considered available as soon as it is ready<span class="token punctuation">)</span>
+
+   paused   <span class="token operator">&lt;</span>boolean<span class="token operator">></span>
+     Indicates that the deployment is paused.
+
+   progressDeadlineSeconds  <span class="token operator">&lt;</span>integer<span class="token operator">></span>
+     The maximum <span class="token function">time</span> <span class="token keyword">in</span> seconds <span class="token keyword">for</span> a deployment to <span class="token function">make</span> progress before it is
+     considered to be failed. The deployment controller will <span class="token builtin class-name">continue</span> to process
+     failed deployments and a condition with a ProgressDeadlineExceeded reason
+     will be surfaced <span class="token keyword">in</span> the deployment status. Note that progress will not be
+     estimated during the <span class="token function">time</span> a deployment is paused. Defaults to 600s.
+
+   replicas <span class="token operator">&lt;</span>integer<span class="token operator">></span>
+     Number of desired pods. This is a pointer to distinguish between explicit
+     zero and not specified. Defaults to <span class="token number">1</span>.
+
+   revisionHistoryLimit <span class="token operator">&lt;</span>integer<span class="token operator">></span>
+     The number of old ReplicaSets to retain to allow rollback. This is a
+     pointer to distinguish between explicit zero and not specified. Defaults to
+     <span class="token number">10</span>.
+
+   selector <span class="token operator">&lt;</span>Object<span class="token operator">></span> -required-
+     Label selector <span class="token keyword">for</span> pods. Existing ReplicaSets whose pods are selected by
+     this will be the ones affected by this deployment. It must match the pod
+     template's labels.
+
+   strategy <span class="token operator">&lt;</span>Object<span class="token operator">></span>
+     The deployment strategy to use to replace existing pods with new ones.
+
+   template <span class="token operator">&lt;</span>Object<span class="token operator">></span> -required-
+     Template describes the pods that will be created.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
 
                 
             </div>
@@ -898,7 +857,7 @@ mov	cr0, eax<span aria-hidden="true" class="line-numbers-rows"><span></span><spa
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://example.com/shi-mo-shi-dao-bao-hu-mo-shi/">http://example.com/shi-mo-shi-dao-bao-hu-mo-shi/</a>
+                    <a href="http://example.com/k8s-zi-yuan-qing-dan/">http://example.com/k8s-zi-yuan-qing-dan/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -936,8 +895,12 @@ mov	cr0, eax<span aria-hidden="true" class="line-numbers-rows"><span></span><spa
                     
                         <div class="article-tag">
                             
-                                <a href="/tags/OS/">
-                                    <span class="chip bg-color">OS</span>
+                                <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
+                                    <span class="chip bg-color">云计算</span>
+                                </a>
+                            
+                                <a href="/tags/k8s/">
+                                    <span class="chip bg-color">k8s</span>
                                 </a>
                             
                         </div>
@@ -1107,29 +1070,30 @@ mov	cr0, eax<span aria-hidden="true" class="line-numbers-rows"><span></span><spa
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
-                <a href="/gdt-yu-miao-shu-fu/">
+                <a href="/k8s-zi-yuan-qing-dan/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="GDT与描述符">
+                        <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="k8s资源清单">
                         
-                        <span class="card-title">GDT与描述符</span>
+                        <span class="card-title">k8s资源清单</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            
+                            搭建好k8s之后，就可以在集群中跑一些应用啦，不过在跑之前，要先知道几个概念。
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2022-02-22
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-02-28
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-user fa-fw"></i>
@@ -1138,11 +1102,16 @@ mov	cr0, eax<span aria-hidden="true" class="line-numbers-rows"><span></span><spa
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/OS/">
-                        <span class="chip bg-color">OS</span>
+                    <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
+                        <span class="chip bg-color">云计算</span>
+                    </a>
+                    
+                    <a href="/tags/k8s/">
+                        <span class="chip bg-color">k8s</span>
                     </a>
                     
                 </div>
@@ -1156,24 +1125,24 @@ mov	cr0, eax<span aria-hidden="true" class="line-numbers-rows"><span></span><spa
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/unicode-he-utf-8/">
+                <a href="/kubeadm-da-jian-k8s-ji-qun-dan-master/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/11.jpg" class="responsive-img" alt="Unicode和UTF-8">
+                        <img src="/medias/featureimages/8.jpg" class="responsive-img" alt="kubeadm搭建k8s集群（单master）">
                         
-                        <span class="card-title">Unicode和UTF-8</span>
+                        <span class="card-title">kubeadm搭建k8s集群（单master）</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            都知道Unicode编码，但我经常把它和UTF-8弄混，都是囫囵吞枣式的理解，基础不扎实。今天突然想搞清楚它俩的前世今生缘，想着连这都不知道也太Low了，就去查了查资料，发现比我想象的要复杂。
+                            本篇将记录采用kubeadm快速搭建单master的k8s集群的全过程，用于对k8s的学习。为了根据最新的集群特性，我们这里安装目前最新的版本 v1.16.2，如果在生产环境使用，建议使用上一个版本中最大的修正版本，比如 v1.15.5，由
                         
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-02-15
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-02-27
                             </span>
                         <span class="publish-author">
                             
@@ -1186,8 +1155,16 @@ mov	cr0, eax<span aria-hidden="true" class="line-numbers-rows"><span></span><spa
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/%E7%BC%96%E7%A0%81/">
-                        <span class="chip bg-color">编码</span>
+                    <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
+                        <span class="chip bg-color">云计算</span>
+                    </a>
+                    
+                    <a href="/tags/k8s/">
+                        <span class="chip bg-color">k8s</span>
+                    </a>
+                    
+                    <a href="/tags/kubeadm/">
+                        <span class="chip bg-color">kubeadm</span>
                     </a>
                     
                 </div>
