@@ -525,7 +525,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    2k
+                    2.1k
                 </div>
                 
 
@@ -557,7 +557,7 @@
 <img src = 'https://i.bmp.ovh/imgs/2022/02/72036687bde47a0d.png' style="zoom:67%;" />
 
 <p>这个结构看上去很复杂，一共26个字段，104字节。实际上，104字节只是TSS的最小尺寸，按照需要还可以再接上个IO位图，不过这些现在不考虑。这里简单介绍一下第28字节及以上的一些字段：</p>
-<p><code>cr3</code>字段同理cr3寄存器，指向该任务所用的<code>页目录</code>基址。<code>ESP</code>为该任务的堆栈段的栈顶指针，即该任务的LDT中的堆栈段的栈顶地址。<code>CS</code>为该任务的代码段，即LDT中代码段的<code>选择子</code>、<code>SS</code>为该任务的堆栈段，即LDT中堆栈段的<code>选择子</code>。顾名思义，<code>LDT</code>就是该任务的LDT<code>选择子</code>。这里给出一个简单的任务TSS示例：</p>
+<p>这些字段都是CPU运行任务时要给响应寄存器设置的值，比如EAX=0100h，就会把eax寄存器设为eax。<code>cr3</code>字段即cr3寄存器，指向该任务所用的<code>页目录</code>基址。<code>ESP</code>为该任务的堆栈段的栈顶指针，即该任务的LDT中的堆栈段的栈顶地址。<code>CS</code>为该任务的代码段，即LDT中代码段的<code>选择子</code>、<code>SS</code>为该任务的堆栈段，即LDT中堆栈段的<code>选择子</code>。顾名思义，<code>LDT</code>就是该任务的LDT<code>选择子</code>。EFLAGS寄存器的第9位<code>IF</code>指是否允许外部中断，置位是允许，所以将EFLAGS设为0200h才允许外部中断。这里给出一个简单的任务TSS示例：</p>
 <pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">[SECTION .TSSB]
 ALIGN	32
 [BITS	32]
