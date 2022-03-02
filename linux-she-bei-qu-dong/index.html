@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="k8s资源清单, SrcMiLeの杂货铺">
+    <meta name="keywords" content="Linux设备驱动, SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>k8s资源清单 | SrcMiLeの杂货铺</title>
+    <title>Linux设备驱动 | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -379,12 +379,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/22.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/4.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">k8s资源清单</h1>
+                    <h1 class="description center-align post-title">Linux设备驱动</h1>
                 </div>
             </div>
         </div>
@@ -500,12 +500,12 @@
                     
                     <div class="article-tag">
                         
-                            <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                                <span class="chip bg-color">云计算</span>
+                            <a href="/tags/OS/">
+                                <span class="chip bg-color">OS</span>
                             </a>
                         
-                            <a href="/tags/k8s/">
-                                <span class="chip bg-color">k8s</span>
+                            <a href="/tags/Linux/">
+                                <span class="chip bg-color">Linux</span>
                             </a>
                         
                     </div>
@@ -520,7 +520,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2022-02-28
+                    2022-03-03
                 </div>
                 
 
@@ -529,7 +529,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    3.4k
+                    2.3k
                 </div>
                 
 
@@ -549,288 +549,232 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <p>搭建好k8s之后，就可以在集群中跑一些应用啦，不过在跑之前，要先知道几个概念。</p>
-<span id="more"></span>
+                <p>在Linux中，一切皆文件，包括设备。对设备使用接口的实现，其实就是对文件操作接口的实现。本博客将详述一个简单的读写设备驱动的编写，理解设备即文件的理念。</p>
+<p>总所周知，Linux是整体式OS，采用<code>模块</code>的开发方式。当想添加什么新功能时，编写新的模块即可，设备也不例外。设备驱动程序的注册需要依赖模块，因此写驱动之前，要先明白如何编写模块。</p>
+<h2 id="编写Linux内核模块"><a href="#编写Linux内核模块" class="headerlink" title="编写Linux内核模块"></a>编写Linux内核模块</h2><p>这里编写一个简单的Linux内核，用来向内核的日志中打印不同的字符串。一个基础模块的编写不难，无非就是模块的<code>加载</code>函数和<code>卸载</code>函数，在Linux库中分别用<code>module_init()</code>和<code>module_exit</code>来实现。前者为安装模块时执行的动作，后者为卸载模块时执行的动作。因此，只需要在这两个函数中进行输出即可，完整代码如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">#include &lt;linux&#x2F;module.h&gt;
+#include &lt;linux&#x2F;kernel.h&gt;
+#include &lt;linux&#x2F;init.h&gt;
+&#x2F;&#x2F;模块许可证声明
+MODULE_LICENSE(&quot;Dual BSD&#x2F;GPLi&quot;);
+&#x2F;&#x2F;模块加载函数
+static int hello_init(void)
+&#123;
+	printk(KERN_ALERT &quot;Hello World enter\n&quot;);
+return 0;
+&#125;
+&#x2F;&#x2F;模块卸载函数
+static void hello_exit(void)
+&#123;
+	    printk(KERN_ALERT &quot;Hello World exit\n&quot;);
+    return;
+&#125;
+&#x2F;&#x2F;模块的注册
+module_init(hello_init);
+module_exit(hello_exit);
+&#x2F;&#x2F;声明模块的作者
+MODULE_AUTHOR(&quot;YeSiyuan&quot;);
+&#x2F;&#x2F;声明模块的描述
+MODULE_DESCRIPTION(&quot;This is a simple example!\n&quot;);
+&#x2F;&#x2F;声明模块的别名
+MODULE_ALIAS(&quot;A simplest example&quot;);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>第一个当然就是应用的<code>镜像</code>，因为我们在集群中运行的是容器，所以首先需要将我们的应用打包成镜像，或者直接从仓库中拉，很简单，这里就不再赘述了。</p>
-<p>镜像准备好了，k8s 集群也准备好了，我们就可以把应用部署到集群中了。但是镜像到集群中运行这个过程如何完成呢？</p>
-<p>在之前 Docker 环境下面我们是直接通过命令 <code>docker run</code> 来运行我们的应用的，在 k8s环境下面我们同样也可以用类似 <code>kubectl run</code> 这样的命令来运行我们的应用，但是在 k8s中却是不推荐使用命令行的方式，而是希望使用我们称为<code>资源清单</code>的东西来描述应用，资源清单可以用 YAML 或者 JSON 文件来编写，一般来说 YAML 文件更方便阅读和理解，所以我们的课程中都会使用 YAML 文件来进行描述。</p>
-<p>实际上，我们在集群中部署的应用，就是一个<code>Kubernetes Object</code>，或者叫<code>API Object</code>。在创建k8s对象时，必须提供对象的规约，用来描述该对象的期望状态，以及关于对象的一些基本信息（例如名称）。当使用<code>Kubernetes API</code>创建对象时（或直接创建，或基于kubectl），API请求必须在请求体中包含<code>JSON</code>格式的信息，就是上面说的JSON文件。而当使用YAML文件作资源清单时，kubectl会在发起API请求时自动将这些信息转换成JSON格式。</p>
-<p>通过一个资源清单文件来定义好一个应用后，我们就可以通过<code>kubectl</code>工具来直接运行它</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl create -f xxxx.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>其中，<code>printk</code>为内核态的输出函数，用于将内容输出进内核日志，可以用<code>dmesg</code>查看日志。<code>MODULE_LICENSE</code>用于指定模块的许可证声明，这个是必须的，包括后面的设备驱动编写。<code>MODULE_AUTHOR</code>、<code>MODULE_DESCRIPTIO</code>、<code>MODULE_ALIAS</code>用来声明作者、描述、别名，都是非必须的。</p>
+<p>编写完成后，即可开始编译。编译需要用Linux内核本身的编译工具，还需要附加一下链接，因此为了编译方便，我们编写一个Makefile文件，内容如下：</p>
+<pre class="line-numbers language-makefile" data-language="makefile"><code class="language-makefile">obj-m <span class="token operator">+=</span> hello.o  <span class="token comment"># 要和编译的cpp文件一致</span>
+  
+<span class="token comment">#generate the path</span>
+CURRENT_PATH<span class="token operator">:=</span><span class="token variable">$</span><span class="token punctuation">(</span><span class="token function">shell</span> pwd<span class="token punctuation">)</span>
+ 
+<span class="token comment">#the current kernel version number</span>
+LINUX_KERNEL<span class="token operator">:=</span><span class="token variable">$</span><span class="token punctuation">(</span><span class="token function">shell</span> uname -r<span class="token punctuation">)</span>
+ 
+<span class="token comment">#the absolute path--根据获取的内核版本拼装绝对路</span>
+LINUX_KERNEL_PATH<span class="token operator">:=</span>/lib/modules/<span class="token variable">$</span><span class="token punctuation">(</span>LINUX_KERNEL<span class="token punctuation">)</span>/build/
+ 
+<span class="token comment">#complie object</span>
+<span class="token target symbol">all</span><span class="token punctuation">:</span>
+        make -C <span class="token variable">$</span><span class="token punctuation">(</span>LINUX_KERNEL_PATH<span class="token punctuation">)</span> M<span class="token operator">=</span><span class="token variable">$</span><span class="token punctuation">(</span>CURRENT_PATH<span class="token punctuation">)</span>
+<span class="token comment">#clean</span>
+		 make -C <span class="token variable">$</span><span class="token punctuation">(</span>LINUX_KERNEL_PATH<span class="token punctuation">)</span> M<span class="token operator">=</span><span class="token variable">$</span><span class="token punctuation">(</span>CURRENT_PATH<span class="token punctuation">)</span> clean<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>我们知道 kubectl 是直接操作 <code>APIServer</code> 的，所以就相当于把我们的清单提交给了 APIServer，然后集群获取到清单描述的应用信息后存入到 <code>etcd</code> 数据库中，然后 <code>kube-scheduler</code> 组件发现这个时候有一个 <code>Pod</code> 还没有绑定到节点上，就会对这个 Pod 进行一系列的调度，把它调度到一个最合适的节点上，然后把这个节点和 Pod 绑定到一起（写回到 etcd），然后节点上的 kubelet 组件这个时候 watch 到有一个 Pod 被分配过来了，就去把这个 Pod 的信息拉取下来，然后根据描述通过容器运行时把容器创建出来，最后当然同样把 Pod 状态再写回到 etcd 中去，这样就完成了一整个的创建流程。</p>
+<p>在工作目录下执行命令make，它会自动找到该上述Makefile进行执行。编译完成后即可安装/卸载该模块。使用<code>insmod hello.ko</code>来安装，使用<code>rmmod hello.ko</code>来卸载，结果如下，注意要<code>sudo</code>。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/03/c3ee7eee2c20e6bc.png"></p>
 <hr>
-<h2 id="第一个容器化应用"><a href="#第一个容器化应用" class="headerlink" title="第一个容器化应用"></a>第一个容器化应用</h2><p>我们创建一个建议的nginx应用，是一个<code>Deployments</code>类型的API对象，其YAML资源清单文件如下，文件名为nginx-deployment.yaml。</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1  <span class="token comment"># API版本</span>
-<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment  <span class="token comment"># API对象类型</span>
-<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
-  <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>deploy
-  <span class="token key atrule">labels</span><span class="token punctuation">:</span>
-    <span class="token key atrule">chapter</span><span class="token punctuation">:</span> first<span class="token punctuation">-</span>app
-<span class="token key atrule">spec</span><span class="token punctuation">:</span>
-  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
-    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span>
-      <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx
-  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">2</span>  <span class="token comment"># tells deployment to run 2 pods matching the template</span>
-  <span class="token key atrule">template</span><span class="token punctuation">:</span>  <span class="token comment"># Pod template</span>
-    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>
-      <span class="token key atrule">labels</span><span class="token punctuation">:</span>
-        <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx
-    <span class="token key atrule">spec</span><span class="token punctuation">:</span>
-      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx
-        <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx<span class="token punctuation">:</span>1.7.9
-        <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-        <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">80</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="编写Linux设备驱动"><a href="#编写Linux设备驱动" class="headerlink" title="编写Linux设备驱动"></a>编写Linux设备驱动</h2><p>这里将简单的编写一个Linux驱动程序，功能：write 几个整数进去，read 出其和。先要明白，在Linux中设备即文件，对设备驱动程序的实现实际上就是对文件操作各个接口的的实现。文件操作的结构定义在结构体<code>file_operations</code>中，其是一个函数指针的集合，其中比较重要的的为<code>open()</code>，<code>close()</code>，<code>write()</code>,<code> read()</code>。这里就重点实现这四者。</p>
+<p>首先实现<code>open</code>，这个很简单，只需要<code>printk</code>一下就行：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">int hello_open(struct inode * ip, struct file * fp)
+&#123;
+    printk(&quot;%s : %d\n&quot;, __func__, __LINE__);
+    
+    &#x2F;* 一般用来做初始化设备的操作 *&#x2F;
+    return 0;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<blockquote>
-<p>Deployment对象，顾名思义，是用于部署应用的对象。它为Pod和ReplicaSet提供了一个声明式定义(declarative)方法，用来替代以前的<a target="_blank" rel="noopener" href="https://www.kubernetes.org.cn/replication-controller-kubernetes">ReplicationController</a>来方便的管理应用。典型的应用场景包括：</p>
-<ul>
-<li>定义Deployment来创建Pod和ReplicaSet</li>
-<li>滚动升级和回滚应用</li>
-<li>扩容和缩容</li>
-<li>暂停和继续Deployment</li>
-</ul>
-</blockquote>
-<p>写完yaml文件后，就可以用<code>kubectl apply</code>来创建上述对象：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl apply -f 
-deployment.apps/nginx-deployment created
-$ kubectl get pods
-NAME                            READY   STATUS    RESTARTS   AGE
-nginx-deploy-786b576769-6lcpn   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          108s
-nginx-deploy-786b576769-cz2f6   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          108s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>然后实现<code>close</code>，也只需要<code>printk</code>一下就行：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">int hello_close(struct inode * ip, struct file * fp)
+&#123;
+    printk(&quot;%s : %d\n&quot;, __func__, __LINE__);
+    
+    &#x2F;* 一般用来做和open相反的操作，open申请资源，close释放资源 *&#x2F;
+    return 0;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>可以看到，上述的Deployment创建出了两个Pod，因为资源清单里指令了字段<code>replicas: 2</code>。当然，Deployment本身也是个对象，因此我们也可以通过kubctl来查看到它的状态：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl get deployment
-NAME           READY   UP-TO-DATE   AVAILABLE   AGE
-nginx-deploy   <span class="token number">2</span>/2     <span class="token number">2</span>            <span class="token number">2</span>           12m<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>接着实现最重要的<code>wirte</code>函数和<code>read</code>函数。这里要求write函数能够写进去2个整数，然后read可以读回两数之和。需要注意的是，用户程序是工作在用户态的，而驱动程序是工作在<code>内核态</code>的，两者是不能直接进行数据通信的，必须借助一些通信函数才能实现，即<code>copy_from_user</code>和<code>copy_to_user</code>，前者将数据从用户空间拷贝到内核空间，后者将数据从内核空间拷贝到用户空间。因此，编写如下write函数：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">ssize_t hello_write(struct file * fp, const char __user * buf, size_t count, loff_t * loff)
+&#123;
+    int ret;
+    
+    &#x2F;* 将用户需要的数据从用户空间copy到内核空间(buf) *&#x2F;
+    printk(&quot;%s : %d\n&quot;, __func__, __LINE__);
+    if ((ret &#x3D; copy_from_user(data, buf, count)))
+    &#123;
+        printk(&quot;copy_from_user err\n&quot;);
+        return -1;
+    &#125;
+    printk(&quot;data1 &#x3D; %c\ndata2 &#x3D; %c\n&quot;,data[0],data[1]);
+    return count;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>其中，<code>READY 2/2</code>指该Deployment期望创建2个副本，实际创建了2个副本，这里的副本就是Pod。<code>UP-TO-DATE</code>指有多少个副本已更新到最新状态，这里两个Pod都是最新的。</p>
-<p>这个模板中定义了我们的 Pod 中只有一个名为 nginx 的容器，容器使用的镜像是 <code>nginx:1.7.9</code>（spec.containers[0].image），并且这个容器监听的端口是 80（spec.containers[0].ports[0].containerPort），另外我们还为 Pod 添加了一个<code>app: nginx</code>这样的 Label 标签，这里需要非常注意的是上面的 <code>selector.matchLabels</code> 区域就是来表示我们的 Deployment 来管理哪些 Pod 的，所以这个地方需要和 Pod 模板中的 Label 标签保持一致，非常重要的。</p>
-<p>另外我们也可以发现每个 API 对象都有一个 <code>Metadata</code> 的字段，用来表示该对象的元数据的，比如定义 name、namespace 等，比如上面 Deployment 和 Pod 模板中都有这个字段，至于为什么 Pod 模板中没有 name 这个元信息呢，这是因为 Deployment 这个控制器会自动在他自己的 name 基础上生成 Pod 名，不过 Deployment 下面定义的 Label 标签就没有 Pod 中定义的 Label 标签那么重要了，只是起到一个对该对象标识和过滤的作用。比如我们在查询对象的时候可以带上标签来进行过滤：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl get deployment -l <span class="token assign-left variable">chapter</span><span class="token operator">=</span>first-app
-NAME           READY   UP-TO-DATE   AVAILABLE   AGE
-nginx-deploy   <span class="token number">2</span>/2     <span class="token number">2</span>            <span class="token number">2</span>           51m
-$ kubectl get pods -l <span class="token assign-left variable">app</span><span class="token operator">=</span>nginx
-NAME                            READY   STATUS    RESTARTS   AGE
-nginx-deploy-786b576769-6lcpn   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          22m
-nginx-deploy-786b576769-cz2f6   <span class="token number">1</span>/1     Running   <span class="token number">0</span>          22m<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>接下来开始编写<code>read</code>函数。需要注意的是，文件操作接口中write和read的缓冲区参数的是char*类型的，而求和是数字求和，因此要减去两个z字符‘0’。完成后，计算出两数之和，然后返回该数即可，代码如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">ssize_t hello_read(struct file * fp, char __user * buf, size_t count, loff_t * loff)
+&#123;
+    int ret;
+    &#x2F;* 将用户需要的数据从内核空间copy到用户空间(buf) *&#x2F;
+    printk(&quot;%s : %d\n&quot;, __func__, __LINE__);
+    if ((ret &#x3D; copy_to_user(buf, data, count)))
+    &#123;
+        printk(&quot;copy_to_user err\n&quot;);
+        return -1;
+    &#125;
+    int sum &#x3D; data[0] + data[1] - &#39;0&#39; - &#39;0&#39;;
+    printk(&quot;sum is %d\n&quot;,sum);
+    return sum;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>到这里我们就完成了我们的第一个应用的容器化部署，但是往往我们在部署应用的过程中或多或少会遇到一些问题，这个时候我们可以使用一个 <code>kubectl describe</code> 命令来查看资源对象的详细信息，比如我们用下面的命令来查看 Pod 的详细信息：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl describe pod nginx-deploy-786b576769-6lcpn
-Name:         nginx-deploy-786b576769-6lcpn
-Namespace:    default
-Priority:     <span class="token number">0</span>
-Node:         node1/192.168.186.150
-Start Time:   Mon, <span class="token number">28</span> Feb <span class="token number">2022</span> <span class="token number">21</span>:07:03 +0800
-Labels:       <span class="token assign-left variable">app</span><span class="token operator">=</span>nginx
-              pod-template-hash<span class="token operator">=</span>786b576769
-Annotations:  <span class="token operator">&lt;</span>none<span class="token operator">></span>
-Status:       Running
-IP:           <span class="token number">10.244</span>.2.4
-IPs:
-  IP:           <span class="token number">10.244</span>.2.4
-Controlled By:  ReplicaSet/nginx-deploy-786b576769
-Containers:
-  nginx:
-    Container ID:   docker://59159005469e5cb0ee5dd544bb11f06bf16bd04290d01d6b0f39a81962f9ef52
-    Image:          nginx:latest
-    Image ID:       docker-pullable://nginx@sha256:0d17b565c37bcbd895e9d92315a05c1c3c9a29f762b011a10c54a66cd53c9b31
-    Port:           <span class="token number">80</span>/TCP
-    Host Port:      <span class="token number">0</span>/TCP
-    State:          Running
-      Started:      Mon, <span class="token number">28</span> Feb <span class="token number">2022</span> <span class="token number">21</span>:07:04 +0800
-    Ready:          True
-    Restart Count:  <span class="token number">0</span>
-    Environment:    <span class="token operator">&lt;</span>none<span class="token operator">></span>
-    Mounts:
-      /var/run/secrets/kubernetes.io/serviceaccount from default-token-fkt88 <span class="token punctuation">(</span>ro<span class="token punctuation">)</span>
-Conditions:
-  Type              Status
-  Initialized       True 
-  Ready             True 
-  ContainersReady   True 
-  PodScheduled      True 
-Volumes:
-  default-token-fkt88:
-    Type:        Secret <span class="token punctuation">(</span>a volume populated by a Secret<span class="token punctuation">)</span>
-    SecretName:  default-token-fkt88
-    Optional:    <span class="token boolean">false</span>
-QoS Class:       BestEffort
-Node-Selectors:  <span class="token operator">&lt;</span>none<span class="token operator">></span>
-Tolerations:     node.kubernetes.io/not-ready:NoExecute <span class="token keyword">for</span> 300s
-                 node.kubernetes.io/unreachable:NoExecute <span class="token keyword">for</span> 300s
-Events:
-  Type    Reason     Age        From               Message
-  ----    ------     ----       ----               -------
-  Normal  Scheduled  <span class="token operator">&lt;</span>unknown<span class="token operator">></span>  default-scheduler  Successfully assigned default/nginx-deploy-786b576769-6lcpn to node1
-  Normal  Pulled     22m        kubelet, node1     Container image <span class="token string">"nginx:latest"</span> already present on machine
-  Normal  Created    22m        kubelet, node1     Created container nginx
-  Normal  Started    22m        kubelet, node1     Started container nginx<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>编写完四个接口实现后，需要在<code>file_operations</code>结构体中对各接口进行注册，如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;* 分配file_operations结构体 *&#x2F;
+struct file_operations hello_fops &#x3D; &#123;
+    .owner &#x3D; THIS_MODULE,
+    .open  &#x3D; hello_open,
+    .release &#x3D; hello_close,
+    .read &#x3D; hello_read,
+    .write &#x3D; hello_write8.	
+&#125;;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>我们可以看到看到很多这个 Pod 的详细信息，比如调度到的节点、状态、IP 等，一般我们比较关心的是下面的 <code>Events</code> 部分，就是我们说的<strong>事件</strong>。在 Kubernetes 创建资源对象的过程中，对该对象的一些重要操作，都会被记录在这个对象的 <code>Events</code> 里面，可以通过 <code>kubectl describe</code> 指令查看对应的结果，所以这个指令会使以后排错过程中经常使用的指令。</p>
-<p><code>Events</code>中越往后的信息越新。比如上面的这个 Pod，可以看到它被创建之后，被调度器调度（Successfully assigned）到了 node1 节点上，然后指定的镜像已经在该节点上存在了，所以没有再去拉取镜像，然后创建我们定义的 nginx 容器，最后启动定义的容器。</p>
-<p>前面说过Deployment支持滚动升级，也就是滚动更新。当我们需要更新Deployment时，可以直接该上述yaml文件。比如这里要将Pod的nginx镜像版本改为latest：</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token punctuation">...</span>    
-    <span class="token key atrule">spec</span><span class="token punctuation">:</span>
-      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx
-        <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx<span class="token punctuation">:</span>latest  <span class="token comment"># 这里被从 1.7.9 修改为latest</span>
-        <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">80</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>最后，由于设备驱动程序也是借助了Linux的模块机制，添加设备也需要添加模块，因此还要实现init和exit即进行<code>module_init</code>和<code>module_exit</code>。和上一个任务的<code>init</code>不同，该任务由于要新增设备，因此在init的实现中要使用<code>MKDV</code>生成设备号，并使用<code>register_chrdev_region</code>来注册设备字符设备。注册完之后，还要通过<code>cdev_add</code>、<code>cdev_init</code>来分配、设置、注册<code>cdev</code>结构体，最终的init和exit代码为：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">struct cdev cdev; 
+static int hello_init(void)
+&#123;
+    int ret;
+    printk(&quot;%s : %d\n&quot;, __func__, __LINE__);
+    
+    &#x2F;* 1. 生成并注册设备号 *&#x2F;
+    devno &#x3D; MKDEV(major, 0);
+    ret  &#x3D; register_chrdev_region(devno, 1, DEVNAME);
+    if (ret !&#x3D; 0)
+    &#123;
+        printk(&quot;%s : %d fail to register_chrdev_region\n&quot;, __func__, __LINE__);
+        return -1;
+    &#125;
+    
+    &#x2F;* 3. 分配、设置、注册cdev结构体 *&#x2F;
+    cdev.owner &#x3D; THIS_MODULE;
+    ret &#x3D; cdev_add(&amp;cdev, devno, 1);
+    cdev_init(&amp;cdev, &amp;hello_fops);
+    if (ret &lt; 0)
+    &#123;
+        printk(&quot;%s : %d fail to cdev_add\n&quot;, __func__, __LINE__);
+        return -1;
+    &#125;
+    printk(&quot;Init success!\n&quot;);
+    return 0;
+&#125;
+ 
+static void hello_exit(void)
+&#123;
+    printk(&quot;%s : %d\n&quot;, __func__, __LINE__);
+      
+    &#x2F;* 释放资源 *&#x2F;
+    cdev_del(&amp;cdev);
+    unregister_chrdev_region(devno, 1);
+&#125;
+ 
+MODULE_LICENSE(&quot;GPL&quot;);
+module_init(hello_init);
+module_exit(hello_exit);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>然后再重新执行一次<code>kubectl apply</code>即可更新。我们不必担心当前的操作是创建，还是更新，k8s会更新yaml文件的内容变化自动处理。也就是，不管是创建还是更新，都可用命令：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl apply -f nginx-deployment.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>编写完设备驱动的代码后，同上一个任务，编写Makefile，模块名为ysy_dev，同cpp文件名：</p>
+<pre class="line-numbers language-makefile" data-language="makefile"><code class="language-makefile">KERNEL_PATH <span class="token operator">:=</span> /lib/modules/`uname -r`/build
+PWD <span class="token operator">:=</span> <span class="token variable">$</span><span class="token punctuation">(</span><span class="token function">shell</span> pwd<span class="token punctuation">)</span>
+MODULE_NAME <span class="token operator">:=</span> ysy_dev
+ 
+obj-m <span class="token operator">:=</span> <span class="token variable">$</span><span class="token punctuation">(</span>MODULE_NAME<span class="token punctuation">)</span>.o
+ 
+<span class="token target symbol">all</span><span class="token punctuation">:</span>
+	<span class="token variable">$</span><span class="token punctuation">(</span>MAKE<span class="token punctuation">)</span> -C <span class="token variable">$</span><span class="token punctuation">(</span>KERNEL_PATH<span class="token punctuation">)</span> M<span class="token operator">=</span><span class="token variable">$</span><span class="token punctuation">(</span>PWD<span class="token punctuation">)</span>
+ 
+<span class="token target symbol">clean</span><span class="token punctuation">:</span>
+	rm -rf .*.cmd *.o *.mod.c *.order *.symvers *.tmp *.ko<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
+<p>注意，模块是模块，设备是设备，设备只是借助模块来注册和卸载，所以设备名不等同于模块名，根据驱动代码可知，设备名为<code>ysy_device</code>。</p>
+<p>使用make进行编译，然后使用insmod来安装该模块，之后使用<code>cat /proc/devices</code>来查看所有设备编号，发现设备安装成功，如下：</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/03/635f65497e34ca1c.png"></p>
+<p>可以看到，设备安装成功，设备编号为255。但是，到该步为止只是将驱动安装到了内核中，如果想要访问驱动，必须先创建设备节点，通过设备节点来访问，输入命令：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">mknod</span> /dev/ysy_device c <span class="token number">255</span> <span class="token number">0</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>其中，c指字符设备，255是主编好，0是次编号，要和编写的设备对用。该命令会创建设备节点和设备挂钩，实际就是一个文件，位于<code>/dev</code>目录下。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/03/83b75198a56a32bf.png"></p>
+<p>至此，设备驱动与设备节点全部创建成功，可以开始测试。</p>
 <hr>
-<h2 id="YAML文件"><a href="#YAML文件" class="headerlink" title="YAML文件"></a>YAML文件</h2><p>YAML是专门用来写配置文件的语言，非常简洁和强大，远比JSON格式方便，它实质上是一种通用的数据串行化格式。其基本语法规则为：</p>
-<blockquote>
-<ul>
-<li>大小写敏感</li>
-<li>使用缩进表示层级关系</li>
-<li>缩进时不允许使用<code>Tab</code>键，只允许使用空格</li>
-<li>缩进的空格数目不重要，只要相同层级的元素左侧对齐即可</li>
-<li><code>#</code> 表示注释，从这个字符一直到行尾，都会被解析器忽略</li>
-</ul>
-</blockquote>
-<p>在 Kubernetes 中，我们只需要了解两种结构类型就行了：</p>
-<blockquote>
-<ul>
-<li>Lists</li>
-<li>Maps</li>
-</ul>
-</blockquote>
-<p>也就说，我们编写的资源文件，基本都是Lists和Maps的嵌套。</p>
-<h3 id="MAPS"><a href="#MAPS" class="headerlink" title="MAPS"></a>MAPS</h3><p>就是多个<code>key-value</code>，例如：</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token punctuation">---</span>
-<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
-<span class="token key atrule">kind</span><span class="token punctuation">:</span> Pod<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h2 id="设备测试"><a href="#设备测试" class="headerlink" title="设备测试"></a>设备测试</h2><p>编写了的测试程序代码如下，会接收第1个参数作为设备路径，然后使用设备驱动将第2、3个参数写入内核日志，并返回两数之和。不解释了，直接上代码：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys&#x2F;stat.h&gt;
+#include &lt;sys&#x2F;types.h&gt;
+#include &lt;fcntl.h&gt;
+ 
+int main(int argc, char * argv[])
+&#123;
+    int fd;
+    int ret;
+    char buf[2];   &#x2F;&#x2F; two num 
+    buf[0] &#x3D; argv[2][0];
+    buf[1] &#x3D; argv[3][0];
+    
+    &#x2F;* 将要打开的文件的路径通过main函数的参数传入 *&#x2F;
+    if (argc &lt; 2)&#123;
+        printf(&quot;Usage: %s &lt;filename&gt;\n&quot;, argv[0]);
+        return -1;
+    &#125;
+    fd &#x3D; open(argv[1], O_RDWR);
+    if (fd &lt; 0)&#123;
+        perror(&quot;fail to open file&quot;);
+        return -1;
+    &#125;
+ 
+    &#x2F;* write data *&#x2F;
+    ret &#x3D; write(fd, buf, sizeof(buf));
+	if (ret &lt; 0)&#123;
+        printf(&quot;read err!&quot;);
+        return -1;
+    &#125;
+    
+    &#x2F;* read data *&#x2F;
+    ret &#x3D; read(fd, buf, sizeof(buf));
+    if (ret &lt; 0)&#123;
+        printf(&quot;read err!&quot;);
+        return -1;
+    &#125;
+    printf(&quot;sum &#x3D; %d\n&quot;,ret);
+    
+    close(fd);
+    return 0;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>注意，首行的<code>---</code>是有意义的，但这里非必须。它是分隔符，在yaml中可以用它区分多个文件，这就意味着，在一个yaml文件中可以进行多个对象的描述，互相之间用<code>---</code>分隔即可。</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token punctuation">---</span>
-<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
-<span class="token key atrule">kind</span><span class="token punctuation">:</span> Pod
-<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
-  <span class="token key atrule">name</span><span class="token punctuation">:</span> ydzs<span class="token punctuation">-</span>site
-  <span class="token key atrule">labels</span><span class="token punctuation">:</span>
-    <span class="token key atrule">app</span><span class="token punctuation">:</span> web<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>上面的 YAML 文件，metadata 这个 KEY 对应的值就是一个 <code>Maps</code> 了，而且嵌套的 labels 这个 KEY 的值又是一个 Map，可以根据需求多层嵌套。</p>
-<p>YAML 根据行缩进来知道内容之间的嗯关联性的。比如上面的 YAML 文件，用了两个空格作为缩进，空格的数量并不重要，但是你得保持一致，并且至少要求一个空格（什么意思？就是你别一会缩进两个空格，一会缩进4个空格）。我们可以看到 name 和 labels 是相同级别的缩进，所以 YAML 处理器就知道了他们属于同一个 Map，而 app 是 labels 的值是因为 app 的缩进更大。</p>
-<blockquote>
-<p>注意！ 在 YAML 文件中绝对不要使用 tab 键来进行缩进，只能空格。</p>
-</blockquote>
-<h3 id="Lists"><a href="#Lists" class="headerlink" title="Lists"></a>Lists</h3><p><code>Lists</code>就是列表，说白了就是数组，在 YAML 文件中我们可以这样定义：</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">args
-  <span class="token punctuation">-</span> Cat
-  <span class="token punctuation">-</span> Dog
-  <span class="token punctuation">-</span> Fish<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>当然，Lists 的子项也可以是 Maps，Maps 的子项也可以是 Lists 如下所示：</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token punctuation">---</span>
-<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
-<span class="token key atrule">kind</span><span class="token punctuation">:</span> Pod
-<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
-  <span class="token key atrule">name</span><span class="token punctuation">:</span> ydzs<span class="token punctuation">-</span>site
-  <span class="token key atrule">labels</span><span class="token punctuation">:</span>
-    <span class="token key atrule">app</span><span class="token punctuation">:</span> web
-<span class="token key atrule">spec</span><span class="token punctuation">:</span>
-  <span class="token key atrule">containers</span><span class="token punctuation">:</span>
-    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> front<span class="token punctuation">-</span>end
-      <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx
-      <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-        <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">80</span>
-    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> flaskapp<span class="token punctuation">-</span>demo
-      <span class="token key atrule">image</span><span class="token punctuation">:</span> cnych/flaskapp
-      <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-        <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">5000</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>上面这个 YAML 文件，定义了一个叫 containers 的 List 对象，每个子项都由 name、image、ports 组成，每个 ports 都有一个 key 为 containerPort 的 Map 组成。</p>
-<hr>
-<h2 id="帮助命令"><a href="#帮助命令" class="headerlink" title="帮助命令"></a>帮助命令</h2><p>那么，我们该如何知道诸如Pod、Deployment这些API对象的资源清单该怎么写呢？有哪些字段需要指定，该怎么指定呢？答案就是官网 =&gt; <a target="_blank" rel="noopener" href="https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/">Workload Resources</a>。诸如Pod、ReplicaSet、Deployment这些都属于API对象的<code>Workload Resources</code>，官网会列出他们：</p>
-<p><img src="https://i.bmp.ovh/imgs/2022/02/3630664c03276690.png"></p>
-<p>点进想看的对象中，即可看见每个字段的意义。比如点进Deployment，可以看到apiVersion、kind、metadata、spec、selector等等。注意，如果字段后面标注了<code>requested</code>，就说明该字段是必须的，不能少。</p>
-<p><img src="https://i.bmp.ovh/imgs/2022/02/644e59ffc3fbe62a.png"></p>
-<p>差Web文档固然是个好方法，但是如果平时我们编写资源清单的时候都这样去查找文档，势必会效率低下。Kubernetes 也考虑到了这点，我们可以直接通过 kubectl 命令行工具来获取这些字段信息，同样的，比如我们要获取 Deployment 的字段信息，我们可以通过 <code>kubectl explain</code> 命令来了解：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl explain deployment
-KIND:     Deployment
-VERSION:  apps/v1
-
-DESCRIPTION:
-     Deployment enables declarative updates <span class="token keyword">for</span> Pods and ReplicaSets.
-
-FIELDS:
-   apiVersion   <span class="token operator">&lt;</span>string<span class="token operator">></span>
-     APIVersion defines the versioned schema of this representation of an
-     object. Servers should convert recognized schemas to the latest internal
-     value, and may reject unrecognized values. More info:
-     https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md<span class="token comment">#resources</span>
-
-   kind <span class="token operator">&lt;</span>string<span class="token operator">></span>
-     Kind is a string value representing the REST resource this object
-     represents. Servers may infer this from the endpoint the client submits
-     requests to. Cannot be updated. In CamelCase. More info:
-     https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md<span class="token comment">#types-kinds</span>
-
-   metadata <span class="token operator">&lt;</span>Object<span class="token operator">></span>
-     Standard object metadata.
-
-   spec <span class="token operator">&lt;</span>Object<span class="token operator">></span>
-     Specification of the desired behavior of the Deployment.
-
-   status   <span class="token operator">&lt;</span>Object<span class="token operator">></span>
-     Most recently observed status of the Deployment.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>我们可以看到上面的信息和我们在 API 文档中查看到的基本一致，比如我们看到其中 <code>spec</code> 字段是一个 <code>&lt;Object&gt;</code> 类型的，证明该字段下面是一个对象，我们可以继续去查看这个字段下面的详细信息：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl explain deployment.spec
-KIND:     Deployment
-VERSION:  apps/v1
-
-RESOURCE: spec <span class="token operator">&lt;</span>Object<span class="token operator">></span>
-
-DESCRIPTION:
-     Specification of the desired behavior of the Deployment.
-
-     DeploymentSpec is the specification of the desired behavior of the
-     Deployment.
-
-FIELDS:
-   minReadySeconds  <span class="token operator">&lt;</span>integer<span class="token operator">></span>
-     Minimum number of seconds <span class="token keyword">for</span> <span class="token function">which</span> a newly created pod should be ready
-     without any of its container crashing, <span class="token keyword">for</span> it to be considered available.
-     Defaults to <span class="token number">0</span> <span class="token punctuation">(</span>pod will be considered available as soon as it is ready<span class="token punctuation">)</span>
-
-   paused   <span class="token operator">&lt;</span>boolean<span class="token operator">></span>
-     Indicates that the deployment is paused.
-
-   progressDeadlineSeconds  <span class="token operator">&lt;</span>integer<span class="token operator">></span>
-     The maximum <span class="token function">time</span> <span class="token keyword">in</span> seconds <span class="token keyword">for</span> a deployment to <span class="token function">make</span> progress before it is
-     considered to be failed. The deployment controller will <span class="token builtin class-name">continue</span> to process
-     failed deployments and a condition with a ProgressDeadlineExceeded reason
-     will be surfaced <span class="token keyword">in</span> the deployment status. Note that progress will not be
-     estimated during the <span class="token function">time</span> a deployment is paused. Defaults to 600s.
-
-   replicas <span class="token operator">&lt;</span>integer<span class="token operator">></span>
-     Number of desired pods. This is a pointer to distinguish between explicit
-     zero and not specified. Defaults to <span class="token number">1</span>.
-
-   revisionHistoryLimit <span class="token operator">&lt;</span>integer<span class="token operator">></span>
-     The number of old ReplicaSets to retain to allow rollback. This is a
-     pointer to distinguish between explicit zero and not specified. Defaults to
-     <span class="token number">10</span>.
-
-   selector <span class="token operator">&lt;</span>Object<span class="token operator">></span> -required-
-     Label selector <span class="token keyword">for</span> pods. Existing ReplicaSets whose pods are selected by
-     this will be the ones affected by this deployment. It must match the pod
-     template's labels.
-
-   strategy <span class="token operator">&lt;</span>Object<span class="token operator">></span>
-     The deployment strategy to use to replace existing pods with new ones.
-
-   template <span class="token operator">&lt;</span>Object<span class="token operator">></span> -required-
-     Template describes the pods that will be created.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
+<p>使命令<code>sudo ./devTest.o /dev/ysy_deivce 3 4 </code>来执行测试程序，打开设备驱动并计算3和4的和，并使用dmesg查看内核缓冲区，结果如下：</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/03/fc7592f5505a1f5a.png"></p>
+<p>可以看到，不仅测试程序返回了正确的执行结果，驱动程序还在内核中输出了相关信息。包括，两个输入数据分别为3和4，计算的求和结果为7都成功打印在了内核缓冲区。</p>
 
                 
             </div>
@@ -857,7 +801,7 @@ FIELDS:
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://example.com/k8s-zi-yuan-qing-dan/">http://example.com/k8s-zi-yuan-qing-dan/</a>
+                    <a href="http://example.com/linux-she-bei-qu-dong/">http://example.com/linux-she-bei-qu-dong/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -895,12 +839,12 @@ FIELDS:
                     
                         <div class="article-tag">
                             
-                                <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                                    <span class="chip bg-color">云计算</span>
+                                <a href="/tags/OS/">
+                                    <span class="chip bg-color">OS</span>
                                 </a>
                             
-                                <a href="/tags/k8s/">
-                                    <span class="chip bg-color">k8s</span>
+                                <a href="/tags/Linux/">
+                                    <span class="chip bg-color">Linux</span>
                                 </a>
                             
                         </div>
@@ -1070,9 +1014,10 @@ FIELDS:
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
                 <a href="/linux-she-bei-qu-dong/">
                     <div class="card-image">
@@ -1090,9 +1035,9 @@ FIELDS:
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2022-03-03
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-03-03
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-user fa-fw"></i>
@@ -1101,6 +1046,7 @@ FIELDS:
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
@@ -1123,24 +1069,24 @@ FIELDS:
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/kubeadm-da-jian-k8s-ji-qun-dan-master/">
+                <a href="/k8s-zi-yuan-qing-dan/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/8.jpg" class="responsive-img" alt="kubeadm搭建k8s集群（单master）">
+                        <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="k8s资源清单">
                         
-                        <span class="card-title">kubeadm搭建k8s集群（单master）</span>
+                        <span class="card-title">k8s资源清单</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            本篇将记录采用kubeadm快速搭建单master的k8s集群的全过程，用于对k8s的学习。为了根据最新的集群特性，我们这里安装目前最新的版本 v1.16.2，如果在生产环境使用，建议使用上一个版本中最大的修正版本，比如 v1.15.5，由
+                            搭建好k8s之后，就可以在集群中跑一些应用啦，不过在跑之前，要先知道几个概念。
                         
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-02-27
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-02-28
                             </span>
                         <span class="publish-author">
                             
@@ -1159,10 +1105,6 @@ FIELDS:
                     
                     <a href="/tags/k8s/">
                         <span class="chip bg-color">k8s</span>
-                    </a>
-                    
-                    <a href="/tags/kubeadm/">
-                        <span class="chip bg-color">kubeadm</span>
                     </a>
                     
                 </div>
