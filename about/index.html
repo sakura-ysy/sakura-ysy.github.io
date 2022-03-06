@@ -439,10 +439,15 @@
 
 
 
+<div class="statis">
+    <span class="count"><a href="/categories">5</a></span>
+    <span class="name">分类</span>
+</div>
+
 
 
 <div class="statis">
-    <span class="count"><a href="/tags">16</a></span>
+    <span class="count"><a href="/tags">15</a></span>
     <span class="name">标签</span>
 </div>
 
@@ -464,10 +469,15 @@
 
 
 
+<div class="statis">
+    <span class="count"><a href="/categories">5</a></span>
+    <span class="name">分类</span>
+</div>
+
 
 
 <div class="statis">
-    <span class="count"><a href="/tags">16</a></span>
+    <span class="count"><a href="/tags">15</a></span>
     <span class="name">标签</span>
 </div>
 
@@ -611,7 +621,7 @@
                 name: '文章篇数',
                 type: 'line',
                 color: ['#6772e5'],
-                data: [0,0,0,0,0,0,0,0,0,0,9,9,2],
+                data: [0,0,0,0,0,0,0,0,0,0,8,9,3],
                 markPoint: {
                     symbolSize: 45,
                     color: ['#fa755a','#3ecf8e','#82d3f4'],
@@ -653,7 +663,7 @@
                 type: 'pie',
                 radius: '50%',
                 color: ['#6772e5', '#ff9e0f', '#fa755a', '#3ecf8e', '#82d3f4', '#ab47bc', '#525f7f', '#f51c47', '#26A69A'],
-                data: [],
+                data: [{"name":"Docker","value":5},{"name":"OS内核","value":5},{"name":"Linux","value":2},{"name":"k8s基础与应用","value":3},{"name":"k8s源码","value":2}],
                 itemStyle: {
                     emphasis: {
                         shadowBlur: 10,
@@ -677,7 +687,7 @@
         xAxis: [
             {
                 type: 'category',
-                data: ["云计算","OS","Docker","分布式","k8s","Linux","Hexo","Blog","test","编码"]
+                data: ["云计算","OS","Docker","分布式","k8s","Linux","pod","Hexo","Blog","编码"]
             }
         ],
         yAxis: [
@@ -690,7 +700,7 @@
                 type: 'bar',
                 color: ['#82d3f4'],
                 barWidth : 18,
-                data: [9,7,5,5,4,2,1,1,1,1],
+                data: [10,7,5,5,5,2,2,1,1,1],
                 markPoint: {
                     symbolSize: 45,
                     data: [{
@@ -915,26 +925,26 @@
             
             
             
-            <a href="/tags/test/">
-                <span class="chip center-align waves-effect waves-light chip-default">test</span>
-            </a>
-            
-            
-            
             <a href="/tags/%E7%BC%96%E7%A0%81/">
                 <span class="chip center-align waves-effect waves-light chip-default">编码</span>
             </a>
             
             
             
-            <a href="/tags/%E6%B3%A2%E5%90%89/">
-                <span class="chip center-align waves-effect waves-light chip-default">波吉</span>
+            <a href="/tags/k8s/">
+                <span class="chip center-align waves-effect waves-light chip-default">k8s</span>
             </a>
             
             
             
-            <a href="/tags/k8s/">
-                <span class="chip center-align waves-effect waves-light chip-default">k8s</span>
+            <a href="/tags/pod/">
+                <span class="chip center-align waves-effect waves-light chip-default">pod</span>
+            </a>
+            
+            
+            
+            <a href="/tags/test/">
+                <span class="chip center-align waves-effect waves-light chip-default">test</span>
             </a>
             
             
@@ -959,12 +969,6 @@
             
             <a href="/tags/kubelet/">
                 <span class="chip center-align waves-effect waves-light chip-default">kubelet</span>
-            </a>
-            
-            
-            
-            <a href="/tags/pod/">
-                <span class="chip center-align waves-effect waves-light chip-default">pod</span>
             </a>
             
             
