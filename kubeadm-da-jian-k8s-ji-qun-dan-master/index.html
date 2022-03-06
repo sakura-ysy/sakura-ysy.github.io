@@ -882,7 +882,7 @@ node2    NotReady   <span class="token operator">&lt;</span>none<span class="tok
 <blockquote>
 <p>你必须部署一个基于 Pod 网络插件的 容器网络接口(CNI)，以便你的 Pod 可以相互通信。 在安装网络之前，**集群 DNS (CoreDNS) **将不会启动。</p>
 </blockquote>
-<p>接下来安装网络插件，可以在文档：<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/concepts/cluster-administration/networking/#how-to-implement-the-kubernetes-networking-model%E4%B8%AD%E9%80%89%E6%8B%A9%E6%88%91%E4%BB%AC%E8%A6%81%E7%94%A8%E7%9A%84%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6%EF%BC%8C%E8%BF%99%E9%87%8C%E4%BD%BF%E7%94%A8%E7%9A%84%E6%98%AF%60flannel%60%EF%BC%9A">https://kubernetes.io/zh/docs/concepts/cluster-administration/networking/#how-to-implement-the-kubernetes-networking-model中选择我们要用的网络插件，这里使用的是`flannel`：</a></p>
+<p>接下来安装网络插件，可以在文档：<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/concepts/cluster-administration/networking/#how-to-implement-the-kubernetes-networking-model">k8s网络插件</a> 中选择我们要用的网络插件，这里使用的是<code>flannel</code>：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ <span class="token function">wget</span> https://raw.githubusercontent.com/coreos/flannel/2140ac876ef134e0ed5af15c65e414cf26827915/Documentation/kube-flannel.yml
 <span class="token comment"># 因为有节点是多网卡，所以需要在资源清单文件中指定内网网卡</span>
 <span class="token comment"># 搜索到名为 kube-flannel-ds-amd64 的 DaemonSet，在kube-flannel容器下面</span>
