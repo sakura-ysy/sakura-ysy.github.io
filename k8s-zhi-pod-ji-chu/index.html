@@ -542,7 +542,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    1.5k
+                    1.6k
                 </div>
                 
 
@@ -566,7 +566,7 @@
 <p><img src="https://i.bmp.ovh/imgs/2022/03/eb53d2583485d0b4.png"></p>
 <h2 id="Pod原理"><a href="#Pod原理" class="headerlink" title="Pod原理"></a>Pod原理</h2><p>其实 Pod 也只是一个逻辑概念，真正起作用的还是 Linux 中 容器的 <code>Namespace</code> 和 <code>Cgroup</code> 这两个最基本的概念，Pod 被创建出来其实是一组共享了一些资源的容器而已。首先 Pod 里面的所有容器，都是共享的同一个 <code>Network namespace</code>，但是涉及到文件系统的时候，默认情况下 Pod 里面的容器之间的文件系统是完全隔离的，但是我们可以通过声明来共享同一个 <code>Volume</code>。</p>
 <p>对于共享同一个<code>Network namespace</code>这个概念是不是比较熟悉，在 Docker 网络模式中，我们可以指定新创建的容器和一个已经存在的容器共享一个 Network namespace，在运行容器的时候只需要指定 <code>--net=container:目标容器名</code> 这个参数就可以了，但是这种模式有一个明显的问题，那就是容器的启动有先后顺序问题，那么 Pod 是怎么来处理这个问题的呢？</p>
-<p>那就是加入一个中间容器（没有什么架构是加一个中间件解决不了的？）这个容器叫做 <code>Infra</code> 容器，而且这个容器在 Pod 中永远都是<code>第一个</code>被创建的容器，这样是不是其他容器都加入到这个 Infra 容器就可以了，这样就完全实现了 Pod 中的所有容器都和 Infra 容器共享同一个 Network namespace 了，如下图所示：</p>
+<p>那就是加入一个中间容器（没有什么架构是加一个中间件解决不了的？）这个容器叫做 <code>Infra</code> 容器，全称 Infrastructure Container，又叫<code>Pause</code>容器。这个容器在 Pod 中永远都是<code>第一个</code>被创建的容器，这样是不是其他容器都加入到这个 Infra 容器就可以了，这样就完全实现了 Pod 中的所有容器都和 Infra 容器共享同一个 Network namespace 了，如下图所示：</p>
 <p><img src="https://i.bmp.ovh/imgs/2022/03/f2c9fed8ebf3d6e2.png"></p>
 <p>所以当我们部署完成 k8s 集群的时候，首先需要保证在所有节点上可以拉取到默认的 Infra 镜像，默认情况下 Infra 镜像地址为 <code>k8s.gcr.io/pause:3.1</code>，这个容器占用的资源非常少，但是这个镜像默认是需要科学上网的，所以很多时候我们在部署应用的时候一直处于 <code>Pending</code> 状态，因为所有 Pod 最先启动的容器镜像都拉不下来，启动不了，那其他容器肯定也就不能启动了。</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@master k8s<span class="token punctuation">]</span>$ kubelet --help <span class="token operator">|</span><span class="token function">grep</span> infra
@@ -578,6 +578,13 @@
 <li>看到的网络设备信息和Infra容器完全一样；</li>
 <li>同一个Pod下的容器不能绑定相同的端口；</li>
 <li>Pod的声明周期只跟Infra容器一致，而与容器A和B无关。</li>
+</ul>
+<p>当然，Infra还提供其他的namespace，汇总如下：</p>
+<ul>
+<li>PID namespace：Pod中的不同应用程序可以看到其他应用程序的进程ID。</li>
+<li>Network namespace：Pod中的多个容器能够访问同一个IP和端口范围。</li>
+<li>IPC namespace：Pod中的多个容器能够使用SystemV IPC或POSIX消息队列进行通信。</li>
+<li>UTS namespace：Pod中的多个容器共享一个主机名。</li>
 </ul>
 <p>对于文件系统 k8s 是怎么实现让一个 Pod 中的容器共享的呢？默认情况下容器的文件系统是互相隔离的，要实现共享只需要在 Pod 的顶层声明一个 <code>Volume</code>，然后在需要共享这个 Volume 的容器中声明挂载即可。</p>
 <p><img src="https://i.bmp.ovh/imgs/2022/03/0d53d31bcb0b12ac.png"></p>
@@ -861,18 +868,17 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="far fa-dot-circle"></i>&nbsp;本篇
-            </div>
+                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/k8s-zhi-pod-ji-chu/">
+                <a href="/k8s-zhi-pod-sheng-ming-zhou-qi/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/14.jpg" class="responsive-img" alt="k8s之Pod基础">
+                        <img src="/medias/featureimages/11.jpg" class="responsive-img" alt="k8s之Pod生命周期">
                         
-                        <span class="card-title">k8s之Pod基础</span>
+                        <span class="card-title">k8s之Pod生命周期</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -882,9 +888,9 @@
                         
                     </div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-03-06
-                            </span>
+                        <span class="publish-date">
+                            <i class="far fa-clock fa-fw icon-date"></i>2022-03-07
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -897,7 +903,6 @@
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
