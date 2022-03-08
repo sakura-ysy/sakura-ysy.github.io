@@ -542,7 +542,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    4.4k
+                    4.7k
                 </div>
                 
 
@@ -930,7 +930,18 @@ NAME     STATUS   ROLES    AGE   VERSION
 master   Ready    master   76m   v1.16.2
 node2    Ready    <span class="token operator">&lt;</span>none<span class="token operator">></span>   74m   v1.16.2<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
-<hr>
+<p>至于为什么说这个配置在一个节点运行，可以看下flannel的yaml文件中有这么一行：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token punctuation">...</span>
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> DaemonSet
+<span class="token punctuation">...</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>DeaomSet也是一个k8s对象，它保证在<strong>每个Node</strong>上都运行一个容器副本，常用来部署一些集群的日志、监控或者其他系统管理应用。典型的应用包括：</p>
+<ul>
+<li>日志收集，比如fluentd，logstash等</li>
+<li>系统监控，比如Prometheus Node Exporter，collectd，New Relic agent，Ganglia gmond等</li>
+<li>系统程序，比如kube-proxy, kube-dns, glusterd, ceph等</li>
+</ul>
 <h2 id="Dashboard"><a href="#Dashboard" class="headerlink" title="Dashboard"></a>Dashboard</h2><p>Dashboard 是基于网页的 Kubernetes 管理界面，你可以使用 Dashboard 获取运行在集群中的应用的概览信息，也可以创建或者修改 Kubernetes 资源 （如 Deployment，Job，DaemonSet 等等）。例如，你可以对 Deployment 实现弹性伸缩、发起滚动升级、重启 Pod 或者使用向导创建新的应用等。在集群中的任何一个节点运行即可。</p>
 <p>v1.16.2 版本的集群需要安装最新的 2.0+ 版本的 Dashboard，首先下载下来：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ <span class="token function">wget</span> https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-beta5/aio/deploy/recommended.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
@@ -1020,6 +1031,10 @@ $ kubectl get secret admin-token-ctmrh -o <span class="token assign-left variabl
 $ <span class="token function">ifconfig</span> cni0 down <span class="token operator">&amp;&amp;</span> <span class="token function">ip</span> <span class="token function">link</span> delete cni0
 $ <span class="token function">ifconfig</span> flannel.1 down <span class="token operator">&amp;&amp;</span> <span class="token function">ip</span> <span class="token function">link</span> delete flannel.1
 $ <span class="token function">rm</span> -rf /var/lib/cni/<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>注意，第2、3步非常重要，要删除cni0和flannel.1虚拟网卡。以cni0为例，之前说过，新加入的节点会在刚建立第一个Pod时建立一个cni0网卡，并在Pod网段中给它分配IP。</p>
+<p>如果之前的cni0没有删除，很不幸，这个node并不会覆盖之前的cni0或者直接使用它，而是会一直尝试用新的ip创建一个cni0并会一直失败，导致这个node上的Pod根本无法建立，<code>describe</code>可以看到Pod创建错误如下：</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/03/e8e6d81e44ab5e5b.png"></p>
 
                 
             </div>

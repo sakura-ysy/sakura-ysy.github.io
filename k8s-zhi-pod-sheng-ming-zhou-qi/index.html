@@ -542,7 +542,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    5.2k
+                    7k
                 </div>
                 
 
@@ -1070,7 +1070,111 @@ message
 Hello from the preStop Handler<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>最后，Hook 调用的日志没有暴露个给 Pod，所以只能通过 describe 命令来获取。如果<code>postStart</code>或 <code>preStop</code>失败阻塞，可以在Event中看到<code>FailedPostStartHook</code> 或 <code>FailedPreStopHook</code>的信息。</p>
-<h2 id="Pod健康检查"><a href="#Pod健康检查" class="headerlink" title="Pod健康检查"></a>Pod健康检查</h2>
+<h2 id="Pod健康检查"><a href="#Pod健康检查" class="headerlink" title="Pod健康检查"></a>Pod健康检查</h2><p>接下来看看Pod健康检查部分。顾名思义，健康检查就是定时检查一下Pod是否健康，严格来讲是检查Pod中Container是否健康。容器怎么才算健康，k8s认为，一是正在运行，二是已就绪可以通信。这两种健康状态分别用<code>liveness probe</code>和<code>readindess probe</code>来检查。probe是探针的意思，很形象了，定期去探测，像探针一样。</p>
+<ul>
+<li>kubelet 通过使用 <code>liveness probe</code> 来确定容器是否正在运行，通俗点将就是是否还活着。一般来说，如果容器崩溃了， Kubernetes 就会立刻知道它已经终止了，然后就会重启这个程序。而我们的 liveness probe 的目的就是来捕获到当前应用程序还没有终止，还没有崩溃，如果出现了这些情况，那么就<strong>重启</strong>处于该状态下的容器，使应用程序在存在 bug 的情况下依然能够继续运行下去。</li>
+<li>kubelet 使用 <code>readiness probe</code> 来确定容器是否已经就绪可以接收流量过来了。这个探针通俗点讲就是说是否准备好了，现在可以开始工作了。只有当 Pod 中的容器都处于就绪状态的时候 kubelet 才会认定该 Pod 处于就绪状态，因为一个 Pod 下面可能会有多个容器。当然 Pod 如果处于非就绪状态，那么我们就会将他从 Service 的 Endpoints 列表中移除出来，这样我们的流量就不会被路由到这个 Pod 里面来了。</li>
+</ul>
+<p>这两个探针也是可以在源码中找到的，位于Container结构中：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// A single application container that you want to run within a pod.</span>
+<span class="token keyword">type</span> Container <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// Periodic probe of container liveness.</span>
+	<span class="token comment">// Container will be restarted if the probe fails.</span>
+    LivenessProbe <span class="token operator">*</span>Probe <span class="token string">`json:"livenessProbe,omitempty" protobuf:"bytes,10,opt,name=livenessProbe"`</span>
+    <span class="token comment">// Periodic probe of container service readiness.</span>
+	<span class="token comment">// Container will be removed from service endpoints if the probe fails.</span>
+    ReadinessProbe <span class="token operator">*</span>Probe <span class="token string">`json:"readinessProbe,omitempty" protobuf:"bytes,11,opt,name=readinessProbe"`</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>资源清单中，探针支持三种配置方式：</p>
+<ul>
+<li>exec：执行一段命令</li>
+<li>http：检测某个 http 请求</li>
+<li>tcpSocket：使用此配置，kubelet 将尝试在指定端口上打开容器的套接字。如果可以建立连接，容器被认为是健康的，如果不能就认为是失败的。实际上就是检查端口。</li>
+</ul>
+<p>这里只说第一个，exec。</p>
+<p>先说说<code>liveness probe</code>，如果用exec的话，它其实一条周期性执行的命令。如果该命令执行成功，说明容器还活着，不然的话，就会认为容器已经宕机了，然后重启容器，怎么重启，就是前面说的<code>重启策略</code>了。</p>
+<p>实验一下，编写一个Pod，就一个容器。容器里声明一个<code>liveness probe</code>，这个probe会每5秒打印容器内的一个文件，仅此而已。但是这个容器会做一件事，那就是在启动之初创建上面那个文件，然后在30秒后把它给删了。资源清单如下：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Pod
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> liveness<span class="token punctuation">-</span>exec
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">containers</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> liveness
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> busybox
+    <span class="token key atrule">args</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> /bin/sh
+    <span class="token punctuation">-</span> <span class="token punctuation">-</span>c
+    <span class="token punctuation">-</span> touch /tmp/healthy; sleep 30; rm <span class="token punctuation">-</span>rf /tmp/healthy; sleep 600
+    <span class="token key atrule">livenessProbe</span><span class="token punctuation">:</span>
+      <span class="token key atrule">exec</span><span class="token punctuation">:</span>
+        <span class="token key atrule">command</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> cat
+        <span class="token punctuation">-</span> /tmp/healthy
+      <span class="token key atrule">initialDelaySeconds</span><span class="token punctuation">:</span> <span class="token number">5</span>
+      <span class="token key atrule">periodSeconds</span><span class="token punctuation">:</span> <span class="token number">5</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>可以看到，在容器启动时，它会执行命令：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ /bin/sh -c <span class="token string">"touch /tmp/healthy; sleep 30; rm -rf /tmp/healthy; sleep 600"</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>在容器内，声明了一个<code>livenessProbe</code>，其中的exec不用说，而后面两个参数分别代表第一次延时和执行间隔，具体为：</p>
+<ul>
+<li><code>initialDelaySeconds</code>：表示在第一次执行探针的时候要等待5秒，这样能够确保我们的容器能够有足够的时间启动起来。想象一下，如果没有这个初始延时，容器启动完成之前探针就执行了，那么它肯定会失败的。这样的话，kubelet 就认为该容器需要重启，从而无限制的重启容器。</li>
+<li><code>periodSeconds</code>：表示让 kubelet 每隔5秒执行一次探针，也就是每5秒执行一次上面的<code>cat /tmp/healthy</code>命令，如果命令执行成功了，将返回0，那么 kubelet 就会认为当前这个容器是存活的，如果返回的是非0值，那么 kubelet 就会把该容器杀掉然后重启它。默认是10秒，最小1秒。</li>
+</ul>
+<p>直接运行该Pod，并在30s内查看Events，发现没有什么信息，容器正常启动</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@master k8s<span class="token punctuation">]</span>$ kubectl apply -f liveness-exec.yaml 
+pod/liveness-exec created
+<span class="token punctuation">[</span>root@master k8s<span class="token punctuation">]</span>$ kubectl describe pod liveness-exec
+<span class="token punctuation">..</span>. 
+Events:
+  Type    Reason     Age        From               Message
+  ----    ------     ----       ----               -------
+  Normal  Scheduled  <span class="token operator">&lt;</span>unknown<span class="token operator">></span>  default-scheduler  Successfully assigned default/liveness-exec to node2
+  Normal  Pulling    20s        kubelet, node2     Pulling image <span class="token string">"busybox"</span>
+  Normal  Pulled     4s         kubelet, node2     Successfully pulled image <span class="token string">"busybox"</span>
+  Normal  Created    4s         kubelet, node2     Created container liveness
+  Normal  Started    4s         kubelet, node2     Started container liveness<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>等一会后（大于30s），容器已经把<code>/tmp/healthy</code>删了，所以探针命令不会执行成功了，这时候再看一下Events：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@master k8s<span class="token punctuation">]</span>$ kubectl describe pod liveness-exec
+<span class="token punctuation">..</span>.
+Events:
+  Type     Reason     Age                  From               Message
+  ----     ------     ----                 ----               -------
+  Normal   Scheduled  <span class="token operator">&lt;</span>unknown<span class="token operator">></span>            default-scheduler  Successfully assigned default/liveness-exec to node2
+  Normal   Pulling    71s <span class="token punctuation">(</span>x2 over 2m38s<span class="token punctuation">)</span>  kubelet, node2     Pulling image <span class="token string">"busybox"</span>
+  Normal   Pulled     55s <span class="token punctuation">(</span>x2 over 2m22s<span class="token punctuation">)</span>  kubelet, node2     Successfully pulled image <span class="token string">"busybox"</span>
+  Normal   Created    55s <span class="token punctuation">(</span>x2 over 2m22s<span class="token punctuation">)</span>  kubelet, node2     Created container liveness
+  Normal   Started    55s <span class="token punctuation">(</span>x2 over 2m22s<span class="token punctuation">)</span>  kubelet, node2     Started container liveness
+  Warning  Unhealthy  11s <span class="token punctuation">(</span>x6 over 111s<span class="token punctuation">)</span>   kubelet, node2     Liveness probe failed: cat: can<span class="token string">'t open '</span>/tmp/healthy': No such <span class="token function">file</span> or directory
+  Normal   Killing    11s <span class="token punctuation">(</span>x2 over 101s<span class="token punctuation">)</span>   kubelet, node2     Container liveness failed liveness probe, will be restarted<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>可以看到，<code>liveness probe</code>执行失败后，Pod变成了<code>unhealthy</code>，从描述中可以看到是因为这个探针运行失败了。紧接着，kubelet开始重启这个Container，所以会把原来那个<code>kill</code>掉，重启。用这个探针的话，容器只能”存活“30s，然后就会被重启：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@master k8s<span class="token punctuation">]</span>$ kubectl get pod liveness-exec
+NAME            READY   STATUS    RESTARTS   AGE
+liveness-exec   <span class="token number">1</span>/1     Running   <span class="token number">4</span>          7m24s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>大约每隔30s，上述RESTARTS数就会加一。</p>
+<p><code>readiness probe</code>的配置跟<code>liveness probe</code>基本上一致的。唯一的不同是使用<code>readinessProbe</code>而不是<code>livenessProbe</code>。两者如果同时使用的话就可以确保流量不会到达还未准备好的容器，准备好过后，如果应用程序出现了错误，则会重新启动容器。这个以后再说。</p>
+<p>另外除了上面的<code>initialDelaySeconds</code>和<code>periodSeconds</code>属性外，探针还可以配置如下几个参数：</p>
+<ul>
+<li>timeoutSeconds：探测超时时间，默认1秒，最小1秒。</li>
+<li>successThreshold：探测失败后，最少连续探测成功多少次才被认定为成功。默认是 1，但是如果是<code>liveness</code>则必须是 1。最小值是 1。</li>
+<li>failureThreshold：探测成功后，最少连续探测失败多少次才被认定为失败。默认是 3，最小值是 1。</li>
+</ul>
+<p>另外，<code>initialDelaySeconds</code>用来确保在容器启动后才执行探针，所以设置时间。但实际上，很多容器的启动时间是不确定的，比如拉镜像的时间很不稳定，如果设久了又不合适，那怎么办？</p>
+<p>在 k8s <code>v1.16</code> 版本官方特地新增了一个 <code>startupProbe（启动探针）</code>，该探针将推迟所有其他探针，直到 Pod 完成启动为止，使用方法和存活探针一样：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">startupProbe</span><span class="token punctuation">:</span>
+  <span class="token key atrule">httpGet</span><span class="token punctuation">:</span>
+    <span class="token key atrule">path</span><span class="token punctuation">:</span> /healthz
+    <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">8080</span>
+  <span class="token key atrule">failureThreshold</span><span class="token punctuation">:</span> <span class="token number">30</span>  <span class="token comment"># 尽量设置大点</span>
+  <span class="token key atrule">periodSeconds</span><span class="token punctuation">:</span> <span class="token number">10</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>上面这里的配置表示我们的慢速容器最多可以有5分钟（30个检查 * 10秒= 300s）来完成启动，期间不会有其他探针执行。</p>
+
                 
             </div>
             <hr/>
