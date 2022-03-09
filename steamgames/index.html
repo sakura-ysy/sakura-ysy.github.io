@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="Docker基础(三): 容器数据卷, SrcMiLeの杂货铺">
+    <meta name="keywords" content="Steam游戏库, SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>Docker基础(三): 容器数据卷 | SrcMiLeの杂货铺</title>
+    <title>Steam游戏库 | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -398,12 +398,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/22.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/20.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">Docker基础(三): 容器数据卷</h1>
+                    <h1 class="description center-align post-title">Steam游戏库</h1>
                 </div>
             </div>
         </div>
@@ -517,33 +517,12 @@
             <div class="row tag-cate">
                 <div class="col s7">
                     
-                    <div class="article-tag">
-                        
-                            <a href="/tags/Docker/">
-                                <span class="chip bg-color">Docker</span>
-                            </a>
-                        
-                            <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                                <span class="chip bg-color">云计算</span>
-                            </a>
-                        
-                            <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
-                                <span class="chip bg-color">分布式</span>
-                            </a>
-                        
-                    </div>
+                          <div class="article-tag">
+                            <span class="chip bg-color">无标签</span>
+                          </div>
                     
                 </div>
                 <div class="col s5 right-align">
-                    
-                    <div class="post-cate">
-                        <i class="fas fa-bookmark fa-fw icon-category"></i>
-                        
-                            <a href="/categories/Docker/" class="post-category">
-                                Docker
-                            </a>
-                        
-                    </div>
                     
                 </div>
             </div>
@@ -552,7 +531,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2022-01-23
+                    2022-03-09
                 </div>
                 
 
@@ -561,7 +540,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    2k
+                    1.2k
                 </div>
                 
 
@@ -581,80 +560,858 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <p>想象一下，你的公司使用docker在容器中部署了一个电商项目，数据全部存在容器中。现在，你一不小心把这个容器删了，里面的数据全没了，再也无法恢复。完了，公司的核心资产被你搞没了，猜猜你能在牢里蹲多久？</p>
-<span id="more"></span>
-
-<h2 id="啥是数据卷"><a href="#啥是数据卷" class="headerlink" title="啥是数据卷"></a>啥是数据卷</h2><p>当然，一个公司业务不可能这么脆弱，但是容器天生就有数据不持久的特点，数据随容器即生即灭，那有什么方法能让其中的重要数据持久化呢？答案就是<code>备份</code>。前面讲过，docker可以通过cp命令和export将容器中的数据备份到主机上，这不失是一种方法。但是，这种操作是一次性的，也即每需要备份时都要手动执行一次，当业务大时，这是不可想象的。那么有没有一种办法，使容器中特定目录和主机之间建立一个持久性的联系，实现自动备份？有的，这就是docker容器数据卷，简称<code>容器卷</code>，或<code>数据卷</code>，或<code>卷</code>。</p>
-<p>所谓卷，就是在主机的指定目录和容器内指定目录之间建立一个<code>双向</code>的管道，二者中的数据完全相同，且任意一者的更改都会同步到另一者之中，实现实时备份与数据共享。</p>
-<blockquote>
-<p><strong>数据卷(Data Volumes)<strong>是一个可供容器使用的特殊目录，它将主机OS目录直接映射进容器，类似于Linux的</strong>mount</strong>行为。</p>
-<p>​    ■ 数据卷可以在容器之间共享和重用，容器间传递数据将变得高效与方便；</p>
-<p>​    ■ 对数据卷内数据的修改会立马生效，无论是容器内操作还是本地操作；</p>
-<p>​    ■ 对数据卷的更新不会影响镜像，解耦开应用和数据；</p>
-<p>​    ■ 卷会一直存在，直到没有容器使用，可以安全卸载它；</p>
+                <blockquote>
+    <p>这可是第九艺术啊</p>
 </blockquote>
-<hr>
-<h2 id="创建数据卷"><a href="#创建数据卷" class="headerlink" title="创建数据卷"></a>创建数据卷</h2><p>Docker提供<code>volume</code>子命令来管理数据卷，如下命令可以在本地创建一个名为test的数据卷：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> volume create -d <span class="token builtin class-name">local</span> <span class="token builtin class-name">test</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<a href="https://steamcommunity.com/profiles/76561198997580810/" target="_blank"><img src="https://i.bmp.ovh/imgs/2022/03/42556b6c9243db47.jpg"></a>
+<style>
+    #steam-item1 a,
+#steam-item1 a:hover {
+  text-decoration: none;
+}
 
-<p>该数据卷存在本地主机的 <code>/var/lib/docker/volumes</code> 路径下，在该路径下会新建一个名为test的目录，就是创建的数据卷。使用<code>inspect</code>查看卷的信息：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> voulme inpect <span class="token builtin class-name">test</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+.steam-game-tabs {
+  margin-bottom: 15px;
+  margin-top: 15px;
+}
 
-<p>得到如下结果，</p>
-<img src="https://i.bmp.ovh/imgs/2022/01/0569fbc976e494b7.png" style="zoom: 80%;" />
+.steam-game-tab {
+  padding: 5px;
+}
 
-<p>可以看到，<code>Mountpoint</code>值为<code>/var/lib/docker/volumes/test/_data</code>，说明改卷会将选定的容器目录映射进主机的该目录中。如果想要让容器使用该卷，使用<code>run -v test:...</code>来绑定该卷即可。</p>
-<p>出来create和inspect，docker volume还支持<code>ls</code>（列出已有数据卷）、<code>prune</code>（清理无用数据卷）、<code>rm</code>（删除数据卷）等，当然这些命令都比较简单。</p>
-<hr>
-<h2 id="绑定数据卷"><a href="#绑定数据卷" class="headerlink" title="绑定数据卷"></a>绑定数据卷</h2><p>创建完数据卷后，使用<code>run</code>的<code>-v</code>（volume）选项来将容器的指定目录绑定上该数据卷，建立容器目录和主机目录之间的双向映射，以数据卷test为例，具体命令为：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run -d -v test:/data --name<span class="token operator">=</span>r3 redits:6.0.8<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+.steam-game-active {
+  background: #657b83;
+  color: #fff;
+}
 
-<p>上述命令将会创建容器r3，并将r3的<code>/data</code>目录映射到主机<code>/var/lib/docker/volumes/test/_data</code>目录中，当对r3的该目录进行操作时，主机也会进行同步。</p>
-<img src="https://i.bmp.ovh/imgs/2022/01/ccdd351da2233cae.png" style="zoom:80%;" />
+.steam-game-item {
+  position: relative;
+  clear: both;
+  min-height: 100px;
+  border-bottom: 1px #ddd solid;
+}
 
-<p>同样，在主机的对应目录下进行操作，/data也会同步。比如，前者创建一个文件或目录，后者也会跟着创建一个文件或目录，前者对某个文件进行更改，后者的该文件也会相应更新。</p>
-<p>现在你肯定想问，能不能不预先创建数据卷，直接在<code>run</code>时创建数据卷，进行目录映射，且指定主机目录？当然可以，依然使用<code>-v</code>选项，以r1的/data目录为例，命令形式为：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run -d -v 主机目录:/data --name<span class="token operator">=</span>r1 redits:6.0.8<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+@media screen and (max-width: 600px) {
+  .steam-game-item {
+    width: 100%;
+  }
+}
 
-<p>也可以用<code>--mount</code>选项来进行绑定。比如，使用 training/webapp 镜像创建 Web 容器，并创建一个数据卷挂载到容器的/opt/webapp 目录：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run -d -P --name web --mount <span class="token assign-left variable">type</span><span class="token operator">=</span>bind,source<span class="token operator">=</span>/webapp,destination<span class="token operator">=</span>/opt/ 
-webapp training/webapp python app.py<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+.steam-game-picture {
+  left: 0;
+  top: 0px;
+  width: 188px;
+  height: 80px;
+}
 
-<p>另外，<code>-v</code>是可以同时创建多个数据卷的，完成多对目录的映射（–mount应该也可以，没试过）。命令形式也很间，用多个-v就行了：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run -d -v 主机目录1:容器目录1 -v 主机目录2:容器目录2 --name<span class="token operator">=</span>r1 redits:6.0.8<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+.steam-game-info {
+  height: 80px;
+  padding-left: 30%;
+}
 
-<p>这里建议，在使用存储类服务时，一定要记得用数据卷，尤其是<strong>mysql</strong>这种！在用mysql创建容器时，一般都会将<code>log</code>、<code>data</code>、<code>config</code>均创建一个数据卷进行备份，因此，创建mysql容器通常用命令：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run -p <span class="token number">3307</span>:3306 --name mysql-master <span class="token punctuation">\</span>
--v /mydata/mysql-master/log:/var/log/mysql <span class="token punctuation">\</span>
--v /mydata/mysql-master/data:/var/lib/mysql <span class="token punctuation">\</span>
--v /mydata/mysql-master/conf:/etc/mysql <span class="token punctuation">\</span>
--e <span class="token assign-left variable">MYSQL_ROOT_PASSWORD</span><span class="token operator">=</span>root  <span class="token punctuation">\</span>
--d mysql<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+.steam-game-meta {
+  font-size: 12px;
+  padding-right: 10px;
+}
 
-<hr>
-<h2 id="权限"><a href="#权限" class="headerlink" title="权限"></a>权限</h2><p>数据卷有两种权限，一是<code>rw</code>（读写），一是<code>ro</code>（只读）。这里的权限是只针对容器而不针对主机的。比如，<code>rw</code>指容器对主机相应目录可读可写，<code>ro</code>指容器对主机相应目录只能读不能写。</p>
-<p>容器使用数据卷的默认权限是<code>rw</code>，如果想要用<code>ro</code>，对命令进行如下更改即可：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run -d -v 主机目录:/data:ro --name<span class="token operator">=</span>r1 redits:6.0.8<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+.steam-game-pagination {
+  margin-top: 15px;
+  text-align: center;
+  margin-bottom: 10px;
+}
 
-<p>注意，当使用<code>ro</code>后，不是指容器内的写操作不会被映射，而是指容器已经无法对该目录（容器内）进行任何写操作了，因为它是一个<code>Read-only file system</code>。</p>
-<p><img src="https://i.bmp.ovh/imgs/2022/01/3aa48b47a02047be.png"></p>
-<hr>
-<h2 id="数据卷容器"><a href="#数据卷容器" class="headerlink" title="数据卷容器"></a>数据卷容器</h2><p>如果你需要在多个容器之间共享一些持续更新的数据，最简单的方式是使用数据卷容器。数据卷容器也是一个容器，但是它的目的是专门提供数据卷给其他容器挂载。</p>
-<p>首先，创建一个容器dbdata，并在其中创建一个数据卷挂载到主机的/dbdata目录下：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run -it -v /dbdata:/ --name dbdata ubuntu<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+.steam-game-button {
+  padding: 5px;
+  display: inline-block;
+}
 
-<p>然后，可以在其他容器中使用<code>--volumes-from</code>来挂载dbdata容器中的数据卷，例如创建db1和db2两个容器，并从dbdata容器挂载数据卷：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run -it --volumes-from dbdata --name db1 ubuntu
-<span class="token function">docker</span> run -it --volumes-from dbdata --name db2 ubuntu<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+.steam-game-button:hover {
+  background: #657b83;
+  color: #fff;
+}
 
-<p>此时，容器db1和db2都挂载同一个数据卷到相同的/dbdata目录中，三个容器任何一方在该目录下的写入，其他容器都可以看到，当然，主机也能看到。</p>
-<p>从<code>--volumes-from</code>这个名字就可以看出来，这种关系可以理解为数据卷的<strong>继承</strong>。既然如此，那么可不可以层层继承？答案是可以的。比如，在上面的基础上，我们可以在创建一个容器db3，它将从db1处继承容器卷，这样一来，四台容器和主机都会互相连通。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run -it --volumes-from db1 --name db3 ubuntu<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+.steam-game-hide {
+  display: none;
+}
 
-<p>如果删除了”父类“容器（包括dbdata、db1和db2），数据卷并不会被删除，这意味着db3依然能够通过其与主机进行映射，即使其”父类“已经消失了。更好玩的是，当你停止了dbdata、db1和db2（并没有删除），然后在主机相应目录或db3相应目录进行写入，比如创建一个a.txt。然后再打开上面上个容器，它们仍然会同步这些数据，即出现a.txt。</p>
-<hr>
-<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>我挺好奇数据卷的实现原理的，比如它到底是对多个空间进行相互拷贝还是建立了一个共享空间，又比如它不属于联合文件系统（Union File System）到底是什么意思，这点我还没搞懂，而且也没查到相关的资料。等我搞懂了会补上，如果有大佬知道千万要告诉我，蟹蟹!</p>
+.steam-game-show {
+  display: block;
+}
 
+.steam-game-title {
+  font-size: 18px;
+}
+
+.steam-game-title a {
+  line-height: 1;
+  padding: 5px;
+}
+
+.steam-game-title a:hover {
+  padding: 5px;
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  border: 1px solid rgba(123, 123, 123, .5);
+  -webkit-transition: all .3s;
+  -moz-transition: all .3s;
+  -o-transition: all .3s;
+  transition: all .3s;
+}
+
+.steam-game-link {
+  min-height: 50px;
+}
+
+@media (max-width:400px) {
+  .steam-game-picture {
+    padding-left: 5px;
+  }
+
+  .steam-game-info {
+    position: relative;
+    left: 0;
+    top: 0px;
+    width: 188px;
+  }
+}
+
+.steam-game-picture img {
+  border: 2px solid #7b7b7b;
+  border-radius: 20px 7px;
+}
+
+.steam-game-button {
+  color: #00b8ff !important;
+  -webkit-transition: all .5s;
+  -moz-transition: all .5s;
+  -o-transition: all .5s;
+  transition: all .5s;
+  position: relative;
+}
+
+.steam-game-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  -webkit-transition: all .3s;
+  -moz-transition: all .3s;
+  -o-transition: all .3s;
+  transition: all .3s;
+}
+
+.steam-game-button:hover::before {
+  opacity: 0;
+  -webkit-transform: scale(1.2, 1.2);
+  transform: scale(1.2, 1.2);
+}
+
+.steam-game-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0;
+  background-color: rgba(255, 255, 255, .25);
+  -webkit-transition: all .3s;
+  -moz-transition: all .3s;
+  -o-transition: all .3s;
+  transition: all .3s;
+  -webkit-transform: scale(.5, .5);
+  transform: scale(.5, .5);
+}
+
+.steam-game-button:hover::after {
+  opacity: 1;
+  -webkit-transform: scale(1, 1);
+  transform: scale(1, 1);
+}
+</style>
+<div>
+    <div id="steam-item1">
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/431960/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/431960/">Wallpaper Engine：壁纸引擎</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 22 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/431960/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/431960">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1238810/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/1238810/">《战地风云 5》</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 19.1 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/1238810/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/1238810">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/359550/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/false/">Tom Clancy&#39;s Rainbow Six Siege</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 14.6 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/359550/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/359550">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1593500/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/1593500/">God of War</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 12.6 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/1593500/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/1593500">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/477160/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/477160/">人类一败涂地 / Human Fall Flat</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 6.1 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/477160/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/477160">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/239140/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/DyingLight/">Dying Light</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 4.8 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/239140/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/239140">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1366540/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/1366540/">戴森球计划</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 3.8 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/1366540/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/1366540">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/208650/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/208650/">Batman™: Arkham Knight</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 2.8 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/208650/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/208650">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1057090/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/1057090/">Ori and the Will of the Wisps</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 2.3 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/1057090/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/1057090">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/323190/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/323190/">Frostpunk</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 1.3 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/323190/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/323190">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/918570/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/918570/">Century: Age of Ashes</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 0.4 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/918570/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/918570">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/730/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/CSGO/">Counter-Strike: Global Offensive</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 0.2 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/730/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/730">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/501300/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/501300/">What Remains of Edith Finch</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 undefined 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/501300/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/501300">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/1091500/">赛博朋克 2077</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 undefined 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/1091500/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/1091500">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/550/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/L4D2/">Left 4 Dead 2</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 undefined 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/550/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/550">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/242760/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/242760/">The Forest</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 undefined 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/242760/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/242760">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/623990/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/false/">Tom Clancy&#39;s Rainbow Six Siege - Test Server</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 undefined 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/623990/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/623990">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1543030/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/1543030/">仙剑奇侠传七</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 undefined 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/1543030/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/1543030">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1426210/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/1426210/">双人成行</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 undefined 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/1426210/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/1426210">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-item">
+    <div class="steam-game-picture" style="float:left"><img
+            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
+            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/349040/capsule_184x69.jpg" referrerPolicy="no-referrer" />
+    </div>
+
+    <div class="steam-game-info">
+        <div class="steam-game-title">
+            <a target="_blank" href="https://store.steampowered.com/app/349040/">火影忍者 疾风传 终极风暴4</a>
+        </div>
+        <div class="steam-game-meta">
+            <span class="steam-game-info-time">
+                总时数 undefined 小时
+            </span>
+        </div>
+        <br/>
+        <div class="steam-game-link">
+            <a class="steam-game-button" target="_blank"
+               href="https://steamcommunity.com/profiles/76561198997580810/stats/349040/?tab=achievements">成就</a>
+
+            <a class="steam-game-button" target="_blank"
+               href="https://store.steampowered.com/app/349040">游戏介绍</a>
+        </div>
+    </div>
+
+</div>
+
+        
+        <div class="steam-game-pagination">
+    <a class="steam-game-button steam-game-firstpage" href="javascript:;" target="_self" onclick="return false"> 首页</a>
+    <a class="steam-game-button steam-game-previouspage" href="javascript:;" target="_self" onclick="return false">上一页</a>
+    <span class="steam-game-pagenum">2 / 3</span>
+    <a class="steam-game-button steam-game-nextpage" href="javascript:;" target="_self" onclick="return false">下一页</a>
+    <a class="steam-game-button steam-game-lastpage" href="javascript:;" target="_self" onclick="return false">尾页</a>
+</div>    </div>
+</div>
+<script>
+    Element.prototype.siblings = function () {
+    let siblingElement = [];
+    let sibs = this.parentNode.children;
+    for (let i = 0; i < sibs.length; i++) {
+        if (sibs[i] !== this) {
+            siblingElement.push(sibs[i]);
+        }
+    }
+    return siblingElement;
+};
+function tabClick() {
+    //修改标签样式
+    this.classList.add('steam-game-active');
+    let sibs = this.siblings();
+    for (let j = 0; j < sibs.length; j++) {
+        sibs[j].classList.remove('steam-game-active');
+    }
+    //显示对应板块
+    let itemId = this.id.replace('tab', 'item');
+    let target = document.getElementById(itemId);
+    target.classList.remove('steam-game-hide');
+    target.classList.add('steam-game-show');
+    sibs = document.getElementById(itemId).siblings();
+    for (let k = 0; k < sibs.length; k++) {
+        sibs[k].classList.remove('steam-game-show');
+        sibs[k].classList.add('steam-game-hide');
+    }
+}
+let tabs = document.getElementsByClassName("steam-game-tab");
+for (let i = 0; i < tabs.length; i++) {
+    tabs[i].onclick = tabClick;
+    tabs[i].onclick.apply(tabs[i]);
+}    var firstpages = document.getElementsByClassName("steam-game-firstpage");
+var previouspages = document.getElementsByClassName("steam-game-previouspage");
+var nextpages = document.getElementsByClassName("steam-game-nextpage");
+var lastpages = document.getElementsByClassName("steam-game-lastpage");
+var pagenums = document.getElementsByClassName("steam-game-pagenum");
+
+function makePageNum(num, arr) {
+    return (num + 1) + ' / ' + (Math.ceil(arr.length / 10 === 0 ? 1 : Math.ceil(arr.length / 10)));
+}
+
+function firstBtn() {
+    var sibs = this.parentNode.siblings();
+    displayPage(sibs, 0);
+    this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText = makePageNum(0, sibs);
+}
+
+function previousBtn() {
+    var sibs = this.parentNode.siblings();
+    var currNum = this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText;
+    currNum = currNum.substr(0, currNum.indexOf('/') - 1);
+    currNum = parseInt(currNum, 10) - 1;
+    if (currNum > 0) {
+        currNum--;
+    }
+    displayPage(sibs, currNum);
+    this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText = makePageNum(currNum, sibs);
+}
+
+function nextBtn() {
+    var sibs = this.parentNode.siblings();
+    var currNum = this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText;
+    currNum = currNum.substr(0, currNum.indexOf('/') - 1);
+    currNum = parseInt(currNum, 10) - 1;
+    if (currNum < Math.ceil(sibs.length / 10) - 1) {
+        currNum++;
+    }
+    displayPage(sibs, currNum);
+    this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText = makePageNum(currNum, sibs);
+}
+
+function lastBtn() {
+    var sibs = this.parentNode.siblings();
+    displayPage(sibs, Math.ceil(sibs.length / 10) - 1);
+    this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText = makePageNum(Math.ceil(sibs.length / 10) - 1 === -1 ? 0 : Math.ceil(sibs.length / 10) - 1, sibs);
+}
+
+function displayPage(arr, num) {
+    for (var i = 0; i < arr.length; i++) {
+        if (Math.floor(i / 10) === num) {
+            arr[i].classList.remove('steam-game-hide');
+            var img = arr[i].getElementsByTagName('img')[0];
+            img.src = img.getAttribute('data-src');
+        } else {
+            arr[i].classList.add('steam-game-hide');
+        }
+    }
+}
+
+for (var i = 0; i < firstpages.length; i++) {
+
+    //add listener
+    firstpages[i].onclick = firstBtn;
+    previouspages[i].onclick = previousBtn;
+    nextpages[i].onclick = nextBtn;
+    lastpages[i].onclick = lastBtn;
+
+    //set page num
+    var size = pagenums[i].parentNode.siblings().length;
+    pagenums[i].innerText = '1 / ' + (Math.ceil(size / 10) === 0 ? 1 : Math.ceil(size / 10));
+    firstpages[i].click();
+}</script>
                 
             </div>
             <hr/>
@@ -680,7 +1437,7 @@ webapp training/webapp python app.py<span aria-hidden="true" class="line-numbers
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://example.com/docker-ji-chu-san-rong-qi-shu-ju-juan/">http://example.com/docker-ji-chu-san-rong-qi-shu-ju-juan/</a>
+                    <a href="http://example.com/steamgames/index.html">http://example.com/steamgames/index.html</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -717,19 +1474,7 @@ webapp training/webapp python app.py<span aria-hidden="true" class="line-numbers
                 <div class="post-meta__tag-list" style="display: inline-block;">
                     
                         <div class="article-tag">
-                            
-                                <a href="/tags/Docker/">
-                                    <span class="chip bg-color">Docker</span>
-                                </a>
-                            
-                                <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                                    <span class="chip bg-color">云计算</span>
-                                </a>
-                            
-                                <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
-                                    <span class="chip bg-color">分布式</span>
-                                </a>
-                            
+                            <span class="chip bg-color">无标签</span>
                         </div>
                     
                 </div>
@@ -897,53 +1642,39 @@ webapp training/webapp python app.py<span aria-hidden="true" class="line-numbers
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
-                <a href="/linux-ruan-ying-lian-jie/">
+                <a href="/steamgames/index.html">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/0.jpg" class="responsive-img" alt="Linux软硬链接">
+                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="Steam游戏库">
                         
-                        <span class="card-title">Linux软硬链接</span>
+                        <span class="card-title">Steam游戏库</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            在Linux中，ln命令会在文件之间创建链接，这种操作实际上是给系统中已有的某个文件指定另外一个可用于访问它的名称，看上去就像是Windows的快捷方式。但是，链接分为两种，一种叫作硬链接(Hard Link) ，另一种叫作符号链接(Sym
+                            
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2022-01-24
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-03-09
+                            </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-bookmark fa-fw icon-category"></i>
-                            
-                            <a href="/categories/Linux/" class="post-category">
-                                    Linux
-                                </a>
-                            
+                            <i class="fas fa-user fa-fw"></i>
+                            SrcMiLe
                             
                         </span>
                     </div>
                 </div>
-                
-                <div class="card-action article-tags">
-                    
-                    <a href="/tags/OS/">
-                        <span class="chip bg-color">OS</span>
-                    </a>
-                    
-                    <a href="/tags/Linux/">
-                        <span class="chip bg-color">Linux</span>
-                    </a>
-                    
-                </div>
+
                 
             </div>
         </div>
@@ -951,56 +1682,37 @@ webapp training/webapp python app.py<span aria-hidden="true" class="line-numbers
         
         <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge right-badge text-color">
-                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+                本篇&nbsp;<i class="far fa-dot-circle"></i>
             </div>
             <div class="card">
-                <a href="/docker-ji-chu-er-ji-chu-ming-ling/">
+                <a href="/steamgames/index.html">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/2.jpg" class="responsive-img" alt="Docker基础(二): 基础命令">
+                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="Steam游戏库">
                         
-                        <span class="card-title">Docker基础(二): 基础命令</span>
+                        <span class="card-title">Steam游戏库</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            如题，本文将总结常用的Docker基础命令，包括但不限于：帮助启动类命名；镜像命令；容器命令。
+                            
                         
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-01-22
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-03-09
                             </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-bookmark fa-fw icon-category"></i>
-                            
-                            <a href="/categories/Docker/" class="post-category">
-                                    Docker
-                                </a>
-                            
+                            <i class="fas fa-user fa-fw"></i>
+                            SrcMiLe
                             
                         </span>
                     </div>
                 </div>
-                
-                <div class="card-action article-tags">
-                    
-                    <a href="/tags/Docker/">
-                        <span class="chip bg-color">Docker</span>
-                    </a>
-                    
-                    <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                        <span class="chip bg-color">云计算</span>
-                    </a>
-                    
-                    <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
-                        <span class="chip bg-color">分布式</span>
-                    </a>
-                    
-                </div>
+
                 
             </div>
         </div>
