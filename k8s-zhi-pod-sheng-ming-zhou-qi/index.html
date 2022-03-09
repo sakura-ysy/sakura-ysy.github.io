@@ -542,7 +542,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    7k
+                    8.1k
                 </div>
                 
 
@@ -983,7 +983,7 @@ init-demo   <span class="token number">1</span>/1     Running   <span class="tok
 <li><code>PostStart</code>：这个钩子在容器创建后立即执行。但是，并不能保证钩子将在容器 ENTRYPOINT 之前运行，因为没有参数传递给处理程序。主要用于资源部署、环境准备等。</li>
 <li><code>PreStop</code>：这个钩子在容器终止之前立即被调用。它是阻塞的，意味着它是同步的，所以它必须在删除容器的调用发出之前完成。主要用于优雅关闭应用程序、通知其他系统等。如果钩子在执行期间挂起，Pod 阶段将一直停留在 running 。</li>
 </ul>
-<p>这两个结构可以在源码中找到，位于Container.Lifecycle中：</p>
+<p>这两个结构可以在源码中找到，位于podSpec.Container.Lifecycle中：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// A single application container that you want to run within a pod.</span>
 <span class="token keyword">type</span> Container <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
     <span class="token operator">...</span>
@@ -1174,6 +1174,104 @@ liveness-exec   <span class="token number">1</span>/1     Running   <span class=
   <span class="token key atrule">periodSeconds</span><span class="token punctuation">:</span> <span class="token number">10</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>上面这里的配置表示我们的慢速容器最多可以有5分钟（30个检查 * 10秒= 300s）来完成启动，期间不会有其他探针执行。</p>
+<h2 id="Pod运行资源"><a href="#Pod运行资源" class="headerlink" title="Pod运行资源"></a>Pod运行资源</h2><p>实际上上面几个步骤就是影响一个 Pod 生命周期的大的部分，但是还有一些细节也会在 Pod 的启动过程进行设置，比如在容器启动之前还会为当前的容器设置分配的 CPU、内存等资源，我们知道我们可以通过 CGroup 来对容器的资源进行限制，同样的，在 Pod 中我们也可以直接配置<code>某个容器</code>使用的 CPU 或者内存的上限。</p>
+<p>现在的OS基本都是分时系统，即CPU是按<code>时间片</code>去分配的。所以，哪个任务申请的CPU时间片越多，那么它得到的CPU资源越多，好理解。</p>
+<p>在CGroup中，CPU资源是有量化和单位的，以<code>核</code>来换算：</p>
+<blockquote>
+<p>1 Core = 1000 m</p>
+<p>0.5 Core  = 500 m</p>
+</blockquote>
+<p><code>m</code>就是毫核的意思，k8s集群中的每一个节点都可以通过OS的命令来确定本节点的CPU内核数量，然后将这个数量乘以1000，就是node的总CPU资源数。在Pod中，可以通过配置<code>requests</code>和<code>limits</code>的配置来设置对资源的申请和限制。</p>
+<ul>
+<li><code>spec.containers[].resources.requests.cpu</code>：CPU请求值，Kubernetes 调度算法里的依据值，可以超过；</li>
+<li><code>spec.containers[].resources.limits.cpu</code>：CPU 上限值，可以短暂超过，容器也不会被停止。</li>
+</ul>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// A single application container that you want to run within a pod.</span>
+<span class="token keyword">type</span> Container <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// Compute Resources required by this container.</span>
+    Resources ResourceRequirements <span class="token string">`json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// ResourceRequirements describes the compute resource requirements.</span>
+<span class="token keyword">type</span> ResourceRequirements <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">// Limits describes the maximum amount of compute resources allowed.</span>
+
+	Limits ResourceList <span class="token string">`json:"limits,omitempty" protobuf:"bytes,1,rep,name=limits,casttype=ResourceList,castkey=ResourceName"`</span>
+	<span class="token comment">// Requests describes the minimum amount of compute resources required.</span>
+	<span class="token comment">// If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,</span>
+	<span class="token comment">// otherwise to an implementation-defined value.</span>
+	Requests ResourceList <span class="token string">`json:"requests,omitempty" protobuf:"bytes,2,rep,name=requests,casttype=ResourceList,castkey=ResourceName"`</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><code>requests</code>是用于集群调度使用的资源，而<code>limits</code>才是真正用于资源限制的配置。如果一个Pod中某个容器的<code>requests.cpu</code>大于任何node的CPU核数，那么这个Pod将无法调度，因为没有节点可以满足资源申请。</p>
+<p>定义一个Pod，其中只有一个容器，配置如下：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Pod
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> resource<span class="token punctuation">-</span>demo1
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">containers</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> resource<span class="token punctuation">-</span>demo1
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">80</span>
+    <span class="token key atrule">resources</span><span class="token punctuation">:</span>
+      <span class="token key atrule">requests</span><span class="token punctuation">:</span>
+        <span class="token key atrule">memory</span><span class="token punctuation">:</span> 50Mi
+        <span class="token key atrule">cpu</span><span class="token punctuation">:</span> 50m
+      <span class="token key atrule">limits</span><span class="token punctuation">:</span>
+        <span class="token key atrule">memory</span><span class="token punctuation">:</span> 100Mi
+        <span class="token key atrule">cpu</span><span class="token punctuation">:</span> 100m<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这里，容器会申请CPU资源50m，也就是 0.05core，这 0.05 core 也就是占了 1 CPU 里的 5% 的资源时间。而限制资源是给的是 100m，但是需要注意的是 CPU 资源是可压缩资源，也就是容器达到了这个设定的上限后，容器性能会下降，但是不会终止或退出。同样，内存申请为50M，限制为100M。</p>
+<blockquote>
+<p>这里注意的是<code>MiB ≠ MB</code>，MB 是十进制单位，MiB 是二进制，平时我们以为 MB 等于 1024KB，其实<code>1MB=1000KB</code>，<code>1MiB</code>才等于<code>1024KiB</code>。中间带字母 i 的是国际电工协会（IEC）定的，走1024乘积；KB、MB、GB是国际单位制，走1000乘积。</p>
+</blockquote>
+<p>创建这个Pod：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ kubectl apply -f resource-test.yaml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>这个Pod被调度到了node2中，所以进去看看里面的容器：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@node2 k8s<span class="token punctuation">]</span>$ <span class="token function">docker</span> <span class="token function">ps</span> <span class="token operator">|</span> <span class="token function">grep</span> resource-demo
+bd2bf6e8facf   nginx                                               <span class="token string">"/docker-entrypoint.…"</span>   <span class="token number">3</span> minutes ago   Up <span class="token number">3</span> minutes             k8s_resource-demo1_resource-demo1_default_37db961b-249e-48a4-9f4d-5542de6b37e5_0
+4444a3a0bdf0   registry.aliyuncs.com/google_containers/pause:3.1   <span class="token string">"/pause"</span>                 <span class="token number">3</span> minutes ago   Up <span class="token number">3</span> minutes             k8s_POD_resource-demo1_default_37db961b-249e-48a4-9f4d-5542de6b37e5_0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>其中，第一个就是我们的nginx容器，也就是主容器。第二个是pause容器，也就是Infra，每个Pod都会有一个它。之后就可以通过<code>inspect</code>看下这个容器的详细信息了，其中就包括资源占用相关：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@node2 k8s<span class="token punctuation">]</span>$ <span class="token function">docker</span> inspect bd2bf6e8facf
+<span class="token punctuation">..</span>.
+ <span class="token string">"CpuShares"</span><span class="token builtin class-name">:</span> <span class="token number">51</span>,
+ <span class="token string">"Memory"</span><span class="token builtin class-name">:</span> <span class="token number">104857600</span>,
+ <span class="token string">"NanoCpus"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+ <span class="token string">"CgroupParent"</span><span class="token builtin class-name">:</span> <span class="token string">"kubepods-burstable-pod37db961b_249e_48a4_9f4d_5542de6b37e5.slice"</span>,
+ <span class="token string">"BlkioWeight"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+ <span class="token string">"BlkioWeightDevice"</span><span class="token builtin class-name">:</span> null,
+ <span class="token string">"BlkioDeviceReadBps"</span><span class="token builtin class-name">:</span> null,
+ <span class="token string">"BlkioDeviceWriteBps"</span><span class="token builtin class-name">:</span> null,
+ <span class="token string">"BlkioDeviceReadIOps"</span><span class="token builtin class-name">:</span> null,
+ <span class="token string">"BlkioDeviceWriteIOps"</span><span class="token builtin class-name">:</span> null,
+ <span class="token string">"CpuPeriod"</span><span class="token builtin class-name">:</span> <span class="token number">100000</span>,
+ <span class="token string">"CpuQuota"</span><span class="token builtin class-name">:</span> <span class="token number">10000</span>,
+ <span class="token string">"CpuRealtimePeriod"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+ <span class="token string">"CpuRealtimeRuntime"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+ <span class="token string">"CpusetCpus"</span><span class="token builtin class-name">:</span> <span class="token string">""</span>,
+ <span class="token string">"CpusetMems"</span><span class="token builtin class-name">:</span> <span class="token string">""</span>,
+ <span class="token string">"Devices"</span><span class="token builtin class-name">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>,
+ <span class="token string">"DeviceCgroupRules"</span><span class="token builtin class-name">:</span> null,
+ <span class="token string">"DeviceRequests"</span><span class="token builtin class-name">:</span> null,
+ <span class="token string">"KernelMemory"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+ <span class="token string">"KernelMemoryTCP"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+ <span class="token string">"MemoryReservation"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+ <span class="token string">"MemorySwap"</span><span class="token builtin class-name">:</span> <span class="token number">104857600</span>,
+ <span class="token string">"MemorySwappiness"</span><span class="token builtin class-name">:</span> null,
+ <span class="token string">"OomKillDisable"</span><span class="token builtin class-name">:</span> false,
+ <span class="token string">"PidsLimit"</span><span class="token builtin class-name">:</span> null,
+ <span class="token string">"Ulimits"</span><span class="token builtin class-name">:</span> null,
+ <span class="token string">"CpuCount"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+ <span class="token string">"CpuPercent"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+ <span class="token string">"IOMaximumIOps"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+ <span class="token string">"IOMaximumBandwidth"</span><span class="token builtin class-name">:</span> <span class="token number">0</span>,
+ <span class="token punctuation">..</span>.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>Pod 上的资源配置最终也还是通过底层的容器运行时去控制 CGroup 来实现的，而 CGroup 是通过文件系统来进行资源限制的。</p>
 
                 
             </div>
