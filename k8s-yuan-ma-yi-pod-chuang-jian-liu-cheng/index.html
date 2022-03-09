@@ -546,7 +546,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    6.5k
+                    6.9k
                 </div>
                 
 
@@ -708,8 +708,34 @@
 	 <span class="token operator">...</span>
 <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>可以看到，该模块会根据<code>configCh</code>中的<code>u.Op</code>来选择对Pods的处理方式。当事件类型为<code>ADD</code>时，即调用<code>HandlePodAdditions</code>接口创建Pods。</p>
-<h3 id="HandlePodAdditions"><a href="#HandlePodAdditions" class="headerlink" title="HandlePodAdditions"></a>HandlePodAdditions</h3><p>进入该接口实现体看下：</p>
+<p>可以看到，该模块会根据<code>configCh</code>中的<code>u.Op</code>来选择对Pods的处理方式。当事件类型为<code>ADD</code>时，即调用<code>HandlePodAdditions</code>方法创建Pods。</p>
+<h3 id="Pod-Struct"><a href="#Pod-Struct" class="headerlink" title="Pod Struct"></a>Pod Struct</h3><p>在进入上述方法前，先看下它的入参。<code>u.Pods</code>是一个<code>Pod Struct </code>类型的切片，而这个结构就是源码中存储Pod信息的最外层结构。其源码如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// Pod is a collection of containers that can run on a host. This resource is created</span>
+<span class="token comment">// by clients and scheduled onto hosts.</span>
+<span class="token keyword">type</span> Pod <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+	metav1<span class="token punctuation">.</span>TypeMeta <span class="token string">`json:",inline"`</span>
+	<span class="token comment">// Standard object's metadata.</span>
+	<span class="token comment">// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata</span>
+	<span class="token comment">// +optional</span>
+	metav1<span class="token punctuation">.</span>ObjectMeta <span class="token string">`json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`</span>
+
+	<span class="token comment">// Specification of the desired behavior of the pod.</span>
+	<span class="token comment">// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status</span>
+	<span class="token comment">// +optional</span>
+	Spec PodSpec <span class="token string">`json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`</span>
+
+	<span class="token comment">// Most recently observed status of the pod.</span>
+	<span class="token comment">// This data may not be up to date.</span>
+	<span class="token comment">// Populated by the system.</span>
+	<span class="token comment">// Read-only.</span>
+	<span class="token comment">// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status</span>
+	<span class="token comment">// +optional</span>
+	Status PodStatus <span class="token string">`json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这四个字段都大有来头，第一个记录了<code>kind</code>和<code>apiVersion</code>，第二个存储了Pod的标准对象原数据，如<code>name</code>、<code>namespace</code>、<code>UID</code>等等。第三个就是大名鼎鼎的<code>PodSpec</code>，记录了Pod的详述，如<code>volume</code>、<code>containers</code>、<code>restartPloicy</code>等等。第四个<code>PodStatus</code>顾名思义就是Pod的状态，里面的<code>phase</code>字段标识了Pod的大体状态，分为Pending、Running、Succeed、Failed、Unkonw，其中Succeed和Failed都为Terminated状态。</p>
+<p>很容易想到，这个<code>Pod Struct</code>是和<code>资源清单</code>文件对应的，结构中的很多字段都从清单中读取，来记录这个待创建Pod的信息。</p>
+<h3 id="HandlePodAdditions"><a href="#HandlePodAdditions" class="headerlink" title="HandlePodAdditions"></a>HandlePodAdditions</h3><p>好了，看完这个结构就可以往下看了。进入刚才那个接口实现体看下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// HandlePodAdditions is the callback in SyncHandler for pods being added from</span>
 <span class="token comment">// a config source.</span>
 <span class="token keyword">func</span> <span class="token punctuation">(</span>kl <span class="token operator">*</span>Kubelet<span class="token punctuation">)</span> <span class="token function">HandlePodAdditions</span><span class="token punctuation">(</span>pods <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>v1<span class="token punctuation">.</span>Pod<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
@@ -732,13 +758,14 @@
 		<span class="token punctuation">&#125;</span>
 
 		<span class="token comment">// 如果该Pod没有被terminate</span>
+        <span class="token comment">// 通过PodStatus判断，Succeed和Failed都视为terminated</span>
 		<span class="token keyword">if</span> <span class="token operator">!</span>kl<span class="token punctuation">.</span><span class="token function">podIsTerminated</span><span class="token punctuation">(</span>pod<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
 			<span class="token comment">// Only go through the admission process if the pod is not</span>
 			<span class="token comment">// terminated.</span>
 
 			<span class="token comment">// We failed pods that we rejected, so activePods include all admitted</span>
 			<span class="token comment">// pods that are alive.</span>
-			<span class="token comment">// 从existingPods中筛选出处于active状态的Pods</span>
+			<span class="token comment">// 从existingPods中筛选出处于处于非terminated态的Pods</span>
 			activePods <span class="token operator">:=</span> kl<span class="token punctuation">.</span><span class="token function">filterOutTerminatedPods</span><span class="token punctuation">(</span>existingPods<span class="token punctuation">)</span>
 
 			<span class="token comment">// Check if we can admit the pod; if not, reject it.</span>
@@ -754,7 +781,7 @@
 		<span class="token comment">// Pod创建完毕后，加入probeManager进行健康检查</span>
 		kl<span class="token punctuation">.</span>probeManager<span class="token punctuation">.</span><span class="token function">AddPod</span><span class="token punctuation">(</span>pod<span class="token punctuation">)</span>
 	<span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>代码流程还是相对明确的。可以看到，<code>HandlePodAdditions</code>的主要工作为:</p>
 <p>​    1&gt; 按照创建时间给待创建的Pods进行排序。然后对其中<strong>每个Pod</strong>进行下述处理；</p>
@@ -766,6 +793,7 @@
 <p>也就是说，创建Pod的，实际上是<code>dispathWork</code>方法，且传入参数<code>kubetypes.SyncPodCreate</code>指明对该Pod的操作为创建。</p>
 <h4 id="dispatchWork"><a href="#dispatchWork" class="headerlink" title="dispatchWork"></a>dispatchWork</h4><p>我们进入该方法看下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>kl <span class="token operator">*</span>Kubelet<span class="token punctuation">)</span> <span class="token function">dispatchWork</span><span class="token punctuation">(</span>pod <span class="token operator">*</span>v1<span class="token punctuation">.</span>Pod<span class="token punctuation">,</span> syncType kubetypes<span class="token punctuation">.</span>SyncPodType<span class="token punctuation">,</span> mirrorPod <span class="token operator">*</span>v1<span class="token punctuation">.</span>Pod<span class="token punctuation">,</span> start time<span class="token punctuation">.</span>Time<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// 若pod处于终结态，直接删除</span>
 	<span class="token keyword">if</span> kl<span class="token punctuation">.</span><span class="token function">podIsTerminated</span><span class="token punctuation">(</span>pod<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
 		<span class="token keyword">if</span> pod<span class="token punctuation">.</span>DeletionTimestamp <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
 			<span class="token comment">// If the pod is in a terminated state, there is no pod worker to</span>
@@ -791,7 +819,7 @@
 	<span class="token keyword">if</span> syncType <span class="token operator">==</span> kubetypes<span class="token punctuation">.</span>SyncPodCreate <span class="token punctuation">&#123;</span>
 		metrics<span class="token punctuation">.</span>ContainersPerPodCount<span class="token punctuation">.</span><span class="token function">Observe</span><span class="token punctuation">(</span><span class="token function">float64</span><span class="token punctuation">(</span><span class="token function">len</span><span class="token punctuation">(</span>pod<span class="token punctuation">.</span>Spec<span class="token punctuation">.</span>Containers<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
 	<span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>可以看到，该方法主要做三个工作：</p>
 <p>​    1&gt; 如果Pod是终结态（”Failed” or “Succeeded”），则对status进行更新，触发对Pod的删除；</p>
@@ -804,8 +832,8 @@
 	<span class="token keyword">var</span> podUpdates <span class="token keyword">chan</span> UpdatePodOptions
 	<span class="token keyword">var</span> exists <span class="token builtin">bool</span>
 
-	p<span class="token punctuation">.</span>podLock<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-	<span class="token keyword">defer</span> p<span class="token punctuation">.</span>podLock<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	p<span class="token punctuation">.</span>podLock<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment">// 加锁</span>
+	<span class="token keyword">defer</span> p<span class="token punctuation">.</span>podLock<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment">// 延时开锁</span>
 	<span class="token comment">// 如果该pod在podUpdates数组里面找不到，那么就创建channel，并启动异步线程，调用managePodLoop</span>
 	<span class="token keyword">if</span> podUpdates<span class="token punctuation">,</span> exists <span class="token operator">=</span> p<span class="token punctuation">.</span>podUpdates<span class="token punctuation">[</span>uid<span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token operator">!</span>exists <span class="token punctuation">&#123;</span>
 		<span class="token comment">// We need to have a buffer here, because checkForUpdates() method that</span>
