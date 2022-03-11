@@ -546,7 +546,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    6.9k
+                    7.9k
                 </div>
                 
 
@@ -735,6 +735,7 @@
 
 <p>这四个字段都大有来头，第一个记录了<code>kind</code>和<code>apiVersion</code>，第二个存储了Pod的标准对象原数据，如<code>name</code>、<code>namespace</code>、<code>UID</code>等等。第三个就是大名鼎鼎的<code>PodSpec</code>，记录了Pod的详述，如<code>volume</code>、<code>containers</code>、<code>restartPloicy</code>等等。第四个<code>PodStatus</code>顾名思义就是Pod的状态，里面的<code>phase</code>字段标识了Pod的大体状态，分为Pending、Running、Succeed、Failed、Unkonw，其中Succeed和Failed都为Terminated状态。</p>
 <p>很容易想到，这个<code>Pod Struct</code>是和<code>资源清单</code>文件对应的，结构中的很多字段都从清单中读取，来记录这个待创建Pod的信息。</p>
+<p>上面几个字段的类型都位于package <code>v1</code>中，比如<code>PodStatus</code>，所以叫<code>v1.PodStatus</code>。要注意的是，其他包里也有同名的结构体，比如<code>container.PodStatus</code>，要区分开来。</p>
 <h3 id="HandlePodAdditions"><a href="#HandlePodAdditions" class="headerlink" title="HandlePodAdditions"></a>HandlePodAdditions</h3><p>好了，看完这个结构就可以往下看了。进入刚才那个接口实现体看下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// HandlePodAdditions is the callback in SyncHandler for pods being added from</span>
 <span class="token comment">// a config source.</span>
@@ -918,6 +919,26 @@
 <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>也即，要创建Pod，就要进入方法<code>syncPod</code>，该方法位于<code>pkg/kubelet/kubelet.go</code>中。</p>
+<p>但是要注意的是，<code>syncPodOptions</code>结构中有一个<code>podStatus</code>字段，这个字段的类型也叫<code>PodStatus</code>，位于<code>pkg/kubelet/container/runtime.go</code>中，包名为<code>container</code>，源码如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// PodStatus represents the status of the pod and its containers.</span>
+<span class="token comment">// v1.PodStatus can be derived from examining PodStatus and v1.Pod.</span>
+<span class="token keyword">type</span> PodStatus <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">// ID of the pod.</span>
+	ID types<span class="token punctuation">.</span>UID
+	<span class="token comment">// Name of the pod.</span>
+	Name <span class="token builtin">string</span>
+	<span class="token comment">// Namspace of the pod.</span>
+	Namespace <span class="token builtin">string</span>
+	<span class="token comment">// IP of the pod.</span>
+	IP <span class="token builtin">string</span>
+	<span class="token comment">// Status of containers in the pod.</span>
+	ContainerStatuses <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>ContainerStatus
+	<span class="token comment">// Status of the pod sandbox.</span>
+	<span class="token comment">// Only for kuberuntime now, other runtime may keep it nil.</span>
+	SandboxStatuses <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>runtimeapi<span class="token punctuation">.</span>PodSandboxStatus
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>从注释中可以看出来，之前说的<code>v1.PodStatus</code>是可以通过这个<code>container.PodStatus</code>转换而得到的。实际上，这个结构可以认为只是一个中间态，最终标识Pod状态，依然是之前的那个<code>v1.PodStatus</code>。</p>
 <h4 id="syncPod"><a href="#syncPod" class="headerlink" title="syncPod"></a>syncPod</h4><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>kl <span class="token operator">*</span>Kubelet<span class="token punctuation">)</span> <span class="token function">syncPod</span><span class="token punctuation">(</span>o syncPodOptions<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">&#123;</span>
 	<span class="token comment">// pull out the required options</span>
 	pod <span class="token operator">:=</span> o<span class="token punctuation">.</span>pod
@@ -978,12 +999,13 @@
 	
 	<span class="token comment">// 校验该Pod能否运行</span>
 	runnable <span class="token operator">:=</span> kl<span class="token punctuation">.</span><span class="token function">canRunPod</span><span class="token punctuation">(</span>pod<span class="token punctuation">)</span>
-	<span class="token comment">// 如果不能运行，那么回写container的等待原因</span>
+	<span class="token comment">// 如果不能运行，将Reason和Message写回v1.PodStatus</span>
 	<span class="token keyword">if</span> <span class="token operator">!</span>runnable<span class="token punctuation">.</span>Admit <span class="token punctuation">&#123;</span>
 		<span class="token comment">// Pod is not runnable; update the Pod and Container statuses to why.</span>
 		apiPodStatus<span class="token punctuation">.</span>Reason <span class="token operator">=</span> runnable<span class="token punctuation">.</span>Reason
 		apiPodStatus<span class="token punctuation">.</span>Message <span class="token operator">=</span> runnable<span class="token punctuation">.</span>Message
 		<span class="token comment">// Waiting containers are not creating.</span>
+        <span class="token comment">// 写回Container的等待原因，为Blocked</span>
 		<span class="token keyword">const</span> waitingReason <span class="token operator">=</span> <span class="token string">"Blocked"</span>
 		<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> cs <span class="token operator">:=</span> <span class="token keyword">range</span> apiPodStatus<span class="token punctuation">.</span>InitContainerStatuses <span class="token punctuation">&#123;</span>
 			<span class="token keyword">if</span> cs<span class="token punctuation">.</span>State<span class="token punctuation">.</span>Waiting <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
@@ -1028,7 +1050,7 @@
 
 	<span class="token comment">// Create Cgroups for the pod and apply resource parameters</span>
 	<span class="token comment">// to them if cgroups-per-qos flag is enabled.</span>
-	<span class="token comment">// 为该Pod创建containerManager</span>
+	<span class="token comment">// 为该Pod创建PodContainerManager</span>
 	pcm <span class="token operator">:=</span> kl<span class="token punctuation">.</span>containerManager<span class="token punctuation">.</span><span class="token function">NewPodContainerManager</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 	<span class="token comment">// If pod has already been terminated then we need not create</span>
 	<span class="token comment">// or update the pod's cgroup</span>
@@ -1065,11 +1087,11 @@
 		<span class="token comment">// We don't create and apply updates to cgroup if its a run once pod and was killed above</span>
 		<span class="token comment">// 如果该pod在上面没有被kill掉，或重启策略不是永不重启</span>
 		<span class="token keyword">if</span> <span class="token operator">!</span><span class="token punctuation">(</span>podKilled <span class="token operator">&amp;&amp;</span> pod<span class="token punctuation">.</span>Spec<span class="token punctuation">.</span>RestartPolicy <span class="token operator">==</span> v1<span class="token punctuation">.</span>RestartPolicyNever<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-			<span class="token comment">// 如果该pod的cgroups不存在，那么就创建cgroups</span>
 			<span class="token keyword">if</span> <span class="token operator">!</span>pcm<span class="token punctuation">.</span><span class="token function">Exists</span><span class="token punctuation">(</span>pod<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
 				<span class="token keyword">if</span> err <span class="token operator">:=</span> kl<span class="token punctuation">.</span>containerManager<span class="token punctuation">.</span><span class="token function">UpdateQOSCgroups</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
 					glog<span class="token punctuation">.</span><span class="token function">V</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Infof</span><span class="token punctuation">(</span><span class="token string">"Failed to update QoS cgroups while syncing pod: %v"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
 				<span class="token punctuation">&#125;</span>
+                <span class="token comment">// 如果该pod的cgroup不存在，那么就创建cgroup</span>
 				<span class="token keyword">if</span> err <span class="token operator">:=</span> pcm<span class="token punctuation">.</span><span class="token function">EnsureExists</span><span class="token punctuation">(</span>pod<span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
 					kl<span class="token punctuation">.</span>recorder<span class="token punctuation">.</span><span class="token function">Eventf</span><span class="token punctuation">(</span>pod<span class="token punctuation">,</span> v1<span class="token punctuation">.</span>EventTypeWarning<span class="token punctuation">,</span> events<span class="token punctuation">.</span>FailedToCreatePodContainer<span class="token punctuation">,</span> <span class="token string">"unable to ensure pod container exists: %v"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
 					<span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"failed to ensure that the pod: %v cgroups exist and are correctly applied: %v"</span><span class="token punctuation">,</span> pod<span class="token punctuation">.</span>UID<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
@@ -1077,7 +1099,7 @@
 			<span class="token punctuation">&#125;</span>
 		<span class="token punctuation">&#125;</span>
 	<span class="token punctuation">&#125;</span>
-	<span class="token comment">//为静态pod 创建镜像</span>
+	<span class="token comment">//为静态pod 创建镜像，如果还未存在的话</span>
 	<span class="token comment">// Create Mirror Pod for Static Pod if it doesn't already exist</span>
 	<span class="token keyword">if</span> kubepod<span class="token punctuation">.</span><span class="token function">IsStaticPod</span><span class="token punctuation">(</span>pod<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
 		podFullName <span class="token operator">:=</span> kubecontainer<span class="token punctuation">.</span><span class="token function">GetPodFullName</span><span class="token punctuation">(</span>pod<span class="token punctuation">)</span>
@@ -1141,22 +1163,67 @@
 	<span class="token punctuation">&#125;</span>
 
 	<span class="token keyword">return</span> <span class="token boolean">nil</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>该方法比较复杂，主要是完成创建Pod前的<code>准备工作</code>，主要准备工作如下：</p>
-<p>​    1&gt; 校验该Pod能否运行，如果不能运行，那么回写container的等待原因，然后更新<code>statusManager</code>的状态信息；</p>
+<p>​    1&gt; 校验该Pod能否运行，如果不能运行，则将Reason和Message写回v1.PodStatus，并回写container的等待原因，然后通过<code>statusManager</code>更新Pod状态；</p>
 <p>​    2&gt; 如果校验没通过或Pod已被删除或Pod跑失败了，那么kill掉Pod，返回；</p>
-<p>​    3&gt; 校验网络插件是否已经准备好，如果没有，直接返回；</p>
-<p>​    4&gt; 如果该Pod的<code>cgroups</code>（container groups）不存在，且不是首次运行，则kill掉；</p>
-<p>​    5&gt; 如果该Pod的cgroups不存在，且在上面没有被kill掉（首次运行），或重启策略不是永不重启，则创建cgroups；</p>
-<p>​    6&gt; 为静态Pod创建镜像；</p>
-<p>​    7&gt; 创建Pod的基础文件目录，等待<code>volume attach/mount</code>；</p>
-<p>​    8&gt; 拉取这个Pod的Secret；</p>
-<p>​    9&gt; 调用<code>containerRuntime.SyncPod</code>来真正创建Pod。</p>
+<p>​    3&gt; 校验网络插件是否已经准备好，如果没有，那么当且仅当Pod使用<code>host network</code>才允许启动，否则直接结束；</p>
+<p>​    4&gt; 如果该Pod的<code>cgroup</code>不存在，且不是首次运行，则kill掉；</p>
+<p>​    5&gt; 如果该Pod的cgroup不存在，且在上面没有被kill掉（首次运行），或重启策略不是永不重启，则创建cgroup；</p>
+<p>​    6&gt; 如果Pod是静态（Static）的，且其mirror Pod不存在，创建这个镜像；</p>
+<p>​    7&gt; 调用<code>makePodDataDirs</code>创建Pod的基础文件目录，</p>
+<p>​    8&gt; 等待<code>volume attach/mount</code>；</p>
+<p>​    9&gt; 拉取这个Pod的Secret；</p>
+<p>​    10&gt; 调用<code>containerRuntime.SyncPod</code>来真正创建Pod。</p>
+<p>这整个方法做的事情非常多，这里只看一些比较重要的。首先是第8步，创建Pod基础目录，进入这个方法看看：</p>
+<h4 id="makePodDataDirs"><a href="#makePodDataDirs" class="headerlink" title="makePodDataDirs"></a>makePodDataDirs</h4><p>该方法位于<code>pkg/kubelet/kubelet_pods.go</code>中，</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// makePodDataDirs creates the dirs for the pod datas.</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>kl <span class="token operator">*</span>Kubelet<span class="token punctuation">)</span> <span class="token function">makePodDataDirs</span><span class="token punctuation">(</span>pod <span class="token operator">*</span>v1<span class="token punctuation">.</span>Pod<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">&#123;</span>
+	uid <span class="token operator">:=</span> pod<span class="token punctuation">.</span>UID
+	<span class="token keyword">if</span> err <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">MkdirAll</span><span class="token punctuation">(</span>kl<span class="token punctuation">.</span><span class="token function">getPodDir</span><span class="token punctuation">(</span>uid<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0750</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>os<span class="token punctuation">.</span><span class="token function">IsExist</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span> err
+	<span class="token punctuation">&#125;</span>
+	<span class="token keyword">if</span> err <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">MkdirAll</span><span class="token punctuation">(</span>kl<span class="token punctuation">.</span><span class="token function">getPodVolumesDir</span><span class="token punctuation">(</span>uid<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0750</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>os<span class="token punctuation">.</span><span class="token function">IsExist</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span> err
+	<span class="token punctuation">&#125;</span>
+	<span class="token keyword">if</span> err <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">MkdirAll</span><span class="token punctuation">(</span>kl<span class="token punctuation">.</span><span class="token function">getPodPluginsDir</span><span class="token punctuation">(</span>uid<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">0750</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>os<span class="token punctuation">.</span><span class="token function">IsExist</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span> err
+	<span class="token punctuation">&#125;</span>
+	<span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><code>MkdirAll</code>就是字面意义的创建目录，主要是其中的几个<code>getxxxDir</code>。</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// getPodsDir returns the full path to the directory under which pod</span>
+<span class="token comment">// directories are created.</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>kl <span class="token operator">*</span>Kubelet<span class="token punctuation">)</span> <span class="token function">getPodsDir</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> filepath<span class="token punctuation">.</span><span class="token function">Join</span><span class="token punctuation">(</span>kl<span class="token punctuation">.</span><span class="token function">getRootDir</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> config<span class="token punctuation">.</span>DefaultKubeletPodsDirName<span class="token punctuation">)</span>		<span class="token comment">// "pods"</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">// getPodDir returns the full path to the per-pod directory for the pod with</span>
+<span class="token comment">// the given UID.</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>kl <span class="token operator">*</span>Kubelet<span class="token punctuation">)</span> <span class="token function">getPodDir</span><span class="token punctuation">(</span>podUID types<span class="token punctuation">.</span>UID<span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> filepath<span class="token punctuation">.</span><span class="token function">Join</span><span class="token punctuation">(</span>kl<span class="token punctuation">.</span><span class="token function">getPodsDir</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">string</span><span class="token punctuation">(</span>podUID<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">// getPodVolumesDir returns the full path to the per-pod data directory under</span>
+<span class="token comment">// which volumes are created for the specified pod.  This directory may not</span>
+<span class="token comment">// exist if the pod does not exist.</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>kl <span class="token operator">*</span>Kubelet<span class="token punctuation">)</span> <span class="token function">getPodVolumesDir</span><span class="token punctuation">(</span>podUID types<span class="token punctuation">.</span>UID<span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">return</span> filepath<span class="token punctuation">.</span><span class="token function">Join</span><span class="token punctuation">(</span>kl<span class="token punctuation">.</span><span class="token function">getPodDir</span><span class="token punctuation">(</span>podUID<span class="token punctuation">)</span><span class="token punctuation">,</span> config<span class="token punctuation">.</span>DefaultKubeletVolumesDirName<span class="token punctuation">)</span>  <span class="token comment">// "volumes"</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>首先看<code>getPodDir</code>，这个方法会将<code>getPodsDir</code>返回的结果和Pod的UID进行拼接。而<code>getPodsDir</code>也很简单，调用<code>getRootDir</code>获取kubelet的根目录，一般为<code>/var/lib/kubelet</code>，然后在后面拼接上字符串<code>pods</code>。也就是说，这一步会创建目录<code>/var/lib/kubelet/pods/&#123;UID&#125;</code>。</p>
+<p>接着，<code>getPodVolumesDir</code>会在上述路径后拼接上字符串<code>volumes</code>，然后交由<code>MkdirAll</code>来创建。<code>plugin</code>也是同理。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/03/90c8c7649e1f1740.png"></p>
+<p>但是至此为止，只是创建了目录而已，并没有任何数据。</p>
+<p>至于如何获取到上述目录，都知道，Pod实质就是一堆容器。因此通过<code>docker inpspect 容器名</code>查看容器具体信息，里面就可以看到容器的目录，而容器就存在上面的<code>containers</code>子目录下。</p>
+<hr>
+<p>回到<code>syncPod</code>，创建完基础目录后，阻塞等待volume的<code>attach/mount</code>，这个比较复杂，我还没咋搞明白，先跳过。然后，就到了核心方法<code>SyncPod</code>。</p>
 <p>也就是说，上面这个<code>syncPod</code>只是完成了一些创建前的准备工作，真正执行创建Pod的，是<code>containerRuntime.SyncPod</code>方法。位于：<code>pkg/kubelet/kuberuntime/kuberuntime_manager.go</code></p>
 <h4 id="SyncPod"><a href="#SyncPod" class="headerlink" title="SyncPod"></a>SyncPod</h4><pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>m <span class="token operator">*</span>kubeGenericRuntimeManager<span class="token punctuation">)</span> <span class="token function">SyncPod</span><span class="token punctuation">(</span>pod <span class="token operator">*</span>v1<span class="token punctuation">.</span>Pod<span class="token punctuation">,</span> <span class="token boolean">_</span> v1<span class="token punctuation">.</span>PodStatus<span class="token punctuation">,</span> podStatus <span class="token operator">*</span>kubecontainer<span class="token punctuation">.</span>PodStatus<span class="token punctuation">,</span> pullSecrets <span class="token punctuation">[</span><span class="token punctuation">]</span>v1<span class="token punctuation">.</span>Secret<span class="token punctuation">,</span> backOff <span class="token operator">*</span>flowcontrol<span class="token punctuation">.</span>Backoff<span class="token punctuation">)</span> <span class="token punctuation">(</span>result kubecontainer<span class="token punctuation">.</span>PodSyncResult<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
 	<span class="token comment">// Step 1: Compute sandbox and container changes.</span>
-	<span class="token comment">// 计算一下有哪些pod中container有没有变化，有哪些container需要创建,有哪些container需要kill掉</span>
+	<span class="token comment">// 检擦Pod Spec是否发生改变，如果是，将这些改变记录下来</span>
 	podContainerChanges <span class="token operator">:=</span> m<span class="token punctuation">.</span><span class="token function">computePodActions</span><span class="token punctuation">(</span>pod<span class="token punctuation">,</span> podStatus<span class="token punctuation">)</span>
 	glog<span class="token punctuation">.</span><span class="token function">V</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Infof</span><span class="token punctuation">(</span><span class="token string">"computePodActions got %+v for pod %q"</span><span class="token punctuation">,</span> podContainerChanges<span class="token punctuation">,</span> format<span class="token punctuation">.</span><span class="token function">Pod</span><span class="token punctuation">(</span>pod<span class="token punctuation">)</span><span class="token punctuation">)</span>
 	<span class="token keyword">if</span> podContainerChanges<span class="token punctuation">.</span>CreateSandbox <span class="token punctuation">&#123;</span>
@@ -1208,7 +1275,7 @@
 	<span class="token comment">// Keep terminated init containers fairly aggressively controlled</span>
 	<span class="token comment">// This is an optmization because container removals are typically handled</span>
 	<span class="token comment">// by container garbage collector.</span>
-	<span class="token comment">// 清理同名的 Init Container</span>
+	<span class="token comment">// 删除一些Init Container，减少容器垃圾收集器上的负载</span>
 	m<span class="token punctuation">.</span><span class="token function">pruneInitContainersBeforeStart</span><span class="token punctuation">(</span>pod<span class="token punctuation">,</span> podStatus<span class="token punctuation">)</span>
 
 	<span class="token comment">// We pass the value of the podIP down to generatePodSandboxConfig and</span>
@@ -1226,7 +1293,7 @@
 	<span class="token punctuation">&#125;</span>
 
 	<span class="token comment">// Step 4: Create a sandbox for the pod if necessary.</span>
-	<span class="token comment">// 为pod创建sandbox</span>
+	<span class="token comment">// 为pod创建sandbox，如果需要的话</span>
 	podSandboxID <span class="token operator">:=</span> podContainerChanges<span class="token punctuation">.</span>SandboxID
 	<span class="token keyword">if</span> podContainerChanges<span class="token punctuation">.</span>CreateSandbox <span class="token punctuation">&#123;</span>
 		<span class="token keyword">var</span> msg <span class="token builtin">string</span>
@@ -1307,7 +1374,7 @@
 	<span class="token punctuation">&#125;</span>
 
 	<span class="token comment">// Step 6: start containers in podContainerChanges.ContainersToStart.</span>
-	<span class="token comment">// 启动容器列表</span>
+	<span class="token comment">// 启动主容器</span>
 	<span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> idx <span class="token operator">:=</span> <span class="token keyword">range</span> podContainerChanges<span class="token punctuation">.</span>ContainersToStart <span class="token punctuation">&#123;</span>
 		container <span class="token operator">:=</span> <span class="token operator">&amp;</span>pod<span class="token punctuation">.</span>Spec<span class="token punctuation">.</span>Containers<span class="token punctuation">[</span>idx<span class="token punctuation">]</span>
 		startContainerResult <span class="token operator">:=</span> kubecontainer<span class="token punctuation">.</span><span class="token function">NewSyncResult</span><span class="token punctuation">(</span>kubecontainer<span class="token punctuation">.</span>StartContainer<span class="token punctuation">,</span> container<span class="token punctuation">.</span>Name<span class="token punctuation">)</span>
@@ -1340,10 +1407,35 @@
 <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>该方法的主要工作如下：</p>
-<p>​    1&gt; 首先会调用<code>computePodActions</code>计算一下有哪些Pod中的container有没有变化，有哪些container需要创建，有哪些container需要kill掉；</p>
+<p>​    1&gt; 首先会调用<code>computePodActions</code>计算一下有哪些Pod Spec中的变化，实际上就是一些是否需要执行动作。将这些变换记录在<code>podContainerChanges</code>中，是一个<code>podActions</code>结构，该结构源码如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// podActions keeps information what to do for a pod.</span>
+<span class="token keyword">type</span> podActions <span class="token keyword">struct</span> <span class="token punctuation">&#123;</span>
+	<span class="token comment">// Stop all running (regular and init) containers and the sandbox for the pod.</span>
+	KillPod <span class="token builtin">bool</span>
+	<span class="token comment">// Whether need to create a new sandbox. If needed to kill pod and create a</span>
+	<span class="token comment">// a new pod sandbox, all init containers need to be purged (i.e., removed).</span>
+	CreateSandbox <span class="token builtin">bool</span>
+	<span class="token comment">// The id of existing sandbox. It is used for starting containers in ContainersToStart.</span>
+	SandboxID <span class="token builtin">string</span>
+	<span class="token comment">// The attempt number of creating sandboxes for the pod.</span>
+	Attempt <span class="token builtin">uint32</span>
+
+	<span class="token comment">// The next init container to start.</span>
+	NextInitContainerToStart <span class="token operator">*</span>v1<span class="token punctuation">.</span>Container
+	<span class="token comment">// ContainersToStart keeps a list of indexes for the containers to start,</span>
+	<span class="token comment">// where the index is the index of the specific container in the pod spec (</span>
+	<span class="token comment">// pod.Spec.Containers.</span>
+	ContainersToStart <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span>
+	<span class="token comment">// ContainersToKill keeps a map of containers that need to be killed, note that</span>
+	<span class="token comment">// the key is the container ID of the container, while</span>
+	<span class="token comment">// the value contains necessary information to kill a container.</span>
+	ContainersToKill <span class="token keyword">map</span><span class="token punctuation">[</span>kubecontainer<span class="token punctuation">.</span>ContainerID<span class="token punctuation">]</span>containerToKillInfo
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>然后，依次按照<code>podContainerChanges</code>中的字段，去做相应的动作。具体如下：</p>
 <p>​    2&gt; kill掉<code>Sandbox</code>已经改变的Pod；</p>
 <p>​    3&gt; 如果有container已改变，那么需要调用<code>killContainer</code>方法来kill掉<code>ContainersToKill</code>列表中的container；</p>
-<p>​    4&gt; 调用<code>pruneInitContainersBeforeStart</code>方法清理同名的<code>Init Container</code>；</p>
+<p>​    4&gt; 调用<code>pruneInitContainersBeforeStart</code>方法清理一些的<code>Init Container</code>，这其实是一种优化，以减轻容器垃圾收集器的负担；</p>
 <p>​    5&gt; 调用<code>createPodSandbox</code>，方法，创建需要被创建的<code>Sandbox</code>；</p>
 <p>​    6&gt; 生成<code>Sandbox</code>的config配置，如Pod的DNS、hostName、端口映射等等；</p>
 <p>​    7&gt; 启动<code>Init Container</code>；</p>
@@ -1456,7 +1548,7 @@
 <p>至此，一个<code>dispathWork</code>的Pod创建工作基本完成，当Pods内的每个Pod都用这种方式创建完成，Pods即创建成功。</p>
 <hr>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>用一张图总结Pod(s)的创建流程。</p>
-<p><img src="https://i.bmp.ovh/imgs/2022/01/6653a4507c37c12c.png"></p>
+<p><img src="https://i.bmp.ovh/imgs/2022/03/8287ee100f9d8b7d.png"></p>
 <hr>
 <h3 id="References"><a href="#References" class="headerlink" title="References"></a>References</h3><p>[1] <a target="_blank" rel="noopener" href="https://www.cnblogs.com/luozhiyun/p/13736569.html">https://www.cnblogs.com/luozhiyun/p/13736569.html</a></p>
 <p>[2] <a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/workloads/pods/">https://kubernetes.io/docs/concepts/workloads/pods/</a></p>
