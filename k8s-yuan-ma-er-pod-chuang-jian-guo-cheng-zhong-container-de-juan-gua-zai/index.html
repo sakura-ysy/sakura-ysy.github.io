@@ -571,7 +571,7 @@
         <div class="card-content article-card-content">
             <div id="articleContent">
                 <p>​    直入正题，本文意在整理出Pod创建过程中和Volume挂载有关的源码及其调用过程。这部分的源码解读我并没有找到什么参考资料，所以会不全，也可能有错。</p>
-<h1 id="syncPod"><a href="#syncPod" class="headerlink" title="syncPod"></a>syncPod</h1><p>直接从<code>syncPod</code>开始看，如上一篇博客（Pod创建流程）中所写，该方法会在创建Pod前进行一些准备工作，比如创建基础目录什么的。方法的最后，它会调用<code>WaitForAttachAndMount</code>等待Pod请求的Volume进行attach和mount，之后，调用<code>SyncPod</code>真正开始创建Pod，源码如下：</p>
+<h2 id="syncPod"><a href="#syncPod" class="headerlink" title="syncPod"></a>syncPod</h2><p>直接从<code>syncPod</code>开始看，如上一篇博客（Pod创建流程）中所写，该方法会在创建Pod前进行一些准备工作，比如创建基础目录什么的。方法的最后，它会调用<code>WaitForAttachAndMount</code>等待Pod请求的Volume进行attach和mount，之后，调用<code>SyncPod</code>真正开始创建Pod，源码如下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// syncPod is the transaction script for the sync of a single pod.</span>
 <span class="token comment">//</span>
 <span class="token comment">// Arguments:</span>
@@ -624,7 +624,7 @@
 <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>因为要最终Volume挂咋过程，所以进入<code>WaitForAttachAndMount</code>中看看，该方法位于<code>pkg/kubelet/volumemanager/volume_manager.go</code>中。</p>
-<h2 id="WaitForAttachAndMount"><a href="#WaitForAttachAndMount" class="headerlink" title="WaitForAttachAndMount"></a>WaitForAttachAndMount</h2><p>源码如下：</p>
+<h3 id="WaitForAttachAndMount"><a href="#WaitForAttachAndMount" class="headerlink" title="WaitForAttachAndMount"></a>WaitForAttachAndMount</h3><p>源码如下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>volumeManager<span class="token punctuation">)</span> <span class="token function">WaitForAttachAndMount</span><span class="token punctuation">(</span>pod <span class="token operator">*</span>v1<span class="token punctuation">.</span>Pod<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">&#123;</span>
     <span class="token comment">// 得到Pod预期要挂载的volume列表</span>
 	expectedVolumes <span class="token operator">:=</span> <span class="token function">getExpectedVolumes</span><span class="token punctuation">(</span>pod<span class="token punctuation">)</span>
@@ -783,7 +783,7 @@
 <p>可以看到，逻辑也很简单，还是遍历。遍历expectedVolumes，如果mountedVolumes中不存在这个Volume，就说明该挂载但是还未挂载。</p>
 <p>至此，<code>WaitForAttachAndMount</code>也就结束了。在上面的代码中，都只是进行一些检测与判断，并没有进行实际的挂载。也就是说，真正的Volume挂载到Pod的操作，并不在这里完成，换句话说，到这里时宿主机的Volume已经完成了挂载。而实际的挂载过程，应该在<code>volumnManager</code>中进行的，但是这不部分我还没读懂，欠努力。</p>
 <p>Volume和Pod如何挂载的我还没弄清，还要学习。接下来，只着眼于Pod中的Container是如何挂载到上述Volume的。</p>
-<h1 id="SyncPod"><a href="#SyncPod" class="headerlink" title="SyncPod"></a>SyncPod</h1><p>回到<code>syncPod</code>，执行完上述的等待后，调用<code>getPullSecretsForPod</code>将Pod的secrets拉下来，但在这里不重要。重要的是最后要调用的<code>SyncPod</code>，看看它的源码，位于<code>pkg/kubelet/kuberuntime/kuberuntime_manager.go</code>中：</p>
+<h2 id="SyncPod"><a href="#SyncPod" class="headerlink" title="SyncPod"></a>SyncPod</h2><p>回到<code>syncPod</code>，执行完上述的等待后，调用<code>getPullSecretsForPod</code>将Pod的secrets拉下来，但在这里不重要。重要的是最后要调用的<code>SyncPod</code>，看看它的源码，位于<code>pkg/kubelet/kuberuntime/kuberuntime_manager.go</code>中：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>m <span class="token operator">*</span>kubeGenericRuntimeManager<span class="token punctuation">)</span> <span class="token function">SyncPod</span><span class="token punctuation">(</span>pod <span class="token operator">*</span>v1<span class="token punctuation">.</span>Pod<span class="token punctuation">,</span> <span class="token boolean">_</span> v1<span class="token punctuation">.</span>PodStatus<span class="token punctuation">,</span> podStatus <span class="token operator">*</span>kubecontainer<span class="token punctuation">.</span>PodStatus<span class="token punctuation">,</span> pullSecrets <span class="token punctuation">[</span><span class="token punctuation">]</span>v1<span class="token punctuation">.</span>Secret<span class="token punctuation">,</span> backOff <span class="token operator">*</span>flowcontrol<span class="token punctuation">.</span>Backoff<span class="token punctuation">)</span> <span class="token punctuation">(</span>result kubecontainer<span class="token punctuation">.</span>PodSyncResult<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
 	<span class="token comment">// Step 1: Compute sandbox and container changes.</span>
 	<span class="token comment">// 检擦Pod Spec是否发生改变，如果是，将这些改变记录下来</span>
@@ -1011,7 +1011,7 @@
 <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>可以看到，其中最最核心的方法就是<code>startContainer</code>，这个方法会首先对容器生成一些配置，然后在启动该容器，我们要研究的Volume挂载过程就在里面。</p>
-<h1 id="startContainer"><a href="#startContainer" class="headerlink" title="startContainer"></a>startContainer</h1><p>进入这个方法看一下，它位于<code>pkg/kubelet/kuberuntime/kuberuntime_container.go</code>中：</p>
+<h2 id="startContainer"><a href="#startContainer" class="headerlink" title="startContainer"></a>startContainer</h2><p>进入这个方法看一下，它位于<code>pkg/kubelet/kuberuntime/kuberuntime_container.go</code>中：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// startContainer starts a container and returns a message indicates why it is failed on error.</span>
 <span class="token comment">// It starts the container through the following steps:</span>
 <span class="token comment">// * pull the image</span>
@@ -1114,7 +1114,7 @@
 <p>其中，最核心的就是第二步创建容器。这里只看核心步骤它会先调用<code>generateContainerConfig</code>生成容器的配置，然后将该配置传给<code>CreateContainer</code>来创建容器。</p>
 <p><img src="/k8s%E6%BA%90%E7%A0%81-%E4%BA%8C-Pod%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B%E4%B8%ADContainer%E7%9A%84%E5%8D%B7%E6%8C%82%E8%BD%BD/cdab0b020a4a4df1.png"></p>
 <p>来一个个看。</p>
-<h2 id="generateContainerConfig"><a href="#generateContainerConfig" class="headerlink" title="generateContainerConfig"></a>generateContainerConfig</h2><p>方法位于<code>pkg/kubelet/kuberuntime/kuberuntime_container.go</code>中，源码如下：</p>
+<h3 id="generateContainerConfig"><a href="#generateContainerConfig" class="headerlink" title="generateContainerConfig"></a>generateContainerConfig</h3><p>方法位于<code>pkg/kubelet/kuberuntime/kuberuntime_container.go</code>中，源码如下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// generateContainerConfig generates container config for kubelet runtime v1.</span>
 <span class="token keyword">func</span> <span class="token punctuation">(</span>m <span class="token operator">*</span>kubeGenericRuntimeManager<span class="token punctuation">)</span> <span class="token function">generateContainerConfig</span><span class="token punctuation">(</span>container <span class="token operator">*</span>v1<span class="token punctuation">.</span>Container<span class="token punctuation">,</span> pod <span class="token operator">*</span>v1<span class="token punctuation">.</span>Pod<span class="token punctuation">,</span> restartCount <span class="token builtin">int</span><span class="token punctuation">,</span> podIP<span class="token punctuation">,</span> imageRef <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>runtimeapi<span class="token punctuation">.</span>ContainerConfig<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
 	opts<span class="token punctuation">,</span> err <span class="token operator">:=</span> m<span class="token punctuation">.</span>runtimeHelper<span class="token punctuation">.</span><span class="token function">GenerateRunContainerOptions</span><span class="token punctuation">(</span>pod<span class="token punctuation">,</span> container<span class="token punctuation">,</span> podIP<span class="token punctuation">)</span>
@@ -1185,7 +1185,7 @@
 <p>其中就有我们要的更挂载相关的字段<code>Mounts</code>。生成完opts之后，会调用<code>getImageUser</code>得到用户。接着，调用<code>ExpandContainerCommandAndArgs</code>来得到容器命令和参数，调用<code>buildContainerLogsPath</code>生成日志文件路径。最后，通过这些参数创建一个<code>ContainerConfig</code>类型的结构变量，就是容器配置。</p>
 <p>我们要关注该结构中的<code>Mounts</code>字段，该字段决定了容器创建时的Volume挂载。通过<code>m.makeMounts(opts, container)</code>生成挂载映射表，赋值给它。</p>
 <p>先来看看opts是怎么生成了，然后在回头看这个<code>m.makeMounts</code>。</p>
-<h3 id="GenerateRunContainerOptions"><a href="#GenerateRunContainerOptions" class="headerlink" title="GenerateRunContainerOptions"></a>GenerateRunContainerOptions</h3><p>方法位于<code>pkg/kubelet/kubelet_pods.go</code>中，源码如下：</p>
+<h4 id="GenerateRunContainerOptions"><a href="#GenerateRunContainerOptions" class="headerlink" title="GenerateRunContainerOptions"></a>GenerateRunContainerOptions</h4><p>方法位于<code>pkg/kubelet/kubelet_pods.go</code>中，源码如下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// GenerateRunContainerOptions generates the RunContainerOptions, which can be used by</span>
 <span class="token comment">// the container runtime to set parameters for launching a container.</span>
 <span class="token keyword">func</span> <span class="token punctuation">(</span>kl <span class="token operator">*</span>Kubelet<span class="token punctuation">)</span> <span class="token function">GenerateRunContainerOptions</span><span class="token punctuation">(</span>pod <span class="token operator">*</span>v1<span class="token punctuation">.</span>Pod<span class="token punctuation">,</span> container <span class="token operator">*</span>v1<span class="token punctuation">.</span>Container<span class="token punctuation">,</span> podIP <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>kubecontainer<span class="token punctuation">.</span>RunContainerOptions<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
@@ -1277,7 +1277,7 @@
 <li>如果需要的话，允许Pod内的容器共享宿主机的namespace；</li>
 </ol>
 <p>其中，跟容器内卷挂载配置相关的操作就是第8步，这里深入<code>makeMounts</code>看看挂载表是如何生成的。</p>
-<h4 id="makeMounts（kublet包）"><a href="#makeMounts（kublet包）" class="headerlink" title="makeMounts（kublet包）"></a>makeMounts（kublet包）</h4><p>该方法位于<code>pkg/kubelet/kubelet_pods.go</code>中，源码如下：</p>
+<h5 id="makeMounts（kublet包）"><a href="#makeMounts（kublet包）" class="headerlink" title="makeMounts（kublet包）"></a>makeMounts（kublet包）</h5><p>该方法位于<code>pkg/kubelet/kubelet_pods.go</code>中，源码如下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// 决定容器的挂载点</span>
 <span class="token comment">// makeMounts determines the mount points for the given container.</span>
 <span class="token keyword">func</span> <span class="token function">makeMounts</span><span class="token punctuation">(</span>pod <span class="token operator">*</span>v1<span class="token punctuation">.</span>Pod<span class="token punctuation">,</span> podDir <span class="token builtin">string</span><span class="token punctuation">,</span> container <span class="token operator">*</span>v1<span class="token punctuation">.</span>Container<span class="token punctuation">,</span> hostName<span class="token punctuation">,</span> hostDomain<span class="token punctuation">,</span> podIP <span class="token builtin">string</span><span class="token punctuation">,</span> podVolumes kubecontainer<span class="token punctuation">.</span>VolumeMap<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span>kubecontainer<span class="token punctuation">.</span>Mount<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
@@ -1424,7 +1424,7 @@
 <li>根据<code>VolumeName</code>、拼接了subPath的<code>hostPath</code>、容器内路径<code>containerPath</code>、是否只读选项<code>readOnly</code>以及另外两个没有提到的属性，构建一个完整的挂载映射关系，并把它追加到<code>mounts</code>中。</li>
 </ol>
 <p>处理完所有VolumeMount之后，该容器的挂载映射表就生成完毕，方法正常返回。通过上面的分析看出，该方法核心就是生成内外路径的映射关系和一些属性，将其作为配置信息传出去，并没有真正深入OS内核执行挂载。</p>
-<h3 id="makeMount（kuberuntime包）"><a href="#makeMount（kuberuntime包）" class="headerlink" title="makeMount（kuberuntime包）"></a>makeMount（kuberuntime包）</h3><p>生成完opts后，即可更具其构建最终的配置<code>config</code>，即：</p>
+<h4 id="makeMount（kuberuntime包）"><a href="#makeMount（kuberuntime包）" class="headerlink" title="makeMount（kuberuntime包）"></a>makeMount（kuberuntime包）</h4><p>生成完opts后，即可更具其构建最终的配置<code>config</code>，即：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go">config <span class="token operator">:=</span> <span class="token operator">&amp;</span>runtimeapi<span class="token punctuation">.</span>ContainerConfig<span class="token punctuation">&#123;</span>
 	Metadata<span class="token punctuation">:</span> <span class="token operator">&amp;</span>runtimeapi<span class="token punctuation">.</span>ContainerMetadata<span class="token punctuation">&#123;</span>
 		Name<span class="token punctuation">:</span>    container<span class="token punctuation">.</span>Name<span class="token punctuation">,</span>
@@ -1508,7 +1508,7 @@
 <p>重构完挂载表之后，正常将其返回即可。</p>
 <p>至此为止，<code>generateContainerConfig</code>就算完成了，生成了创建容器需要的相关配置=&gt;<code>containerConfig</code>。然后，<code>startContainer</code>就会把生成的这个配置交给<code>CreateContaier</code>，开始创建容器。</p>
 <p>这方法是Docker Serveice提供的方法，创建容器，并完成其中的卷挂载，我们跟进它，看看到底是怎么进行挂载的。</p>
-<h2 id="CreateContainer（dockershim包）"><a href="#CreateContainer（dockershim包）" class="headerlink" title="CreateContainer（dockershim包）"></a>CreateContainer（dockershim包）</h2><p>该方法位于<code>pkg/kubelet/dockershim/docker_container.go</code>中，源码如下：</p>
+<h3 id="CreateContainer（dockershim包）"><a href="#CreateContainer（dockershim包）" class="headerlink" title="CreateContainer（dockershim包）"></a>CreateContainer（dockershim包）</h3><p>该方法位于<code>pkg/kubelet/dockershim/docker_container.go</code>中，源码如下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// CreateContainer creates a new container in the given PodSandbox</span>
 <span class="token comment">// Docker cannot store the log to an arbitrary location (yet), so we create an</span>
 <span class="token comment">// symlink at LogPath, linking to the actual path of the log.</span>
@@ -1605,7 +1605,7 @@
 <li>生成完配置之后，调用docker client的<code>CreateContainer</code>方法，来创建容器。</li>
 </ol>
 <p>先看一下<code>generateMountBindings</code>是怎么工作，最后规范的挂载表格式又是什么样的。</p>
-<h3 id="generateMountBindings"><a href="#generateMountBindings" class="headerlink" title="generateMountBindings"></a>generateMountBindings</h3><p>方法位于<code>pkg/kubelet/dockershim/helpers.go</code>中，源码如下：</p>
+<h4 id="generateMountBindings"><a href="#generateMountBindings" class="headerlink" title="generateMountBindings"></a>generateMountBindings</h4><p>方法位于<code>pkg/kubelet/dockershim/helpers.go</code>中，源码如下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// generateMountBindings converts the mount list to a list of strings that</span>
 <span class="token comment">// can be understood by docker.</span>
 <span class="token comment">// '&lt;HostPath>:&lt;ContainerPath>[:options]', where 'options'</span>
@@ -1650,7 +1650,7 @@
 
 <p>方法的实现很简单，就是提取主机路径、容器内路径、挂载属性这三个元素。然后docker的规范挂载配置也很简单，就是<code>hostPath:containerPath:attrs</code> 而已。</p>
 <p>接着，更进<code>client.CreateContainer</code>来看是如何进行挂载的。</p>
-<h3 id="CreateContainer（libdocker包）"><a href="#CreateContainer（libdocker包）" class="headerlink" title="CreateContainer（libdocker包）"></a>CreateContainer（libdocker包）</h3><p>方法位于<code>pkg/kubelet/dockershim/libdocker/kube_docker_client.go</code>中，源码如下：</p>
+<h4 id="CreateContainer（libdocker包）"><a href="#CreateContainer（libdocker包）" class="headerlink" title="CreateContainer（libdocker包）"></a>CreateContainer（libdocker包）</h4><p>方法位于<code>pkg/kubelet/dockershim/libdocker/kube_docker_client.go</code>中，源码如下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>d <span class="token operator">*</span>kubeDockerClient<span class="token punctuation">)</span> <span class="token function">CreateContainer</span><span class="token punctuation">(</span>opts dockertypes<span class="token punctuation">.</span>ContainerCreateConfig<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>dockercontainer<span class="token punctuation">.</span>ContainerCreateCreatedBody<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
 	ctx<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> d<span class="token punctuation">.</span><span class="token function">getTimeoutContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 	<span class="token keyword">defer</span> <span class="token function">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
@@ -1670,7 +1670,7 @@
 <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>可以看到，这个方法是调用<code>client.ContainerCreate</code>来实现的，因此直接跟进这个方法即可。</p>
-<h4 id="ContainerCreate"><a href="#ContainerCreate" class="headerlink" title="ContainerCreate"></a>ContainerCreate</h4><p>方法位于<code>github.com/docker/docker/client/container_create.go</code>，源码如下：</p>
+<h5 id="ContainerCreate"><a href="#ContainerCreate" class="headerlink" title="ContainerCreate"></a>ContainerCreate</h5><p>方法位于<code>github.com/docker/docker/client/container_create.go</code>，源码如下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// ContainerCreate creates a new container based in the given configuration.</span>
 <span class="token comment">// It can be associated with a name, but it's not mandatory.</span>
 <span class="token keyword">func</span> <span class="token punctuation">(</span>cli <span class="token operator">*</span>Client<span class="token punctuation">)</span> <span class="token function">ContainerCreate</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> config <span class="token operator">*</span>container<span class="token punctuation">.</span>Config<span class="token punctuation">,</span> hostConfig <span class="token operator">*</span>container<span class="token punctuation">.</span>HostConfig<span class="token punctuation">,</span> networkingConfig <span class="token operator">*</span>network<span class="token punctuation">.</span>NetworkingConfig<span class="token punctuation">,</span> containerName <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>container<span class="token punctuation">.</span>ContainerCreateCreatedBody<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
@@ -1720,7 +1720,7 @@
 serverResp<span class="token punctuation">,</span> err <span class="token operator">:=</span> cli<span class="token punctuation">.</span><span class="token function">post</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> <span class="token string">"/containers/create"</span><span class="token punctuation">,</span> query<span class="token punctuation">,</span> body<span class="token punctuation">,</span> <span class="token boolean">nil</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <p>继续跟进这个post方法，就是docker如何包装并发送这个请求了。这里面能说能整理的还有很多，所以准备放在一篇博客中单独介绍。</p>
-<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>至此，Pod创建过程，有关Container卷挂载的流程就相对清晰了。看上去调用了很多方法，实际上就是层层封装。概括一下的话，就是两大部分：</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>至此，Pod创建过程，有关Container卷挂载的流程就相对清晰了。看上去调用了很多方法，实际上就是层层封装。概括一下的话，就是两大部分：</p>
 <ul>
 <li>生成容器创建的配置，其中就有卷的挂载映射；</li>
 <li>将配置包装成请求体，调用docker API进行容器创建；</li>
