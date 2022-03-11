@@ -1112,7 +1112,7 @@
 <li>启动这个容器。</li>
 </ol>
 <p>其中，最核心的就是第二步创建容器。这里只看核心步骤它会先调用<code>generateContainerConfig</code>生成容器的配置，然后将该配置传给<code>CreateContainer</code>来创建容器。</p>
-<p><img src="/k8s%E6%BA%90%E7%A0%81-%E4%BA%8C-Pod%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B%E4%B8%ADContainer%E7%9A%84%E5%8D%B7%E6%8C%82%E8%BD%BD/cdab0b020a4a4df1.png"></p>
+<p><img src="https://i.bmp.ovh/imgs/2022/03/129ed1ea963b2faa.png"></p>
 <p>来一个个看。</p>
 <h3 id="generateContainerConfig"><a href="#generateContainerConfig" class="headerlink" title="generateContainerConfig"></a>generateContainerConfig</h3><p>方法位于<code>pkg/kubelet/kuberuntime/kuberuntime_container.go</code>中，源码如下：</p>
 <pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token comment">// generateContainerConfig generates container config for kubelet runtime v1.</span>
