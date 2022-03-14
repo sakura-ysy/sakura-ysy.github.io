@@ -1072,7 +1072,7 @@
 		<span class="token comment">// Don't kill containers in pod if pod's cgroups already</span>
 		<span class="token comment">// exists or the pod is running for the first time</span>
 		podKilled <span class="token operator">:=</span> <span class="token boolean">false</span>
-		<span class="token comment">// 如果该pod 的cgroups(container groups)不存在，并且不是首次启动，那么kill掉</span>
+		<span class="token comment">// 如果该pod 的cgroups不存在，并且不是首次启动，那么kill掉</span>
 		<span class="token keyword">if</span> <span class="token operator">!</span>pcm<span class="token punctuation">.</span><span class="token function">Exists</span><span class="token punctuation">(</span>pod<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>firstSync <span class="token punctuation">&#123;</span>
 			<span class="token keyword">if</span> err <span class="token operator">:=</span> kl<span class="token punctuation">.</span><span class="token function">killPod</span><span class="token punctuation">(</span>pod<span class="token punctuation">,</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> podStatus<span class="token punctuation">,</span> <span class="token boolean">nil</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">&#123;</span>
 				podKilled <span class="token operator">=</span> <span class="token boolean">true</span>
