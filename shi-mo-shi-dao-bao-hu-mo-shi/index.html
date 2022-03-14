@@ -1,0 +1,1617 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="实模式到保护模式, SrcMiLeの杂货铺">
+    <meta name="description" content="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    <title>实模式到保护模式 | SrcMiLeの杂货铺</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+
+    <script src="/libs/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+
+
+<body>
+    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/avatar.jpg" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">SrcMiLeの杂货铺</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fas fa-bars"></i></a>
+<ul class="right nav-menu">
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/" class="waves-effect waves-light">
+      
+      <i class="fas fa-home" style="zoom: 0.6;"></i>
+      
+      <span>首页</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/tags" class="waves-effect waves-light">
+      
+      <i class="fas fa-tags" style="zoom: 0.6;"></i>
+      
+      <span>标签</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/categories" class="waves-effect waves-light">
+      
+      <i class="fas fa-bookmark" style="zoom: 0.6;"></i>
+      
+      <span>分类</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/archives" class="waves-effect waves-light">
+      
+      <i class="fas fa-archive" style="zoom: 0.6;"></i>
+      
+      <span>归档</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/about" class="waves-effect waves-light">
+      
+      <i class="fas fa-user-circle" style="zoom: 0.6;"></i>
+      
+      <span>关于</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/contact" class="waves-effect waves-light">
+      
+      <i class="fas fa-comments" style="zoom: 0.6;"></i>
+      
+      <span>留言板</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/friends" class="waves-effect waves-light">
+      
+      <i class="fas fa-address-book" style="zoom: 0.6;"></i>
+      
+      <span>友情链接</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="" class="waves-effect waves-light">
+
+      
+      <i class="fas fa-list" style="zoom: 0.6;"></i>
+      
+      <span>Medias</span>
+      <i class="fas fa-chevron-down" aria-hidden="true" style="zoom: 0.6;"></i>
+    </a>
+    <ul class="sub-nav menus_item_child ">
+      
+      <li>
+        <a href="/movies">
+          
+          <i class="fas fa-film" style="margin-top: -20px; zoom: 0.6;"></i>
+          
+          <span>放映室</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/books">
+          
+          <i class="fas fa-book" style="margin-top: -20px; zoom: 0.6;"></i>
+          
+          <span>破书架</span>
+        </a>
+      </li>
+      
+    </ul>
+    
+  </li>
+  
+  <li>
+    <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+      <i id="searchIcon" class="fas fa-search" title="搜索" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+</ul>
+
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/avatar.jpg" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">SrcMiLeの杂货铺</div>
+        <div class="logo-desc">
+            
+            Never really desperate, only the lost of the soul.
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+        <li class="m-nav-item">
+	  
+		<a href="/" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-home"></i>
+			
+			首页
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/tags" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-tags"></i>
+			
+			标签
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/categories" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-bookmark"></i>
+			
+			分类
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/archives" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-archive"></i>
+			
+			归档
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/about" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-user-circle"></i>
+			
+			关于
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/contact" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-comments"></i>
+			
+			留言板
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/friends" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-address-book"></i>
+			
+			友情链接
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="javascript:;">
+			
+				<i class="fa-fw fas fa-list"></i>
+			
+			Medias
+			<span class="m-icon"><i class="fas fa-chevron-right"></i></span>
+		</a>
+            <ul  style="background:  ;" >
+              
+                <li>
+
+                  <a href="/movies " style="margin-left:75px">
+				  
+				   <i class="fa fas fa-film" style="position: absolute;left:50px" ></i>
+			      
+		          <span>放映室</span>
+                  </a>
+                </li>
+              
+                <li>
+
+                  <a href="/books " style="margin-left:75px">
+				  
+				   <i class="fa fas fa-book" style="position: absolute;left:50px" ></i>
+			      
+		          <span>破书架</span>
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/sakura-ysy" class="waves-effect waves-light" target="_blank">
+                <i class="fab fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/sakura-ysy" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+    
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/1.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <h1 class="description center-align post-title">实模式到保护模式</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        width: 345px;
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        padding: 35px 0 15px 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content {
+        padding-bottom: 30px;
+        overflow: auto;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+
+        position: absolute;
+        right: 23.5vw;
+        display: block;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/OS/">
+                                <span class="chip bg-color">OS</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/OS%E5%86%85%E6%A0%B8/" class="post-category">
+                                OS内核
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                
+                <div class="post-date info-break-policy">
+                    <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2022-02-20
+                </div>
+                
+
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
+                    5.6k
+                </div>
+                
+
+                
+
+                
+            </div>
+        </div>
+        <hr class="clearfix">
+
+        
+        <!-- 是否加载使用自带的 prismjs. -->
+        <link rel="stylesheet" href="/libs/prism/prism.css">
+        
+
+        
+
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <p>在不知道保护模式之前，让我们先看一段代码，如果没有接触过保护模式，会一头雾水，不过没关系，在这种好奇心的驱使下，会学的更高效。</p>
+<span id="more"></span>
+
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;
+; pmtest1.asm
+; 编译方法：nasm pmtest1.asm -o pmtest1.com
+; &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;
+
+%include	&quot;pm.inc&quot;	; 常量, 宏, 以及一些说明
+
+
+org	07c00h
+	jmp	LABEL_BEGIN
+
+
+
+[SECTION .gdt]
+; GDT
+;                                         段基址,      段界限     , 属性
+
+LABEL_GDT:		Descriptor	       0,                0, 0     		; 空描述符
+LABEL_DESC_CODE32:	Descriptor	       0, SegCode32Len - 1, DA_C + DA_32	; 非一致代码段, 32
+LABEL_DESC_VIDEO:	Descriptor	 0B8000h,           0ffffh, DA_DRW		; 显存首地址
+; GDT 结束
+
+
+GdtLen		equ	$ - LABEL_GDT	; GDT长度
+GdtPtr		dw	GdtLen - 1	; GDT界限
+		dd	0		; GDT基地址
+
+; GDT 选择子
+SelectorCode32		equ	LABEL_DESC_CODE32	- LABEL_GDT
+SelectorVideo		equ	LABEL_DESC_VIDEO	- LABEL_GDT
+; END of [SECTION .gdt]
+
+
+[SECTION .s16]
+[BITS	16]
+LABEL_BEGIN:
+
+	mov	ax, cs
+	mov	ds, ax
+	mov	es, ax
+	mov	ss, ax
+	mov	sp, 0100h
+
+	; 初始化 32 位代码段描述符
+	; 旨在将LABEL_SEG_CODE32设为保护模式的基址
+	xor	eax, eax
+	mov	ax, cs
+	shl	eax, 4
+	add	eax, LABEL_SEG_CODE32
+	mov	word [LABEL_DESC_CODE32 + 2], ax
+	shr	eax, 16
+	mov	byte [LABEL_DESC_CODE32 + 4], al
+	mov	byte [LABEL_DESC_CODE32 + 7], ah
+
+	; 为加载 GDTR 作准备
+	xor	eax, eax
+	mov	ax, ds
+	shl	eax, 4
+	add	eax, LABEL_GDT		; eax &lt;- gdt 基地址
+	mov	dword [GdtPtr + 2], eax	; [GdtPtr + 2] &lt;- gdt 基地址
+
+
+
+	; 加载 GDTR
+	lgdt	[GdtPtr] ; 将GdtPtr指示的6字节加载到寄存器gdtr,其中32为GDT基地址,16为GDT界限
+
+	; 关中断
+
+	cli
+
+	; 打开地址线A20,即第20号地址位(从0开始)，超过了1MB，开机时默认关闭
+	; 只有打开才能寻1MB以外的空间
+	in	al, 92h
+	or	al, 00000010b
+	out	92h, al
+
+	; 准备切换到保护模式
+	; 将寄存器cr0的第0号位置设为1，相当于打开了保护模式的开关
+	mov	eax, cr0
+	or	eax, 1
+	mov	cr0, eax
+
+	; 真正进入保护模式
+	jmp	dword SelectorCode32:0	; 执行这一句会把 SelectorCode32 装入 cs, 并跳转到 Code32Selector:0  处
+; END of [SECTION .s16]
+
+
+[SECTION .s32]; 32 位代码段. 由实模式跳入.
+[BITS	32]
+LABEL_SEG_CODE32:
+
+	mov	ax, SelectorVideo
+	mov	gs, ax			; 视频段选择子(目的)
+
+	mov	edi, (80 * 10 + 0) * 2	; 屏幕第 10 行, 第 0 列。
+	mov	ah, 0Ch			; 0000: 黑底    1100: 红字
+	mov	al, &#39;P&#39;
+	mov	[gs:edi], ax
+
+	; 到此停止
+	jmp	$
+	
+SegCode32Len	equ	$ - LABEL_SEG_CODE32
+; END of [SECTION .s32]
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这段代码会将OS从实模式跳转到保护模式，然后在屏幕的第10行第0列输出黑底红字的P，让我们先运行下看看效果，这里使用的工具为：Ubuntu虚拟机 + NASM + Bochs + FreeDos。</p>
+<p>最基础的，可以将上如代码编译为pmtest1.bin然后直接写入Boot Sector（引导扇区），这样做很方便，可以直接运行，不需要FreeDos。但是，有个很明显的缺点，就是空间有限，限制为512B，一旦代码量大了起来就不行了，所以不是长久之计。</p>
+<p>解决上述问题有两个方法，一个是写一个Boot Sector，然后是它读取我们写的程序并运行，即引导我们写的OS内核，不过难度较大。第二个方法就是借助别的东西，比如DOS，我们把程序编译成<code>COM</code>文件，然后让DOS来执行它，这里，我们使用<code>FreeDos</code>来完成这个任务。</p>
+<p>首先去Bochs官方下载一个FreeDos，主要用到其中的<code>a.img</code>。解压后，将a.img复制到工作目录，更名为<code>freedos.img</code>。</p>
+<p>用<code>bximage</code>生成一个<code>软盘镜像</code>，起名为<code>pm.img</code>。</p>
+<p>新建文件<code>bochsrc</code>，内容如下，重点为floppya、floppyb和boot：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">megs<span class="token punctuation">:</span><span class="token number">32</span>
+
+romimage<span class="token punctuation">:</span>file=$BXSHARE/BIOS<span class="token punctuation">-</span>bochs<span class="token punctuation">-</span>latest
+
+vgaromimage<span class="token punctuation">:</span>file=$BXSHARE/VGABIOS<span class="token punctuation">-</span>lgpl<span class="token punctuation">-</span>latest
+
+floppya<span class="token punctuation">:</span>1_44=freedos.img<span class="token punctuation">,</span>status=inserted
+floppyb<span class="token punctuation">:</span>1_44=pm.img<span class="token punctuation">,</span>status=inserted
+<span class="token comment">#软盘映射</span>
+boot<span class="token punctuation">:</span>a
+<span class="token comment">#硬盘</span>
+<span class="token comment">#boot:disk</span>
+
+<span class="token comment">#分配HD为60M，根据分配硬盘大小，cylinders, heads, spt会变化</span>
+<span class="token comment">#ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14</span>
+<span class="token comment">#ata0-master: type=disk, mode=flat, path="boot.img", cylinders=121, heads=16, spt=63</span>
+
+log<span class="token punctuation">:</span>bochsout.txt<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>使用<code>bochs -f bochsrc</code>启动Bochs，待FreeDos启动完毕后格式化B盘：</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/02/597d1f0674ed20d5.png"></p>
+<p>这里说下为什么要用Ubuntu，因为Linux的挂载（<code>mount</code>）操作可以将宿主目录和Dos中的镜像关联起来，轻易实现将目标文件复制到Dos运行的镜像中。首先，编译出.COM文件，然后将其复制到虚拟软盘pm.img上：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">nasm pmtest1.asm -o pmtest1.com
+<span class="token function">sudo</span> <span class="token function">mount</span> -o loop pm.img /mnt/floppy
+<span class="token function">sudo</span> <span class="token function">cp</span> pmtest1.com /mnt/floppy/
+<span class="token function">sudo</span> <span class="token function">umount</span> /mnt/floppy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>然后到FreeDos中，执行命令：<code>B:\pmtest1.com</code>，就运行起来了，如图所示，显示一个红色的p。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/02/e8e4882d1409b8c8.png"></p>
+<p>好了，演示完毕，接下来开始介绍各部分代码的含义，由此了解保护模式，不过更重要的，是要先了解保护模式的一些历史。</p>
+<h2 id="初始保护模式"><a href="#初始保护模式" class="headerlink" title="初始保护模式"></a>初始保护模式</h2><p>保护模式重在“保护”二字，顾名思义，其主要提供了安全上的服务，那它到底安全在哪？保护了什么？这个还在要从8086的16位寄存器时开始说起。</p>
+<p>在Intel 8086中，CPU是16位的，它有着16位的寄存器、16位的数据总线以及20位的地址总线，共1MB的寻址空间，由于数据总线是少于地址总线的，所以物理地址是又<code>段:偏移</code>组成的，两者都是16位。</p>
+<blockquote>
+<p>物理地址 = 段基址*16 + 偏移</p>
+</blockquote>
+<p>上述模式就是我们后来所称的实模式，它的弊端是很大的：</p>
+<p>1&gt;    操作系统和用户程序属于同一特权级，平起平坐，没有区别；</p>
+<p>2&gt;    用户程序引用的地址直接为<code>物理地址</code>，即逻辑地址=物理地址，指哪打哪，没有限制很不安全；</p>
+<p>3&gt;    用户程序可以自由设定段基址，在1MB空间中随意访问，不安全;</p>
+<p>4&gt;    16位寄存器只能访问64KB，所以当访问的地址跨越64KB时，需要更改段基址，很麻烦;</p>
+<p>5&gt;    一次只能运行一个程序，无法充分利用计算机资源;</p>
+<p>6&gt;    最大的弊端，空间只有1MB，这在20年前就已经不够用了;</p>
+<p>其中，(1)(2)(3)是安全方面的缺陷，没有安全可言的CPU是注定不可依赖的，它从本质上决定了程序乃至操作系统的数据有被随意删改的风险。(4)(5)是使用方面的缺陷，这个再20年前似乎还能忍受，但是随着计算需求的提升必会被淘汰。最硬伤的就是(6)，1MB完全不够用，因此急需更高的寻址空间。</p>
+<p>从80286开始，Intel的CPU进入32位时代，32位CPU具有两种运行模式，分别为<code>实模式</code>和<code>保护模式</code>，可以兼容8086时代的16位运行环境。实际上，在8086时代，16位CPU根本没有实模式的概念！当时的人用的只有16位CPU，他们从没想过自己习惯的模式还要重新命名。直到CPU发展到了32位，新的运行模式和之前不大相同，但不管怎么发展，都一定要满足一个原则：<code>兼容</code>。</p>
+<p>也就是说，32位CPU具有两种模式，一种是为了克服8086运行模式弊端的新模式，即它自己的运行模式；另一种就是为了兼容8086运行模式而存在的，实模式。为了凸显前者的优势，将其称为保护模式。再强调一遍：</p>
+<blockquote>
+<p>实模式是32CPU时才提出的概念，旨在兼容8086的16位运行模式</p>
+</blockquote>
+<p>实模式的运行环境为16位，保护模式为32位。但是要注意的是，当PC运行在实模式下时，CPU依然是32位，硬件本身不会变！相当于高中生去做初中生的题，当它处在16位的运行模式时，依然可以处理32位的操作数，因为它在硬件层面上是32位的。也即：</p>
+<blockquote>
+<p>实模式指32位CPU运行在16位模式下的状态，但CPU本身是32位的，依然可以处理32位操作数</p>
+</blockquote>
+<p>了解完其基础概念后，来看看保护模式究竟从哪些方面得到了进化。</p>
+<h2 id="寄存器扩展"><a href="#寄存器扩展" class="headerlink" title="寄存器扩展"></a>寄存器扩展</h2><p>无论PC怎么发展，兼容都是最基本的要求，包括寄存器、访存方式、指令格式等的兼容。CPU发展到了32位后，地址总线和数据总线也发展到了32位，即寻址空间夸大到了4GB，一次可以处理的操作数升至32位。4GB的空间如果还用曾经的<code>段:偏移</code>法来寻址的话，段基址要左移16位，这显然很不合适。</p>
+<p>最关键的，从设计思想上将，段基址本身就应该是某个内存段的起始地址，它不应该在应用前先做个处理。在原来的16位模式下，由于数据总线小于地址总线，所以迫不得已预先将段基址*16，才产生了这种蹩脚的方式。现在，数据总线和地址总线一样宽了，就可从根本上解决这个问题——扩展寄存器到32位。</p>
+<p>寄存器要保持向下兼容，不能推翻之前的方案重来，因此要在原有16位的基础上向高位扩展16位，延申到32位，新的寄存器用前缀e表示扩展，即eax、ebx等等，如图：</p>
+ <img src="https://i.bmp.ovh/imgs/2022/02/477588c3761f2737.png" style="zoom:80%;" />
+
+<p>可以看到，通用寄存器、标志寄存器、指令指针寄存器都扩展到了32位，但是段寄存器没有，仍然只有32位，这是因为段寄存器16位就够用了，这个后面会解释到。</p>
+<p>上图中，寄存器的低16位是为了兼容实模式的，在任何模式下都可以<code>单独使用</code>，但是高16位不行，必须在引用32位寄存器时才能用到他们。</p>
+<p>之前提到过，在80286之后，引入了保护模式的概念，大大提高了安全性，其中很重要的一部分，就是对内存段的描述。它改变了段基址的实质，引入了<code>GRT(Global Descriptor Table)</code>的概念。</p>
+<h2 id="GDT"><a href="#GDT" class="headerlink" title="GDT"></a>GDT</h2><p>保护模式下，偏移地址和实模式是一样的，但是段基址不再是简单的一个地址了。之前说过，实模式下段基址可以任意设定，随意访问空间内的任何地方，很不安全。因此为了更加安全，要给它加一些约束条件，这些约束条件就是对内存段的描述信息。由于信息太多了，所以专门找了个数据结构——全局描述符表，即<code>GDT</code>。该表很大，故放在了内存中，由<code>GDTR</code>寄存器指向它的首址，这个寄存器有6字节。</p>
+<p>既然是表，那一定有表项，每一个表项就是一个<code>段描述符</code>，大小为8字节，用来描述一个内存段的段基址、段界限和段属性等等。注意，表项就是描述符，而不是描述符的索引。不过这里不会详细介绍，只浅谈一下即可，后面会专门开一篇博客专门介绍GDT和描述符。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/02/ccabd82c4185bc24.png"></p>
+<p>这样，段寄存器中保存的再也不是段基址了，里面保存的内容叫<code>选择子</code>，selector。实际上，这个选择子就是个<code>数</code>，用这个数来<code>索引</code>GDT中的段描述符。把全局描述符当成数组，选择子就像数组下标一样。</p>
+<blockquote>
+<p>1&gt; 段描述符是在内存中的，访问会很耗时</p>
+<p>2&gt; 段描述符的格式很奇怪，CPU把这些七零八落的数拼凑起来也会耗时</p>
+</blockquote>
+<p>既然访问内存中的段描述符很耗时间，那CPU如何提高效率呢？使用缓存。在80286的保护模式中，为了提高获取段信息的效率，对段寄存器率先应用了缓存技术，将段信息用一个寄存器来缓存，这就是<code>段描述符缓冲寄存器</code>。对程序员而言它是不可见的。CPU每次访问描述符并获取到内存段信息后，会将其存入上述缓冲寄存器中，下次访问相同段时，直接从中取就行了。</p>
+<p>另外，虽然段描述符缓冲寄存器是保护模式下的产物，但是它也可以用在实模式下。在16为的实模式下，段基址左移4位这个操作也是耗时的。因此，CPU会将段基址左移后的结果存在上述寄存器中，以后每次引用这个段时，就直接走缓冲寄存器，直到换段，也就是段寄存器被重新赋值。</p>
+<p>在进入代码解释之前按，先简单概括下描述符各属性的含义：</p>
+<p><strong>P位</strong>：存在位，P=1表示段在内存中存在；P=0表示在内存中不存在。</p>
+<p><strong>DPL</strong>：描述符特权级（Privilege Level），可以是0123，数字越小特权级越大。</p>
+<p><strong>S位</strong>：指明描述符是数据段/代码段（S=1）还是系统段/门描述符（S=0）.</p>
+<p><strong>TYPE</strong>：描述符类型，详情见下表：</p>
+<img src="https://i.bmp.ovh/imgs/2022/02/331f5d92ee10678c.png" style="zoom: 67%;" />
+
+<p>其中，当S=1时，TYPE&lt;8对应数据段，&gt;=8对应代码段；当S=0时，TYPE&lt;8对应系统段，&gt;=8对应门描述符。</p>
+<p><strong>G位</strong>：段界限粒度（Granularity）位。G=0时段界限为字节；G=1时段界限粒度为4KB。</p>
+<p><strong>D/B位</strong>：这一位比较复杂，分三种情况：</p>
+<ul>
+<li>   在可执行代码段描述符中，这一位叫做D位。D=1时，在默认情况下指令使用32位地址以及32位或8位操作数；D=0时，在默认情况下使用16位地址以及16位或8位操作数；</li>
+<li>   在向下扩展数据段的描述符中，这一位叫做B位。B=1时，段的上部界限为4GB；B=0时，段的上部界限为64KB；</li>
+<li>   在描述堆栈段（由ss寄存器指向的段）的描述符中，这一位叫做B位。B=1时，隐式的堆栈访问指令（如push、pop和call）使用32位堆栈指针寄存器esp；D=0时，隐式的堆栈访问指令（如push、pop和call）使用16位堆栈指针寄存器sp；</li>
+</ul>
+<p><strong>AVL位</strong>：保留位：可以被系统软件使用。</p>
+<h2 id="代码解释"><a href="#代码解释" class="headerlink" title="代码解释"></a>代码解释</h2><p>好了，知道保护模式和GDT的相关基础后，可以开始通过解释文初的代码来进一步学习保护模式了。</p>
+<p>代码一共分为三个部分，即三个段：[SECTION .gdt]、[SECTION .s16]、[SECTION .s32]。顾名思义，第一部分定义了GDT，第二部分为16位环境下运行的代码，即实模式，第三部分为32位环境下运行的代码，即保护模式。我们一个一个看。</p>
+<h3 id="SECTION-gdt"><a href="#SECTION-gdt" class="headerlink" title="[SECTION .gdt]"></a>[SECTION .gdt]</h3><p>这个部分定义了一个数组，每一个元素都是一个<code>Descriptor</code>，很明显，这个数组就是<code>GDT</code>。其中，<code>Descriptor</code>是一个宏，这个宏用比较自动化的方法把段基址、段界限和段属性放入一个描述符中合适的位置，这个宏在pm.inc中，内容如下：</p>
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 描述符
+; usage: Descriptor Base, Limit, Attr
+;        Base:  dd
+;        Limit: dd (low 20 bits available)
+;        Attr:  dw (lower 4 bits of higher byte are always 0)
+%macro Descriptor 3
+	dw	%2 &amp; 0FFFFh				; 段界限 1				(2 字节)
+	dw	%1 &amp; 0FFFFh				; 段基址 1				(2 字节)
+	db	(%1 &gt;&gt; 16) &amp; 0FFh			; 段基址 2				(1 字节)
+	dw	((%2 &gt;&gt; 8) &amp; 0F00h) | (%3 &amp; 0F0FFh)	; 属性 1 + 段界限 2 + 属性 2		(2 字节)
+	db	(%1 &gt;&gt; 24) &amp; 0FFh			; 段基址 3				(1 字节)
+%endmacro ; 共 8 字节<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>代码的GDT中共有3个描述符，为方便起见，这里分别简称为DESC_DUMMY、DESC_CODE32和DESC_VIDEO。其中DESC_VIDEO的段基址是<code>0B800h</code>，这个地址是显存的起始地址，故该描述符指向了显存。</p>
+<p>段基址和段界限都好说，来看下段属性。DESC_CODE32的属性为<code>DA_C + DA_32</code>，DESC_VIDEO的属性为<code>DA_DRW</code>。这些值都定义在pm.inc中：</p>
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">;---------------------------------------------------------------
+; 描述符类型值说明
+; 其中:
+;       DA_  : Descriptor Attribute
+;       D    : 数据段
+;       C    : 代码段
+;       S    : 系统段
+;       R    : 只读
+;       RW   : 读写
+;       A    : 已访问
+;       其它 : 可按照字面意思理解
+;---------------------------------------------------------------
+DA_32		EQU	4000h	; 32 位段
+
+DA_DPL0		EQU	  00h	; DPL &#x3D; 0
+DA_DPL1		EQU	  20h	; DPL &#x3D; 1
+DA_DPL2		EQU	  40h	; DPL &#x3D; 2
+DA_DPL3		EQU	  60h	; DPL &#x3D; 3
+;---------------------------------------------------------------
+; 存储段描述符类型值说明
+;---------------------------------------------------------------
+DA_DR		EQU	90h	; 存在的只读数据段类型值
+DA_DRW		EQU	92h	; 存在的可读写数据段属性值
+DA_DRWA		EQU	93h	; 存在的已访问可读写数据段类型值
+DA_C		EQU	98h	; 存在的只执行代码段属性值
+DA_CR		EQU	9Ah	; 存在的可执行可读代码段属性值
+DA_CCO		EQU	9Ch	; 存在的只执行一致代码段属性值
+DA_CCOR		EQU	9Eh	; 存在的可执行可读一致代码段属性值
+;---------------------------------------------------------------
+; 系统段描述符类型值说明
+;---------------------------------------------------------------
+DA_LDT		EQU	  82h	; 局部描述符表段类型值
+DA_TaskGate	EQU	  85h	; 任务门类型值
+DA_386TSS	EQU	  89h	; 可用 386 任务状态段类型值
+DA_386CGate	EQU	  8Ch	; 386 调用门类型值
+DA_386IGate	EQU	  8Eh	; 386 中断门类型值
+DA_386TGate	EQU	  8Fh	; 386 陷阱门类型值
+;---------------------------------------------------------------<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>DA_C + DA_32的二进制为<code>0100 0000 1001 1000</code>，更具描述符TYPE的含义可知该内存段为<strong>存在的只执行的32位代码段，DPL为0</strong>。同理可知，DESC_VIDEO段为<strong>可读写数据段</strong>。</p>
+<p>定义完GDT后，用变量<code>GdtLen</code>存储GDT的长度，结构变量<code>GdtPtr</code>存储GDT的长度和基地址。</p>
+<p>随后，开始存储后两个描述符的<code>选择子</code>，可以看到，<code>SelectorCode32</code>和<code>SelectorVideo</code>分别存储了DESC_CODE32和DESC_VIDEO相对于GDT首址的偏移，这个数就是他们各自的选择子。实际上，选择子不止是一个偏移，它的结构要稍微复杂一些，这里不详细介绍。</p>
+<p>数据结构<code>GdtPtr</code>是用来记录GDT界限和GDT基址的。前文提到过，<code>GDTR</code>寄存器要指向GDT的首址，先来看看这个寄存器的结构：</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/02/71d060da237efc08.png"></p>
+<p>可以看到，这个寄存器和我们定义的<code>GdtPtr</code>结构是一样的，实际上，定义<code>GdtPtr</code>的目的就是将其赋值给<code>GDTR</code>。</p>
+<h2 id="SECTION-s32"><a href="#SECTION-s32" class="headerlink" title="[SECTION .s32]"></a>[SECTION .s32]</h2><p>这个部分为保护模式下要执行的代码，目的很简单，在指定位置打印一个红色的P。首先，把显存的内存段也就是描述符DESC_VIDEO的<code>选择子</code>写入段寄存器<code>GS</code>:</p>
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">mov	ax, SelectorVideo
+mov	gs, ax			; 视频段选择子(目的)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>接着，把想要显示的位置写入<code>edi</code>，然后通过<code>[gs:edi]</code>要显示的东西写入显存的对应位置中：</p>
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">mov	edi, (80 * 10 + 0) * 2	; 屏幕第 10 行, 第 0 列。
+mov	ah, 0Ch			; 0000: 黑底    1100: 红字
+mov	al, &#39;P&#39;
+mov	[gs:edi], ax<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>保护模式运行的代码到此为止，使用一个死循环来停在此处即可。可以看到，这部分并不难。核心目的就是把字符写入显存对应的位置，不过由于保护模式用<code>描述符</code>来表示各个内存段，因此需要借助<code>GDT</code>来完成。</p>
+<h2 id="SECTION-s16"><a href="#SECTION-s16" class="headerlink" title="[SECTION .s16]"></a>[SECTION .s16]</h2><p>我们知道，当PC启动时，首先进入的是实模式，只有1MB的寻址空间，要转入保护模式，就需要另做一些操作，比如打开某些开关，然后<code>jmp</code>到保护模式，[SECTION .s16]就是在实模式中做这些事的。</p>
+<p>在将cs、ds、es、ss相统一之后，开始初始化保护模式代码段描述符。因为最后要跳到保护模式所在的内存段（代码段），因此需要一个描述符来存储它，就是<code>DESC_CODE32</code>，不过由于描述符结构比较蹩脚，所以得分步来赋值。</p>
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 初始化 32 位代码段描述符
+xor	eax, eax
+mov	ax, cs
+shl	eax, 4
+add	eax, LABEL_SEG_CODE32
+mov	word [LABEL_DESC_CODE32 + 2], ax
+shr	eax, 16
+mov	byte [LABEL_DESC_CODE32 + 4], al
+mov	byte [LABEL_DESC_CODE32 + 7], ah<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>初始化完该描述符后，开始加载GDT，即将GDT的首址和界限写入寄存器<code>GDTR</code>，期间要借助数据结构<code>GdtPtr</code>：</p>
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 为加载 GDTR 作准备
+xor	eax, eax
+mov	ax, ds
+shl	eax, 4
+add	eax, LABEL_GDT		; eax &lt;- gdt 基地址
+mov	dword [GdtPtr + 2], eax	; [GdtPtr + 2] &lt;- gdt 基地址
+
+; 加载 GDTR
+lgdt	[GdtPtr]<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>最后一行的<code>lgdt</code>的作用是将以GdtPtr为首址的6字节加载到寄存器<code>GDTR</code>中。</p>
+<p>接下来就是关中断，因为保护模式下中断处理的机制是不同的，不关掉会出错误：</p>
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 关中断
+cli<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>再下面几行的作用就是打开<code>A20</code>地址线，这里简单介绍下什么时候A20地址线。在8086中，地址线只有20位，空间为1MB，那么如果试图访问1MB之外的空间呢？系统并不会发生异常，而是<code>回卷</code>，重新从0地址开始。但是到了80286时，空间变成了4GB，访问1MB之外不再需要回卷了，这就造成了和旧模式的不兼容，怎么办呢？IBM想出一个办法，使用8042键盘控制器来控制第20号（从0开始）地址位，这就是<code>A20</code>地址线，如果不被打开，默认为0，地址会回卷。也即，<code>A20</code>是程序或OS能够访问到1MB之外的空间，可以认为是进入保护模式的第一步。代码通过操作端口92h来打开它：</p>
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 打开地址线A20
+in	al, 92h
+or	al, 00000010b
+out	92h, al<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>接下来，离最后的<code>jmp</code>就只差一步了，那就是打开保护模式的开关：</p>
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 准备切换到保护模式
+mov	eax, cr0
+or	eax, 1
+mov	cr0, eax<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>上述代码很简单，就是把<code>cr0</code>寄存器的第0位设1。寄存器<code>cr0</code>的第0位是PE位，此位为0时，CPU运行于实模式，为1时，CPU运行于保护模式。因此，这一步打开了进入保护模式的开关。</p>
+<p>此时，系统已经进入了保护模式，但是<code>cs</code>仍然是实模式的值，即依然停留在实模式的代码处。因此，需要将其更改为保护模式的代码段，那就是<code>jmp</code>。通过之前定义的DESC_CODE32的选择子<code>SelectorCode32</code>，来执行保护模式处的代码：</p>
+<pre class="line-numbers language-assembly" data-language="assembly"><code class="language-assembly">; 真正进入保护模式
+	jmp	dword SelectorCode32:0	; 执行这一句会把 SelectorCode32 装入 cs, 并跳转到 Code32Selector:0  处<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>至此，成功进入了保护模式，下面总结一下进入保护模式的主要步骤：</p>
+<p>1&gt;    准备GDT；</p>
+<p>2&gt;    用lgdt加载gdtr；</p>
+<p>3&gt;    打开A20；</p>
+<p>4&gt;    置cr0的PE位，使系统处于保护模式；</p>
+<p>5&gt;    跳转，进入保护模式；</p>
+
+                
+            </div>
+            <hr/>
+
+            
+
+    <div class="reprint" id="reprint-statement">
+        
+            <div class="reprint__author">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-user">
+                        文章作者:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="/about" rel="external nofollow noreferrer">SrcMiLe</a>
+                </span>
+            </div>
+            <div class="reprint__type">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-link">
+                        文章链接:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="http://example.com/shi-mo-shi-dao-bao-hu-mo-shi/">http://example.com/shi-mo-shi-dao-bao-hu-mo-shi/</a>
+                </span>
+            </div>
+            <div class="reprint__notice">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-copyright">
+                        版权声明:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    本博客所有文章除特別声明外，均采用
+                    <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="external nofollow noreferrer" target="_blank">CC BY 4.0</a>
+                    许可协议。转载请注明来源
+                    <a href="/about" target="_blank">SrcMiLe</a>
+                    !
+                </span>
+            </div>
+        
+    </div>
+
+    <script async defer>
+      document.addEventListener("copy", function (e) {
+        let toastHTML = '<span>复制成功，请遵循本文的转载规则</span><button class="btn-flat toast-action" onclick="navToReprintStatement()" style="font-size: smaller">查看</a>';
+        M.toast({html: toastHTML})
+      });
+
+      function navToReprintStatement() {
+        $("html, body").animate({scrollTop: $("#reprint-statement").offset().top - 80}, 800);
+      }
+    </script>
+
+
+
+            <div class="tag_share" style="display: block;">
+                <div class="post-meta__tag-list" style="display: inline-block;">
+                    
+                        <div class="article-tag">
+                            
+                                <a href="/tags/OS/">
+                                    <span class="chip bg-color">OS</span>
+                                </a>
+                            
+                        </div>
+                    
+                </div>
+                <div class="post_share" style="zoom: 80%; width: fit-content; display: inline-block; float: right; margin: -0.15rem 0;">
+                    <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+<div id="article-share">
+
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+                </div>
+            </div>
+            
+                <style>
+    #reward {
+        margin: 40px 0;
+        text-align: center;
+    }
+
+    #reward .reward-link {
+        font-size: 1.4rem;
+        line-height: 38px;
+    }
+
+    #reward .btn-floating:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #rewardModal {
+        width: 320px;
+        height: 350px;
+    }
+
+    #rewardModal .reward-title {
+        margin: 15px auto;
+        padding-bottom: 5px;
+    }
+
+    #rewardModal .modal-content {
+        padding: 10px;
+    }
+
+    #rewardModal .close {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        color: rgba(0, 0, 0, 0.5);
+        font-size: 1.3rem;
+        line-height: 20px;
+        cursor: pointer;
+    }
+
+    #rewardModal .close:hover {
+        color: #ef5350;
+        transform: scale(1.3);
+        -moz-transform:scale(1.3);
+        -webkit-transform:scale(1.3);
+        -o-transform:scale(1.3);
+    }
+
+    #rewardModal .reward-tabs {
+        margin: 0 auto;
+        width: 210px;
+    }
+
+    .reward-tabs .tabs {
+        height: 38px;
+        margin: 10px auto;
+        padding-left: 0;
+    }
+
+    .reward-content ul {
+        padding-left: 0 !important;
+    }
+
+    .reward-tabs .tabs .tab {
+        height: 38px;
+        line-height: 38px;
+    }
+
+    .reward-tabs .tab a {
+        color: #fff;
+        background-color: #ccc;
+    }
+
+    .reward-tabs .tab a:hover {
+        background-color: #ccc;
+        color: #fff;
+    }
+
+    .reward-tabs .wechat-tab .active {
+        color: #fff !important;
+        background-color: #22AB38 !important;
+    }
+
+    .reward-tabs .alipay-tab .active {
+        color: #fff !important;
+        background-color: #019FE8 !important;
+    }
+
+    .reward-tabs .reward-img {
+        width: 210px;
+        height: 210px;
+    }
+</style>
+
+<div id="reward">
+    <a href="#rewardModal" class="reward-link modal-trigger btn-floating btn-medium waves-effect waves-light red">赏</a>
+
+    <!-- Modal Structure -->
+    <div id="rewardModal" class="modal">
+        <div class="modal-content">
+            <a class="close modal-close"><i class="fas fa-times"></i></a>
+            <h4 class="reward-title">你的赏识是我前进的动力</h4>
+            <div class="reward-content">
+                <div class="reward-tabs">
+                    <ul class="tabs row">
+                        <li class="tab col s6 alipay-tab waves-effect waves-light"><a href="#alipay">支付宝</a></li>
+                        <li class="tab col s6 wechat-tab waves-effect waves-light"><a href="#wechat">微 信</a></li>
+                    </ul>
+                    <div id="alipay">
+                        <img src="/medias/reward/alipay.jpg" class="reward-img" alt="支付宝打赏二维码">
+                    </div>
+                    <div id="wechat">
+                        <img src="/medias/reward/wechat.jpg" class="reward-img" alt="微信打赏二维码">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('.tabs').tabs();
+    });
+</script>
+
+            
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/gdt-yu-miao-shu-fu/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="GDT与描述符">
+                        
+                        <span class="card-title">GDT与描述符</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="far fa-clock fa-fw icon-date"></i>2022-02-22
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/OS%E5%86%85%E6%A0%B8/" class="post-category">
+                                    OS内核
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/OS/">
+                        <span class="chip bg-color">OS</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/unicode-he-utf-8/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/11.jpg" class="responsive-img" alt="Unicode和UTF-8">
+                        
+                        <span class="card-title">Unicode和UTF-8</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            都知道Unicode编码，但我经常把它和UTF-8弄混，都是囫囵吞枣式的理解，基础不扎实。今天突然想搞清楚它俩的前世今生缘，想着连这都不知道也太Low了，就去查了查资料，发现比我想象的要复杂。
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-02-15
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-user fa-fw"></i>
+                            SrcMiLe
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E7%BC%96%E7%A0%81/">
+                        <span class="chip bg-color">编码</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+
+<!-- 代码块功能依赖 -->
+<script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
+
+<!-- 代码语言 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeLang.js"></script>
+
+
+<!-- 代码块复制 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeCopy.js"></script>
+
+
+<!-- 代码块收缩 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeShrink.js"></script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget card" style="background-color: white;">
+            <div class="toc-title"><i class="far fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fas fa-list-ul"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            collapseDepth: Number('0'),
+            headingSelector: 'h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).hide();
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).show();
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+
+    <footer class="page-footer bg-color">
+    
+    <div class="container row center-align" style="margin-bottom: 15px !important;">
+        <div class="col s12 m8 l8 copy-right">
+            Copyright&nbsp;&copy;
+            
+                <span id="year">2022</span>
+            
+            <span id="year">2022</span>
+            <a href="/about" target="_blank">SrcMiLe</a>
+            |&nbsp;Powered by&nbsp;<a href="https://hexo.io/" target="_blank">Hexo</a>
+            |&nbsp;Theme&nbsp;<a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>
+            <br>
+            
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="far fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fas fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            
+            <br>
+            
+            <span id="sitetime">载入运行时间...</span>
+            <script>
+                function siteTime() {
+                    var seconds = 1000;
+                    var minutes = seconds * 60;
+                    var hours = minutes * 60;
+                    var days = hours * 24;
+                    var years = days * 365;
+                    var today = new Date();
+                    var startYear = "2022";
+                    var startMonth = "1";
+                    var startDate = "12";
+                    var startHour = "0";
+                    var startMinute = "0";
+                    var startSecond = "0";
+                    var todayYear = today.getFullYear();
+                    var todayMonth = today.getMonth() + 1;
+                    var todayDate = today.getDate();
+                    var todayHour = today.getHours();
+                    var todayMinute = today.getMinutes();
+                    var todaySecond = today.getSeconds();
+                    var t1 = Date.UTC(startYear, startMonth, startDate, startHour, startMinute, startSecond);
+                    var t2 = Date.UTC(todayYear, todayMonth, todayDate, todayHour, todayMinute, todaySecond);
+                    var diff = t2 - t1;
+                    var diffYears = Math.floor(diff / years);
+                    var diffDays = Math.floor((diff / days) - diffYears * 365);
+                    var diffHours = Math.floor((diff - (diffYears * 365 + diffDays) * days) / hours);
+                    var diffMinutes = Math.floor((diff - (diffYears * 365 + diffDays) * days - diffHours * hours) /
+                        minutes);
+                    var diffSeconds = Math.floor((diff - (diffYears * 365 + diffDays) * days - diffHours * hours -
+                        diffMinutes * minutes) / seconds);
+                    if (startYear == todayYear) {
+                        document.getElementById("year").innerHTML = todayYear;
+                        document.getElementById("sitetime").innerHTML = "本站已安全运行 " + diffDays + " 天 " + diffHours +
+                            " 小时 " + diffMinutes + " 分钟 " + diffSeconds + " 秒";
+                    } else {
+                        document.getElementById("year").innerHTML = startYear + " - " + todayYear;
+                        document.getElementById("sitetime").innerHTML = "本站已安全运行 " + diffYears + " 年 " + diffDays +
+                            " 天 " + diffHours + " 小时 " + diffMinutes + " 分钟 " + diffSeconds + " 秒";
+                    }
+                }
+                setInterval(siteTime, 1000);
+            </script>
+            
+            <br>
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/sakura-ysy" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fab fa-github"></i>
+    </a>
+
+
+
+    <a href="mailto:2575633193@qq.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
+        <i class="fas fa-envelope-open"></i>
+    </a>
+
+
+
+
+
+
+
+    <a href="tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=2575633193" class="tooltipped" target="_blank" data-tooltip="QQ联系我: 2575633193" data-position="top" data-delay="50">
+        <i class="fab fa-qq"></i>
+    </a>
+
+
+
+
+
+
+
+    <a href="/atom.xml" class="tooltipped" target="_blank" data-tooltip="RSS 订阅" data-position="top" data-delay="50">
+        <i class="fas fa-rss"></i>
+    </a>
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+    <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fas fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+$(function () {
+    var searchFunc = function (path, search_id, content_id) {
+        'use strict';
+        $.ajax({
+            url: path,
+            dataType: "xml",
+            success: function (xmlResponse) {
+                // get the contents from search data
+                var datas = $("entry", xmlResponse).map(function () {
+                    return {
+                        title: $("title", this).text(),
+                        content: $("content", this).text(),
+                        url: $("url", this).text()
+                    };
+                }).get();
+                var $input = document.getElementById(search_id);
+                var $resultContent = document.getElementById(content_id);
+                $input.addEventListener('input', function () {
+                    var str = '<ul class=\"search-result-list\">';
+                    var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                    $resultContent.innerHTML = "";
+                    if (this.value.trim().length <= 0) {
+                        return;
+                    }
+                    // perform local searching
+                    datas.forEach(function (data) {
+                        var isMatch = true;
+                        var data_title = data.title.trim().toLowerCase();
+                        var data_content = data.content.trim().replace(/<[^>]+>/g, "").toLowerCase();
+                        var data_url = data.url;
+                        data_url = data_url.indexOf('/') === 0 ? data.url : '/' + data_url;
+                        var index_title = -1;
+                        var index_content = -1;
+                        var first_occur = -1;
+                        // only match artiles with not empty titles and contents
+                        if (data_title !== '' && data_content !== '') {
+                            keywords.forEach(function (keyword, i) {
+                                index_title = data_title.indexOf(keyword);
+                                index_content = data_content.indexOf(keyword);
+                                if (index_title < 0 && index_content < 0) {
+                                    isMatch = false;
+                                } else {
+                                    if (index_content < 0) {
+                                        index_content = 0;
+                                    }
+                                    if (i === 0) {
+                                        first_occur = index_content;
+                                    }
+                                }
+                            });
+                        }
+                        // show search results
+                        if (isMatch) {
+                            str += "<li><a href='" + data_url + "' class='search-result-title'>" + data_title + "</a>";
+                            var content = data.content.trim().replace(/<[^>]+>/g, "");
+                            if (first_occur >= 0) {
+                                // cut out 100 characters
+                                var start = first_occur - 20;
+                                var end = first_occur + 80;
+                                if (start < 0) {
+                                    start = 0;
+                                }
+                                if (start === 0) {
+                                    end = 100;
+                                }
+                                if (end > content.length) {
+                                    end = content.length;
+                                }
+                                var match_content = content.substr(start, end);
+                                // highlight all keywords
+                                keywords.forEach(function (keyword) {
+                                    var regS = new RegExp(keyword, "gi");
+                                    match_content = match_content.replace(regS, "<em class=\"search-keyword\">" + keyword + "</em>");
+                                });
+
+                                str += "<p class=\"search-result\">" + match_content + "...</p>"
+                            }
+                            str += "</li>";
+                        }
+                    });
+                    str += "</ul>";
+                    $resultContent.innerHTML = str;
+                });
+            }
+        });
+    };
+
+    searchFunc('/search.xml', 'searchInput', 'searchResult');
+});
+</script>
+
+    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+</div>
+
+
+    <script src="/libs/materialize/materialize.min.js"></script>
+    <script src="/libs/masonry/masonry.pkgd.min.js"></script>
+    <script src="/libs/aos/aos.js"></script>
+    <script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+    <script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+    <script src="/js/matery.js"></script>
+
+    <!-- Baidu Analytics -->
+
+    <!-- Baidu Push -->
+
+<script>
+    (function () {
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https') {
+            bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        } else {
+            bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+    
+    
+    <script async src="/libs/others/busuanzi.pure.mini.js"></script>
+    
+
+    
+
+    
+
+	
+    
+
+    
+    
+    <script type="text/javascript" size="150" alpha='0.6'
+        zIndex="-1" src="/libs/background/ribbon-refresh.min.js" async="async"></script>
+    
+
+    
+
+    
+    <script src="/libs/instantpage/instantpage.js" type="module"></script>
+    
+
+</body>
+
+</html>
