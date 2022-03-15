@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="Linux之Cgroups, SrcMiLeの杂货铺">
+    <meta name="keywords" content="Linux Cgroups, SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>Linux之Cgroups | SrcMiLeの杂货铺</title>
+    <title>Linux Cgroups | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -379,12 +379,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/0.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/5.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">Linux之Cgroups</h1>
+                    <h1 class="description center-align post-title">Linux Cgroups</h1>
                 </div>
             </div>
         </div>
@@ -498,12 +498,29 @@
             <div class="row tag-cate">
                 <div class="col s7">
                     
-                          <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
-                          </div>
+                    <div class="article-tag">
+                        
+                            <a href="/tags/OS/">
+                                <span class="chip bg-color">OS</span>
+                            </a>
+                        
+                            <a href="/tags/Linux/">
+                                <span class="chip bg-color">Linux</span>
+                            </a>
+                        
+                    </div>
                     
                 </div>
                 <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/Linux/" class="post-category">
+                                Linux
+                            </a>
+                        
+                    </div>
                     
                 </div>
             </div>
@@ -512,7 +529,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2022-03-15
+                    2022-03-14
                 </div>
                 
 
@@ -521,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    0
+                    2.5k
                 </div>
                 
 
@@ -541,7 +558,188 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                
+                <p>在Linux中，使用Namespace技术帮助进程隔离出自己单独的空间，但怎么对这个空间进行限制？比如限制进程申请的资源大小等等，这就要用到Linux的<code>Cgroups</code>技术。</p>
+<p>Linux Cgroups (Control Groups ）提供了对一<code>组</code>进程及将来子进程的资源限制、控制和统计的能力，这些资源包括 CPU、内存、存储、网络等 通过 Cgroups ，可以方便地限制某个进程的资源占用，并且可以实时地监控进程的监控和统计信息。</p>
+<h2 id="3个组件"><a href="#3个组件" class="headerlink" title="3个组件"></a>3个组件</h2><p>Cgroups只是个技术名称，它由三个组件组成，分别为<code>cgroup</code>、<code>subsystem</code>、<code>hierarchy</code>。</p>
+<ul>
+<li><p><strong>cgroup</strong> 是对进程分组管理的一种机制，一个cgroup包含一<code>组</code>进程，并可以在这个cgroup上增加Linux subsystem的各种参数配置，将一组进程和一组subsystem的系统参数关联起来。</p>
+</li>
+<li><p><strong>subsystem</strong> 是一组资源空间模块，就像上面说的，用于资源限制，一般包含如下几项：</p>
+<ul>
+<li>blkio 设置对块设备（比如硬盘）输入输出的访问控制。</li>
+<li>cpu 设置 cgroup 中进程的 CPU 被调度的策略。</li>
+<li>cpuacct 可以统计 cgroup 中进程的 CPU 占用。</li>
+<li>cpuset 在多核机器上设置 cgroup 中进程可以使用的 CPU 和内存（此处内存仅使用于<br>NUMA 架构）。</li>
+<li>devices 控制 cgroup 中进程对设备的访问。</li>
+<li>freezer 用于挂起（ suspend ）和恢复（ resume) cgroup 中的进程。</li>
+<li>memory 用于控制 cgroup 中进程的内存占用。</li>
+<li>net_els 用于将 cgroup 中进程产生的网络包分类，以便 Linux tc (traffic con oller ）可<br>以根据分类区分出来自某个 cgroup 的包并做限流或监控。</li>
+<li>net_prio 设置 cgroup 中进程产生的网络流量的优先级。</li>
+<li>ns 这个 subsystem 比较特殊，它的作用是使 cgroup 中的进程在新的 Namespace fork<br>新进程 CNEWNS ）时，创建出 个新的 cgroup ，这个 cgroup 包含新的 Namespace<br>的进程。</li>
+</ul>
+<p>每个subsystem会关联到定义了相应限制的cgroup上，并对这个cgroup中的进程做相应的限制和控制。这些subsystem是逐步合并到内核中的。可以使用<code>lssubsys</code>查看当前内核支持的subsystem：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@master cgroup-test<span class="token punctuation">]</span>$ lssubsys
+cpuset
+cpu,cpuacct
+memory
+devices
+freezer
+net_cls,net_prio
+blkio
+perf_event
+hugetlb
+pids<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
+<li><p><strong>hierarchy</strong> 的功能是把一组cgroup串成一个<code>树状</code>的结构，一个这样的树便是一个hierarchy。通过这种树状结构，Cgroups可以做到<code>继承</code>。比如，系统对一组定时的任务进程通过 cgroupl 限制了 CPU 的使用率，然后其中有一个定时 dump 日志的进程还需要限制磁盘 IO ，为了避免限制了磁盘 IO 之后影响到其他进程，就可以创建 cgroup2 ，使其继承于 cgroupl 井限制磁盘的 IO ，这样 cgroup2 便继承了 cgroupl 中对 CPU 使用率的限制，并且增加了磁盘 IO 的限制而不影响到 cgroupl 中的其他进程。也就是说，hierarchy是一组cgroup组成的树。</p>
+</li>
+</ul>
+<h2 id="组件之间的关系"><a href="#组件之间的关系" class="headerlink" title="组件之间的关系"></a>组件之间的关系</h2><p>不难看出，Cgroups是通过上面三个组件的相互协作实现的，他们的关系如下：</p>
+<ul>
+<li>在创建了新的hierarchy之后，系统中所有的进程都会加入这个hierarchy的根cgroup中，这个cgroup是hierarchy默认创建的。对，没听错，所有的进程都会加进去，之后创建的进程也会，哪怕仅仅是用户随便创了个hierarchy玩。</li>
+<li>一个subsystem只能附加到一个hierarchy上面，用于限制其下进程的资源使用。</li>
+<li>一个hierarchy可以附加多个subsystem。</li>
+<li>一个进程可以作为多个cgroup的成员（不然创建hierarchy时就无法把所有进程加进去）。但是，这些cgroup必须在不同的hierarchy中。</li>
+<li>一个进程fork出子进程时，子进程是和父进程在同一个cgroup中的，也可以根据需要将其移动到其他cgroup中。</li>
+</ul>
+<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><p>首先，创建并挂载一个hierarchy，这里需要用mount操作，如下：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 创建一个hierarchy挂载点</span>
+<span class="token punctuation">[</span>root@master sakura<span class="token punctuation">]</span>$ <span class="token function">mkdir</span> cgroup-test
+<span class="token comment"># 挂载该hierarchy</span>
+<span class="token punctuation">[</span>root@master sakura<span class="token punctuation">]</span>$ <span class="token function">sudo</span> <span class="token function">mount</span> -t cgroup -o none,name<span class="token operator">=</span>cgroup-test cgroup-test ./cgroup-test
+<span class="token comment"># 该目录就成了hierarchy的根cgroup</span>
+<span class="token punctuation">[</span>root@master sakura<span class="token punctuation">]</span>$ <span class="token function">ls</span> ./cgroup-test/
+cgroup.clone_children  cgroup.event_control  cgroup.procs  cgroup.sane_behavior  notify_on_release  release_agent  tasks<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>可以看到，当指定挂载的filesystem类型为cgroup后，目录下多个很多文件。这些文件就是cgroup根节点的配置项，上面的文件含义分别如下：</p>
+<ul>
+<li>cgroup.clone_children：cpuset subsystem 会读取这个配置文件，如果这个值是1（默认为0），子cgroup才会继承父cgroup的cpuset的配置。</li>
+<li>cgroup.procs：是树中当前节点 cgroup 中的进程组 ID ，现在的位置是在根节点，这个文件中会有现在系统中所有进程组的 ID。</li>
+<li>notify_on_release，release agent：这俩会一起使用。 notify on release 标识当这个 cgroup后一个进程退出的时候是否执行了 release_agent，release_ agent 则是 个路径，通常用作进程退出之后自动清理掉不再使用的 cgroup。</li>
+<li>tasks：标识该cgroup下面的进程ID，如果把一个进程ID写到tasks文件中，便会将相应的进程加入到这个cgroup中。</li>
+</ul>
+<p>之前说了，创建hierarchy后会把系统所有进程到加入到根cgroup中，所以cgroup.procs一个记录了所以进程组的ID，tasks中记录了所有进程的ID：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@master cgroup-test<span class="token punctuation">]</span>$ <span class="token function">cat</span> tasks
+<span class="token number">1</span>
+<span class="token comment"># ...当前所有进程ID</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>然后，在上述根cgroup中创建两个子cgroup，就是两个目录：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@master cgroup-test<span class="token punctuation">]</span>$ <span class="token function">mkdir</span> cgroup1
+<span class="token punctuation">[</span>root@master cgroup-test<span class="token punctuation">]</span>$ <span class="token function">mkdir</span> cgroup2
+<span class="token punctuation">[</span>root@master cgroup-test<span class="token punctuation">]</span>$ tree
+<span class="token punctuation">[</span>root@master cgroup-test<span class="token punctuation">]</span><span class="token comment"># tree</span>
+<span class="token builtin class-name">.</span>
+├── cgroup1
+│   ├── cgroup.clone_children
+│   ├── cgroup.event_control
+│   ├── cgroup.procs
+│   ├── notify_on_release
+│   └── tasks
+├── cgroup2
+│   ├── cgroup.clone_children
+│   ├── cgroup.event_control
+│   ├── cgroup.procs
+│   ├── notify_on_release
+│   └── tasks
+├── cgroup.clone_children
+├── cgroup.event_control
+├── cgroup.procs
+├── cgroup.sane_behavior
+├── notify_on_release
+├── release_agent
+└── tasks
+
+<span class="token number">2</span> directories, <span class="token number">17</span> files<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>可以看到，在一个cgroup的目录下创建文件时，内核会把文件夹标记为这个cgroup的子cgroup，它们会继承父cgroup的属性。</p>
+<p>一个进程在hierarchy中，只能在一个cgroup节点上存在，系统的所有进程都会默认在根cgroup上存在，可以将进程移动到其他cgroup上，只需要将进程ID写到对应的cgroup的tasks文件中即可。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>sakura@master cgroup-test<span class="token punctuation">]</span>$ <span class="token builtin class-name">cd</span> cgroup1
+<span class="token punctuation">[</span>sakura@master cgroup1<span class="token punctuation">]</span>$ <span class="token function">cat</span> <span class="token punctuation">..</span>/tasks <span class="token operator">|</span> <span class="token function">grep</span> <span class="token variable">$$</span>
+<span class="token number">101308</span>
+<span class="token punctuation">[</span>sakura@master cgroup1<span class="token punctuation">]</span>$ <span class="token function">sudo</span> <span class="token function">sh</span> -c <span class="token string">"echo <span class="token variable">$$</span> >> tasks"</span>
+<span class="token punctuation">[</span>sudo<span class="token punctuation">]</span> sakura 的密码：
+<span class="token punctuation">[</span>sakura@master cgroup1<span class="token punctuation">]</span>$ <span class="token function">cat</span> <span class="token punctuation">..</span>/tasks <span class="token operator">|</span> <span class="token function">grep</span> <span class="token variable">$$</span>
+<span class="token punctuation">[</span>sakura@master cgroup1<span class="token punctuation">]</span>$ <span class="token function">cat</span> ./tasks <span class="token operator">|</span> <span class="token function">grep</span> <span class="token variable">$$</span>
+<span class="token number">101308</span>
+<span class="token punctuation">[</span>sakura@master cgroup1<span class="token punctuation">]</span>$ <span class="token function">cat</span> /proc/<span class="token variable">$$</span>/cgroup
+<span class="token number">23</span>:name<span class="token operator">=</span>cgroup-test:/cgroup1
+<span class="token number">11</span>:freezer:/
+<span class="token number">10</span>:pids:/user.slice
+<span class="token number">9</span>:cpuset:/
+<span class="token number">8</span>:memory:/user.slice
+<span class="token number">7</span>:cpuacct,cpu:/user.slice
+<span class="token number">6</span>:hugetlb:/
+<span class="token number">5</span>:devices:/user.slice
+<span class="token number">4</span>:blkio:/user.slice
+<span class="token number">3</span>:perf_event:/
+<span class="token number">2</span>:net_prio,net_cls:/
+<span class="token number">1</span>:name<span class="token operator">=</span>systemd:/user.slice/user-1000.slice/session-1.scope<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>可以看到，当进程ID被写入hierarchy中另一个cgroup的tasks中时，它会自动的从原cgroup的tasks中移除。通过最后一条命令可知，一个进程可以属于多个cgroup，但是cgroup必须位于不同的hierarchy。</p>
+<p>但是到此为止，这个hierarchy并没有关联到任何的subsystem，所以没办法通过其中的cgroup来限制进程的资源占用。</p>
+<p>实际上，系统已经为每个subsystem创建好了一个默认的hierarchy，位于<code>/sys/fs/cgroup/</code>下：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@master cgroup-test<span class="token punctuation">]</span>$ <span class="token function">ls</span> /sys/fs/cgroup
+blkio  cpuacct      cpuset   freezer  memory   net_cls,net_prio  perf_event  systemd
+cpu    cpu,cpuacct  devices  hugetlb  net_cls  net_prio          pids<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>或者用另外一种方法查看：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@master cgroup-test<span class="token punctuation">]</span>$ <span class="token function">mount</span> <span class="token operator">|</span> <span class="token function">grep</span> cgroup
+tmpfs on /sys/fs/cgroup <span class="token builtin class-name">type</span> tmpfs <span class="token punctuation">(</span>ro,nosuid,nodev,noexec,mode<span class="token operator">=</span><span class="token number">755</span><span class="token punctuation">)</span>
+cgroup on /sys/fs/cgroup/systemd <span class="token builtin class-name">type</span> cgroup <span class="token punctuation">(</span>rw,nosuid,nodev,noexec,relatime,xattr,release_agent<span class="token operator">=</span>/usr/lib/systemd/systemd-cgroups-agent,name<span class="token operator">=</span>systemd<span class="token punctuation">)</span>
+cgroup on /sys/fs/cgroup/net_cls,net_prio <span class="token builtin class-name">type</span> cgroup <span class="token punctuation">(</span>rw,nosuid,nodev,noexec,relatime,net_prio,net_cls<span class="token punctuation">)</span>
+cgroup on /sys/fs/cgroup/perf_event <span class="token builtin class-name">type</span> cgroup <span class="token punctuation">(</span>rw,nosuid,nodev,noexec,relatime,perf_event<span class="token punctuation">)</span>
+cgroup on /sys/fs/cgroup/blkio <span class="token builtin class-name">type</span> cgroup <span class="token punctuation">(</span>rw,nosuid,nodev,noexec,relatime,blkio<span class="token punctuation">)</span>
+cgroup on /sys/fs/cgroup/devices <span class="token builtin class-name">type</span> cgroup <span class="token punctuation">(</span>rw,nosuid,nodev,noexec,relatime,devices<span class="token punctuation">)</span>
+cgroup on /sys/fs/cgroup/hugetlb <span class="token builtin class-name">type</span> cgroup <span class="token punctuation">(</span>rw,nosuid,nodev,noexec,relatime,hugetlb<span class="token punctuation">)</span>
+cgroup on /sys/fs/cgroup/cpu,cpuacct <span class="token builtin class-name">type</span> cgroup <span class="token punctuation">(</span>rw,nosuid,nodev,noexec,relatime,cpuacct,cpu<span class="token punctuation">)</span>
+cgroup on /sys/fs/cgroup/memory <span class="token builtin class-name">type</span> cgroup <span class="token punctuation">(</span>rw,nosuid,nodev,noexec,relatime,memory<span class="token punctuation">)</span>
+cgroup on /sys/fs/cgroup/cpuset <span class="token builtin class-name">type</span> cgroup <span class="token punctuation">(</span>rw,nosuid,nodev,noexec,relatime,cpuset<span class="token punctuation">)</span>
+cgroup on /sys/fs/cgroup/pids <span class="token builtin class-name">type</span> cgroup <span class="token punctuation">(</span>rw,nosuid,nodev,noexec,relatime,pids<span class="token punctuation">)</span>
+cgroup on /sys/fs/cgroup/freezer <span class="token builtin class-name">type</span> cgroup <span class="token punctuation">(</span>rw,nosuid,nodev,noexec,relatime,freezer<span class="token punctuation">)</span>
+cgroup-test on /home/sakura/cgroup-test <span class="token builtin class-name">type</span> cgroup <span class="token punctuation">(</span>rw,relatime,name<span class="token operator">=</span>cgroup-test<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>以memory举例，<code>/sys/fs/cgroup/memory</code>目录便是他的hierarchy的根cgroup。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@master memory<span class="token punctuation">]</span><span class="token comment"># ls</span>
+cgroup.clone_children       memory.kmem.max_usage_in_bytes      memory.memsw.limit_in_bytes      memory.usage_in_bytes
+cgroup.event_control        memory.kmem.slabinfo                memory.memsw.max_usage_in_bytes  memory.use_hierarchy
+cgroup.procs                memory.kmem.tcp.failcnt             memory.memsw.usage_in_bytes      notify_on_release
+cgroup.sane_behavior        memory.kmem.tcp.limit_in_bytes      memory.move_charge_at_immigrate  release_agent
+kubepods.slice              memory.kmem.tcp.max_usage_in_bytes  memory.numa_stat                 system.slice
+machine.slice               memory.kmem.tcp.usage_in_bytes      memory.oom_control               tasks
+memory.failcnt              memory.kmem.usage_in_bytes          memory.pressure_level            <span class="token builtin class-name">test</span>
+memory.force_empty          memory.limit_in_bytes               memory.soft_limit_in_bytes       user.slice
+memory.kmem.failcnt         memory.max_usage_in_bytes           memory.stat
+memory.kmem.limit_in_bytes  memory.memsw.failcnt                memory.swappiness<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>不同于不做限制的hierarchy，附加了subsystem的hierarchy下会多出很多相关的配置文件，不同的subsystem有所不同。</p>
+<p>接下来，在其中创建一个子cgroup，名为test：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@master memory<span class="token punctuation">]</span>$ <span class="token builtin class-name">cd</span> <span class="token builtin class-name">test</span>
+<span class="token punctuation">[</span>root@master test<span class="token punctuation">]</span>$ <span class="token function">ls</span>
+cgroup.clone_children           memory.kmem.slabinfo                memory.memsw.failcnt             memory.soft_limit_in_bytes
+cgroup.event_control            memory.kmem.tcp.failcnt             memory.memsw.limit_in_bytes      memory.stat
+cgroup.procs                    memory.kmem.tcp.limit_in_bytes      memory.memsw.max_usage_in_bytes  memory.swappiness
+memory.failcnt                  memory.kmem.tcp.max_usage_in_bytes  memory.memsw.usage_in_bytes      memory.usage_in_bytes
+memory.force_empty              memory.kmem.tcp.usage_in_bytes      memory.move_charge_at_immigrate  memory.use_hierarchy
+memory.kmem.failcnt             memory.kmem.usage_in_bytes          memory.numa_stat                 notify_on_release
+memory.kmem.limit_in_bytes      memory.limit_in_bytes               memory.oom_control               tasks
+memory.kmem.max_usage_in_bytes  memory.max_usage_in_bytes           memory.pressure_level<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>创建完毕后，然后在<code> memory.limit_in_bytes</code>中限制该cgroup中的进程最大只能占用100M的内存，然后在该cgroup下启动一个占用200M的进程，查看情况。注意，当前的bash进程并不属于该cgroup，而stree进程是bash的子进程，所以要先把bash进程移入该cgroup，stree自然就进去了。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 内存使用限制在100M</span>
+<span class="token punctuation">[</span>root@master test<span class="token punctuation">]</span>$ <span class="token function">sudo</span> <span class="token function">sh</span> -c <span class="token string">"echo "</span>100m<span class="token string">" > memory.limit_in_bytes"</span>
+<span class="token comment"># 将当前bash进程加入该cgroup</span>
+<span class="token punctuation">[</span>root@master test<span class="token punctuation">]</span>$ <span class="token function">sudo</span> <span class="token function">sh</span> -c <span class="token string">"echo <span class="token variable">$$</span> > tasks"</span>
+<span class="token comment"># 压力测试, 申请占用200M</span>
+<span class="token punctuation">[</span>root@master test<span class="token punctuation">]</span>$ stress --vm-bytes 200m --vm-keep -m <span class="token number">1</span>
+stress: info: <span class="token punctuation">[</span><span class="token number">31547</span><span class="token punctuation">]</span> dispatching hogs: <span class="token number">0</span> cpu, <span class="token number">0</span> io, <span class="token number">1</span> vm, <span class="token number">0</span> hdd
+stress: FAIL: <span class="token punctuation">[</span><span class="token number">31547</span><span class="token punctuation">]</span> <span class="token punctuation">(</span><span class="token number">415</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span>-- worker <span class="token number">31548</span> got signal <span class="token number">9</span>
+stress: WARN: <span class="token punctuation">[</span><span class="token number">31547</span><span class="token punctuation">]</span> <span class="token punctuation">(</span><span class="token number">417</span><span class="token punctuation">)</span> now reaping child worker processes
+stress: FAIL: <span class="token punctuation">[</span><span class="token number">31547</span><span class="token punctuation">]</span> <span class="token punctuation">(</span><span class="token number">451</span><span class="token punctuation">)</span> failed run completed <span class="token keyword">in</span> 0s
+<span class="token comment"># 重新测试，申请内存少于100M</span>
+<span class="token punctuation">[</span>root@master test<span class="token punctuation">]</span>$ stress --vm-bytes <span class="token number">99</span>.99m --vm-keep -m <span class="token number">1</span>
+stress: info: <span class="token punctuation">[</span><span class="token number">31840</span><span class="token punctuation">]</span> dispatching hogs: <span class="token number">0</span> cpu, <span class="token number">0</span> io, <span class="token number">1</span> vm, <span class="token number">0</span> hdd
+<span class="token comment">#.. 成功</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>可以看到，当通过memory这一subsystem将cgroup下的进程占用内存限制在100M以内后，所有需要100M内存以上的进程都无法在该cgroup下运行，达到资源限制的目的。</p>
+
                 
             </div>
             <hr/>
@@ -604,7 +802,15 @@
                 <div class="post-meta__tag-list" style="display: inline-block;">
                     
                         <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
+                            
+                                <a href="/tags/OS/">
+                                    <span class="chip bg-color">OS</span>
+                                </a>
+                            
+                                <a href="/tags/Linux/">
+                                    <span class="chip bg-color">Linux</span>
+                                </a>
+                            
                         </div>
                     
                 </div>
@@ -781,44 +987,6 @@
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/0.jpg" class="responsive-img" alt="Linux之Cgroups">
-                        
-                        <span class="card-title">Linux之Cgroups</span>
-                    </div>
-                </a>
-                <div class="card-content article-content">
-                    <div class="summary block-with-text">
-                        
-                            
-                        
-                    </div>
-                    <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-03-15
-                            </span>
-                        <span class="publish-author">
-                            
-                            <i class="fas fa-user fa-fw"></i>
-                            SrcMiLe
-                            
-                        </span>
-                    </div>
-                </div>
-
-                
-            </div>
-        </div>
-        
-        
-        <div class="article col s12 m6" data-aos="fade-up">
-            <div class="article-badge right-badge text-color">
-                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="card">
-                <a href="/linux-cgroups/">
-                    <div class="card-image">
-                        
-                        
                         <img src="/medias/featureimages/5.jpg" class="responsive-img" alt="Linux Cgroups">
                         
                         <span class="card-title">Linux Cgroups</span>
@@ -846,6 +1014,7 @@
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
@@ -855,6 +1024,71 @@
                     
                     <a href="/tags/Linux/">
                         <span class="chip bg-color">Linux</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/k8s-yuan-ma-er-pod-chuang-jian-guo-cheng-zhong-container-de-juan-gua-zai/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/10.jpg" class="responsive-img" alt="k8s源码(二): Pod创建过程中Container的卷挂载">
+                        
+                        <span class="card-title">k8s源码(二): Pod创建过程中Container的卷挂载</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-03-10
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/k8s%E6%BA%90%E7%A0%81/" class="post-category">
+                                    k8s源码
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
+                        <span class="chip bg-color">云计算</span>
+                    </a>
+                    
+                    <a href="/tags/k8s/">
+                        <span class="chip bg-color">k8s</span>
+                    </a>
+                    
+                    <a href="/tags/pod/">
+                        <span class="chip bg-color">pod</span>
+                    </a>
+                    
+                    <a href="/tags/kubelet/">
+                        <span class="chip bg-color">kubelet</span>
+                    </a>
+                    
+                    <a href="/tags/volume/">
+                        <span class="chip bg-color">volume</span>
                     </a>
                     
                 </div>
