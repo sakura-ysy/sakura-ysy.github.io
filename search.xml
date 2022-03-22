@@ -4,6 +4,58 @@
   
     
     <entry>
+      <title>Docker使用AUFS</title>
+      <link href="/docker-shi-yong-aufs/"/>
+      <url>/docker-shi-yong-aufs/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      <categories>
+          
+          <category> Docker </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> Docker </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>反向代理与内网穿透</title>
+      <link href="/fan-xiang-dai-li-yu-nei-wang-chuan-tou/"/>
+      <url>/fan-xiang-dai-li-yu-nei-wang-chuan-tou/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      <categories>
+          
+          <category> 网络 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> net </tag>
+            
+            <tag> proxy </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>UnionFS与AUFS</title>
       <link href="/unionfs-yu-aufs/"/>
       <url>/unionfs-yu-aufs/</url>
