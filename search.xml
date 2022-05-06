@@ -4,6 +4,45 @@
   
     
     <entry>
+      <title>VPN(二): 加密隧道</title>
+      <link href="/vpn-er-jia-mi-sui-dao/"/>
+      <url>/vpn-er-jia-mi-sui-dao/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>VPN(一): UDP隧道</title>
+      <link href="/vpn-yi-udp-sui-dao/"/>
+      <url>/vpn-yi-udp-sui-dao/</url>
+      
+        <content type="html"><![CDATA[]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>DNS缓存中毒攻击</title>
+      <link href="/dns-huan-cun-zhong-du-gong-ji/"/>
+      <url>/dns-huan-cun-zhong-du-gong-ji/</url>
+      
+        <content type="html"><![CDATA[<p>众所周知，DNS服务器分为<code>根</code>、<code>顶级域</code>、<code>权威</code>域三个部分，查询时，会从上往下进行查询，从根服务器查顶级域服务器的IP，再从顶级域查权威域的IP，最后从权威域服务器中查最终的IP，返回给<code>本地DNS服务器中</code>。用户机查询域名IP，会首先去本地DNS服务器，如果服务器中有，直接返回结果，否则，重复上述过程。</p><p>而常见的三种DNS攻击，就是针对用户机和本地DNS服务器的。分别为：攻击用户机主机、伪造响应欺骗用户、DNS缓存中毒攻击。三种攻击大致思想如下：</p><p><img src="/DNS%E7%BC%93%E5%AD%98%E4%B8%AD%E6%AF%92%E6%94%BB%E5%87%BB/image-20220415211701047.png" alt="image-20220415211701047"></p><p>本篇将进行常规的本地DNS缓冲中毒的实验。</p><h2 id="实验环境"><a href="#实验环境" class="headerlink" title="实验环境"></a>实验环境</h2><p>实验大环境使用<code>Ubuntu-Seed</code>虚拟机，使用<code>docker</code>容器模拟出DNS服务器和用户机。首先创建对应的容器，注意，<code>--privileged</code>一定不能加，因为这会和<code>bind9</code>向冲突。</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 创建Local DNS Server</span>$ <span class="token function">sudo</span> <span class="token function">docker</span> run -it --name<span class="token operator">=</span>dns --hostname<span class="token operator">=</span>dns seedubuntu /bin/bash<span class="token comment"># 创建User</span>$ <span class="token function">sudo</span> <span class="token function">docker</span> run -it --name<span class="token operator">=</span>user --hostname<span class="token operator">=</span>user seedubuntu /bin/bash<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre><p>攻击机直接用虚拟机即可，三者的IP如下：</p><ul><li>Attacker：192.168.186.137</li><li>Local DNS Server：172.17.0.2</li><li>User：172.17.0.3</li></ul><h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>首先配置服务器。对于本地 DNS 服务器，我们需要运行 DNS 服务器程序。最广泛使用的 DNS服务器软件称为 <code>BIND</code>（Berkeley Internet Name Domain）。<code>bind9</code> 从<code>/etc/bind/named.conf</code> 文件中获取其配置。这个文件是主要的配置文件，它通常包含几个”include”条目，即实际配置 存 储 在 那 些 include 文 件 中 。 其 中 一 个 include 文 件 称 为<code>/etc/bind/named.conf.options</code>。这是我们通常设置配置选项的文件。</p><p>首先设置<code>转储文件</code>，所谓转储，就是把服务器上的所有DNS缓冲转存进去，相当于备份。在<code>/etc/bind/named.conf.options</code>中设置<code>dump-file</code>：</p><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">options <span class="token punctuation">&#123;</span>dump<span class="token punctuation">-</span>file "/var/cache/bind/dump.db";<span class="token punctuation">&#125;</span>;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre><p>当需要转储或清空时，用下列命令即可：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 转储</span>$ <span class="token function">sudo</span> rndc dumpdb -cache<span class="token comment"># 清空</span>$ <span class="token function">sudo</span> rndc flush<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre><p>接着需要关闭<code>DNSSEC</code>。引入DNSSEC 是为了防止对 DNS服务器的 spoofing攻击，所以要关闭。仍然在上面那个文件中进行：</p><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">options <span class="token punctuation">&#123;</span><span class="token comment"># dnssec-validation auto;</span>dnssec<span class="token punctuation">-</span>enable no;<span class="token punctuation">&#125;</span>;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre><p>启动DNS服务：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ <span class="token function">sudo</span> <span class="token function">service</span> bind9 restart<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre><p>如有错误，查看错误日志：</p><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">$ <span class="token function">sudo</span> named -d <span class="token number">3</span> -f -g<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre><p>配完服务器后，开始配用户机。在<code>/etc/resolv.conf</code>中配置，将上述服务器作为它唯一的DNS服务器：</p><p><img src="/DNS%E7%BC%93%E5%AD%98%E4%B8%AD%E6%AF%92%E6%94%BB%E5%87%BB/2.png" alt="2"></p>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>Docker使用AUFS</title>
       <link href="/docker-shi-yong-aufs/"/>
       <url>/docker-shi-yong-aufs/</url>
