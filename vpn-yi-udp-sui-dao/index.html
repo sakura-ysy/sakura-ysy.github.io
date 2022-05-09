@@ -498,12 +498,29 @@
             <div class="row tag-cate">
                 <div class="col s7">
                     
-                          <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
-                          </div>
+                    <div class="article-tag">
+                        
+                            <a href="/tags/VPN/">
+                                <span class="chip bg-color">VPN</span>
+                            </a>
+                        
+                            <a href="/tags/%E8%AE%A1%E7%BD%91/">
+                                <span class="chip bg-color">计网</span>
+                            </a>
+                        
+                    </div>
                     
                 </div>
                 <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/%E8%AE%A1%E7%BD%91/" class="post-category">
+                                计网
+                            </a>
+                        
+                    </div>
                     
                 </div>
             </div>
@@ -521,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    0
+                    2.5k
                 </div>
                 
 
@@ -541,7 +558,98 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                
+                <p>虚拟专用网络（VPN）用于创建计算机通信的专用通信域，或为专用网络到不安全网络（如Internet）的安全扩展。VPN是一种被广泛使用的安全技术。在<code>IPSec</code>或<code>TLS/SSL</code>上构建VPN是<code>完全不同</code>的两种方法。在本博客以及后续的VPN实验博客中，只关注基于<code>TLS/SSL</code>的VPN。所谓 TLS/SSL，即 传输层安全性/安全套接字层。</p>
+<h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>在实际环境中，节点只能访问到和其同处一个网络中的其他节点，无法访问到处于它之外的内网中的节点，如下：</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/05/06/47af7486547be6f3.png"></p>
+<p>我们使用 docker 网络 ”intranet“ 将 HostV 与 VPN 服务器网关的内网口连接，模拟内部局域网。此时，HostU是无法直接访问HostV的。而本实验的目的，就是在HostU和VM之间建立VPN隧道，使其能够通过 Internet 直接访问到HostV。</p>
+<h2 id="TUN-TAP-技术"><a href="#TUN-TAP-技术" class="headerlink" title="TUN/TAP 技术"></a>TUN/TAP 技术</h2><p>TLS/SSL VPN中使用了<code>TUN/TAP</code>技术，其在现代操作系统中已被广泛使用。TUN和TAP是<code>虚拟网络内核驱动程序</code>，它们可以实现完全由<code>软件</code>支持的网络设备。TAP模拟以太网设备，处理链路帧，TUN模拟网络层，处理IP数据报。我们可以用 TAP/TUN 创建<code>虚拟网络接口</code>。</p>
+<p>用户空间程序访问 TUN/TAP 虚拟网络接口，操作系统通过 TUN/TAP 网络接口将数据包传送到用户空间程序。另一方面，程序通过 TUN/TAP 网络接口发送的数据包被注入操作系统的网络栈。在操作系统看来，数据包是<em>通过虚拟网络接口的外部源进来的</em>。</p>
+<p>当程序从TUN/TAP接口读取数据时，计算机发送到此接口的IP数据包将被传送给程序。另一方面，程序发送到接口的IP数据包将被传送到计算机中，就好像这些数据包通过这个虚拟网络接口从外部来的一样。程序可以使用标准的read()和write()系统调用来接口或发送数据包到虚拟接口。</p>
+<p>VPN客户端会运行 <a href="">vpnclient</a>，VPN服务端会运行 <a href="">vpnserver</a>，两个程序分别是VPN隧道的两端，它们使用 TCP 或 UDP 协议，这篇博客用的UDP。VPN客户端和服务端程序通过<code>TUN接口</code>连接到主机系统，做以下两件事：</p>
+<ul>
+<li>从主机系统获取IP数据包，因此数据包可以<code>通过隧道</code>发送；</li>
+<li>从隧道获取IP数据包，然后将其<code>转发</code>到主机系统，主机系统将数据包转发到其最终目的地。</li>
+</ul>
+<p>以我的理解，TUN接口就是对IP进行了重造，使原本无法转发的数据包能被转发，具体的流如下图所示：</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/05/06/958baa24656974b3.png"></p>
+<p>知道了基本流程后，开始做实验。</p>
+<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><p>实验环境为：</p>
+<ul>
+<li>VMware® Workstation 15 Pro</li>
+<li>SeedUbuntu 16.04</li>
+<li>Docker 1.10.3</li>
+</ul>
+<h3 id="1-配置网络拓扑"><a href="#1-配置网络拓扑" class="headerlink" title="1. 配置网络拓扑"></a>1. 配置网络拓扑</h3><p>我们将在计算机（客户端）和网关之间创建 VPN 隧道，允许计算机通过网<br>关安全地访问专用网络。我们使用虚拟机本身作为 VPN 服务器网关（VM），并<br>创建两个容器分别作为 VPN 客户端（HostU）和专用网络中的主机（HostV）。<br>网络设置如下图：</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/05/06/47af7486547be6f3.png"></p>
+<p>在实际环境中，VPN 客户端（HostU）和 VPN 服务器网关的外网口通过<br>Internet 连接。简单起见，我们在本实验中将这两台机器直接连接到同一 docker<br>网络“extranet”，模拟 Internet。第三台机器 HostV 是内部局域网的计算机。Internet 中的主机 HostU 上的用户希望通过 VPN 隧道与内部局域网的主机 HostV 通信。为模拟此设置，我们使用 docker 网络“intranet”将 HostV 与 VPN 服务器网关的内网口连接，模拟内部局域网。在这种设置中，HostV 不能直接从 Internet 访问，即不能直接从 HostU 访问。为实现上述的网络环境配置，我们需要执行以下操作：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 在VM上创建 docker 网络 extranet</span>
+seed@VM:~$ <span class="token function">sudo</span> <span class="token function">docker</span> network create --subnet<span class="token operator">=</span><span class="token number">10.0</span>.2.0/24 --gateway<span class="token operator">=</span><span class="token number">10.0</span>.2.8 --opt <span class="token string">"com.docker.network.bridge.name"</span><span class="token operator">=</span><span class="token string">"docker1"</span> extranet
+<span class="token comment"># 在VM上创建 docker 网络 intranet</span>
+seed@VM:~$ <span class="token function">sudo</span> <span class="token function">docker</span> network create --subnet<span class="token operator">=</span><span class="token number">192.168</span>.60.0/24 --gateway<span class="token operator">=</span><span class="token number">192.168</span>.60.1 --opt <span class="token string">"com.docker.network.bridge.name"</span><span class="token operator">=</span><span class="token string">"docker2"</span> intranet
+
+<span class="token comment"># 创建并运行容器HostU</span>
+seed@VM:~$ <span class="token function">sudo</span> <span class="token function">docker</span> run -it --name<span class="token operator">=</span>HostU --hostname<span class="token operator">=</span>HostU --net<span class="token operator">=</span>extranet --ip<span class="token operator">=</span><span class="token number">10.0</span>.2.7 --privileged <span class="token string">"seedubuntu"</span> /bin/bash
+<span class="token comment"># 创建并运行容器HostV</span>
+    seed@VM:~$ <span class="token function">sudo</span> <span class="token function">docker</span> run -it --name<span class="token operator">=</span>HostV --hostname<span class="token operator">=</span>HostV --net<span class="token operator">=</span>intranet --ip<span class="token operator">=</span><span class="token number">192.168</span>.60.101 --privileged <span class="token string">"seedubuntu"</span> /bin/bash<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>实际上，完成上述工作后，HostU 和 HostV 是可以相互 ping 通的，为了模拟二者不可见的情况，需要将它们的默认路由都删掉：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 删除默认路由</span>
+root@HostU:/<span class="token comment"># route delete default</span>
+root@HostV:/<span class="token comment"># route delete default</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p><img src="https://i.bmp.ovh/imgs/2022/05/09/42d6da2cbf3c7bba.png"></p>
+<h3 id="2-运行-VPN-服务器"><a href="#2-运行-VPN-服务器" class="headerlink" title="2. 运行 VPN 服务器"></a>2. 运行 VPN 服务器</h3><p>我们首先在服务器 VM 上运行 VPN 服务器程序 vpnserver。程序运行后，系<br>统中将出现一个虚拟 TUN 网络接口（我们可以使用 <code>ifconfig -a</code> 命令看到它）<br>在大多数情况下，接口的名称将是 <code>tun0</code>，但它们可以是 tunX，其中 X 是一个数<br>字。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/05/06/17397136e6d3cc21.png"></p>
+<p>此新接口尚未配置，因此我们需要通过为其提供 IP 地址来配置它。我们使用 192.168.53.1 作为此接口的 IP 地址。运行以下命令。第一个命令将启动服务器程序，第二个命令将一个 IP 地址分配给 tun0 接口，然后激活它。由于 ./vpnserver 时守护进程，每次有数据包时都会打印信息，所以开两个终端分别执行。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># VM 启动 vpnserver</span>
+seed@VM:~/vpn$ <span class="token function">sudo</span> ./vpnserver
+<span class="token comment"># 在 VM 上配置 tun0 虚拟 IP 地址并激活接口</span>
+seed@VM:~$ <span class="token function">sudo</span> <span class="token function">ifconfig</span> tun0 <span class="token number">192.168</span>.53.1/24 up<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>除非特别配置，否则计算机将仅充当主机，而不充当网关。VPN Server 需要在内网和隧道之间转发报文，因此需要作为<code>网关</code>。我们需要为计算机启用 <code>IP 转发</code>，使其行为类似于网关。由于 VM 上的 <code>iptables</code> 规则可能阻断转发报文，还需要清除 iptables 规则。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># VM 启动 IP转发</span>
+seed@VM:~/vpn$ <span class="token function">sudo</span> sysctl net.ipv4.ip_forward<span class="token operator">=</span><span class="token number">1</span>
+<span class="token comment"># VM 清除 iptables 规则</span>
+seed@VM:~/vpn$ <span class="token function">sudo</span> iptables -F<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="3-运行-VPN-客户端"><a href="#3-运行-VPN-客户端" class="headerlink" title="3. 运行 VPN 客户端"></a>3. 运行 VPN 客户端</h3><p>在 HostU 上运行下面两个命令，第一个命令将启动 VPN 客户端以<code>连接</code>到10.0.2.8 上运行的 VPN 服务器程序，第二个容器在容器 HostU 中配置 tun0 虚拟 IP 地址并激活接口。依然在两个终端分别执行。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 启动 VPN 客户端</span>
+root@HostU:/vpn<span class="token comment"># ./vpnclient 10.0.2.8</span>
+<span class="token comment"># 配置 tun0 虚拟 IP 地址并激活接口</span>
+root@HostU:/<span class="token comment"># ifconfig tun0 192.168.53.5/24 up</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>然后 HostU 中也会出现 tun0 接口：</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/05/09/6474f066a75951a6.png"></p>
+<h3 id="4-在-HostU-设置路由"><a href="#4-在-HostU-设置路由" class="headerlink" title="4. 在 HostU 设置路由"></a>4. <strong>在 HostU 设置路由</strong></h3><p>完成上述两个步骤后，隧道将会建立。在我们使用隧道之前，我们需要在 HostU 和 VPN 服务器上设置路由，以指示通过隧道的预期流量。在 HostU 上，我们需要将所有进入专用网络（192.168.60.0/24）的数据包<code>定向</code>到 tun0 接口，从该接口可以通过 VPN 隧道<code>转发</code>数据包。如果没有此设置，我们将无法访问专用<br>网络。</p>
+<p>使用 route 命令添加路由条目，下述命令会将 192.168.60.0/24 数据包定向到接口tun0：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 增加路由条目</span>
+root@HostU:/vpn<span class="token comment"># route add -net 192.168.60.0/24 tun0</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p><img src="https://i.bmp.ovh/imgs/2022/05/09/973ecd2afceda52e.png"></p>
+<p>至此，HostU 和 VM 之间就建立了 VPN 隧道，HostU 发向 192.168.60.X 的报文都会通过 tun0 转发给 VM 。VM 在将 tun0 解析出的报文转发至 docker2 。</p>
+<p>此时，HostU 的报文已经可以到达 HostV 了，可以尝尝试 ping 一下 HostV，然后用 wireshark 截包，会发现 docker1，tun0，docker2 三个网卡均有报文。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/05/09/034b05edd68bbdab.png"></p>
+<p>其中，tun0 和 docker2 截获的都是从 192.168.53.5 发往 192.168.60.101 的 ICMP ，因此可以确认，经过tun0 的封装，源 IP 变为了 192.168.53.5 。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/05/09/95bb1624c74e749a.png"></p>
+<p>值得注意的是，只捕获到了 HostU 发往 HostV 的报文，没有任何 HostV 发往 HostU 的回应。这是因为，前面已经删了 HostV 的默认路由（除了内网之外的所有目的 IP 向网关转发），所以不会对发往 192.168.53.5 的报文进行处理，所以 ping 不同。</p>
+<h3 id="5-在-HostV-上设置路由"><a href="#5-在-HostV-上设置路由" class="headerlink" title="5. 在 HostV 上设置路由"></a>5. <strong>在 HostV 上设置路由</strong></h3><p>得知了源 IP 为 192.168.53.5 之后，可以对这个网段的目的报进行 route 配置，使发往 192.168.53.0/24 网段的报文都均转向网关 192.168.60.1 即可。运行下面命令：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">root@HostV:/<span class="token comment"># route add -net 192.168.53.0/24 gw 192.168.60.1 eth0</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p><img src="https://i.bmp.ovh/imgs/2022/05/09/9b3769658152e72c.png"></p>
+<p>这样 HostV 就可以把响应发给 VM 了。那 VM 需不需要另做配置呢？实际上，只需要一个，就是把发送192.168.53.0/24 网段的报文转给 tun0 接口，但这个路由配置在 tun0 刚创建时已经<code>自动</code>配置好了，所以不需要我们另外做什么配置。</p>
+<p><img src="https://i.bmp.ovh/imgs/2022/05/09/81837eb9eedb077c.png"></p>
+<p>至此，不仅配好了 HostU 和 VM 之间的 VPN 隧道，还配好了 HostU 发往隧道的路由配置与 HostV 回应的路由配置，两者就可以相互通信啦。</p>
+<p>重新 ping 一下看看：</p>
+<p><img src="/VPN-%E4%B8%80-UDP%E9%9A%A7%E9%81%93/image-20220509214058761.png" alt="image-20220509214058761"></p>
+<p>可以看到，ping通了，VPN 隧道里也做转发。</p>
+<p>telnet 一下看看（记得 HostV 要开启 telnet 服务）：</p>
+<p><img src="/VPN-%E4%B8%80-UDP%E9%9A%A7%E9%81%93/image-20220509214547296.png" alt="image-20220509214547296"></p>
+<p>很明显，telnet也成功了，VPN 隧道里有相关的转发。</p>
+<p>现在试着在 VM 里把  VPN 关了。因为 vpnserver 是守护进程，所以需要 kill 掉后台的进程。关了之后，虽然 telnet 连接没断，但是不管输入什么都不会回显了，数据传不到 HostV 了。</p>
+<p><img src="/VPN-%E4%B8%80-UDP%E9%9A%A7%E9%81%93/image-20220509224317747.png" alt="image-20220509224317747"></p>
+<hr>
+<p>好啦，基于 UDP 的 VPN 隧道实验就完了。不过没有进行加密、证书等，显然不是严格意义上的 VPN，下一篇会记录安全 VPN 的实验过程。</p>
+
                 
             </div>
             <hr/>
@@ -604,7 +712,15 @@
                 <div class="post-meta__tag-list" style="display: inline-block;">
                     
                         <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
+                            
+                                <a href="/tags/VPN/">
+                                    <span class="chip bg-color">VPN</span>
+                                </a>
+                            
+                                <a href="/tags/%E8%AE%A1%E7%BD%91/">
+                                    <span class="chip bg-color">计网</span>
+                                </a>
+                            
                         </div>
                     
                 </div>
