@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="Steam游戏库, SrcMiLeの杂货铺">
+    <meta name="keywords" content="TinyKV-2022 项目总结, SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>Steam游戏库 | SrcMiLeの杂货铺</title>
+    <title>TinyKV-2022 项目总结 | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -379,12 +379,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/20.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/13.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">Steam游戏库</h1>
+                    <h1 class="description center-align post-title">TinyKV-2022 项目总结</h1>
                 </div>
             </div>
         </div>
@@ -498,12 +498,29 @@
             <div class="row tag-cate">
                 <div class="col s7">
                     
-                          <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
-                          </div>
+                    <div class="article-tag">
+                        
+                            <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
+                                <span class="chip bg-color">分布式</span>
+                            </a>
+                        
+                            <a href="/tags/%E5%AD%98%E5%82%A8/">
+                                <span class="chip bg-color">存储</span>
+                            </a>
+                        
+                    </div>
                     
                 </div>
                 <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/" class="post-category">
+                                分布式
+                            </a>
+                        
+                    </div>
                     
                 </div>
             </div>
@@ -521,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    1.2k
+                    1.6k
                 </div>
                 
 
@@ -541,858 +558,60 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <blockquote>
-    <p>这可是第九艺术啊</p>
-</blockquote>
-<a href="https://steamcommunity.com/profiles/76561198997580810/" target="_blank"><img src="https://i.bmp.ovh/imgs/2022/03/42556b6c9243db47.jpg"></a>
-<style>
-    #steam-item1 a,
-#steam-item1 a:hover {
-  text-decoration: none;
-}
+                <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>大三下暑假才开始的实习，也是我的第一次分布式 lab，之前没做过6.824，所以完成的过程中很折磨，bug 飞来飞去。最后用了6个星期多才完成了项目，并且还是建立在很多基于样例编程的基础上，即使这样也没有完成全部测试点，project3b 还是太难了。</p>
+<p>项目最后需要编写一个文档，里面写了我对四个project的理解以及一些重要函数的实现流程。实际上，如果不做另行优化的话，大部分的函数流程都是固定的，因此只要清楚了思想，至少在宏观上可以减少一些走弯路的风险，接下来就是疯狂对着bug调细节了。文档写的稍微有点书面，而且字不少，直接cp过来有点不合适哈哈哈，所以还是放链接吧：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/sakura-ysy/TinyKV-2022-doc">项目实现文档</a></p>
+<p>实现的思路和流程基本都写进去了，还有个人认为非常关键的 raft 角色转换逻辑，在 project2 的文档中我尝试画图来更直观地去梳理一下，效果还可以。细节写进文档中了，这里我想谈谈一些杂感和心得分享。</p>
+<h2 id="整体感受"><a href="#整体感受" class="headerlink" title="整体感受"></a>整体感受</h2><p>感受就一个字：痛。</p>
+<p>首先是<strong>花时间</strong>，Code 之前要研读很多东西，比如 raft 论文，不读个两遍我个人是不建议上手敲代码的，还比如代码框架，再比如官方的文档，外加上我还读了一些别人的心得分享。接着就会发现，读完这些后，还是不太好下手，因为整个 raft 都要我们自己来实现，需要从整体的角度去构建。所以会花很多的时间去一点点完善 raft 的所有步骤，不过好在大部分函数/方法官网已经给函数名了，至少知道了方向。实现完了之后就是调 bug，这是最耗费时间的，而且会出现解决了后面的 bug，前面又出了新的 bug 这种情况，这就属于按照测试点 debug 而忽略了实现逻辑上的问题，很难受。解决这些 bug 要花很多的时间，尤其是 project3b 的一些 bug，还随机出现，只能不断地打日志、猜想/验证来去找到 bug 的源头，这会花很多时间，比如有一个我就用了整整3天，那3天项目一点进度都没有，全拿来解决那个 bug 去了。</p>
+<p>前两个 project 都好说。project1 通过研读代码框架直接就可以确定实现逻辑，project2就是仔细仔细读 raft 论文，而且只要是线性测试的，那都不是问题，2b/c的非线性测试也没遇见那种扣破头也解决不了 bug。除去前期对项目整体的熟悉之外，project2 一天半做完了，看网上的分享都是说两三个小时就做完了，我觉得对我来说不现实，毕竟拿到手还要花时间读代码框架，整理 API 啥的，这一下就不止几个小时了，如果说两三个小时是纯 Code 时间，那才差不多能接受。</p>
+<p>然后就是<strong>绝望</strong>。这在 project3b 中尤为明显，在做 Split 的时候，就是会出现很多奇奇怪怪的 bug，而且随机出现，很难复现。有时候，只要这个 bug 出现了我就很高兴，对，没有解决，仅仅是出现，因为这样我就可以通过日志尝试追踪了。在解决3b的一些 bug 时，很多时候我是靠猜的，然后去验证，然后发现猜错了，由此往复。有一个 bug，我调了3天，前两天真的很绝望，没有靠追踪日志来溯源成功，就硬猜，然后一直猜错，都想放弃了。不过好在最后发现了是在 raft 层中的 tick 出了问题，和心跳有关，第三天晚上解决了，不然我快绝望死了。</p>
+<p>最重要的，提升<strong>工程能力</strong>。这点很重要，因为项目不同于小 lab 或者一些算法刷题那样，它需要完完整整的实现一个系统，这就要求我们从整体到细节都要考虑到，不能只拘泥于某一项功能的实现，会很好地锻炼整体性、模块化的开发思想。在组会的时候，基本每周都有大佬建议先不要硬磕测试点，把整个项目结构搞明白了先，这比测试点重要。</p>
+<h2 id="开发建议"><a href="#开发建议" class="headerlink" title="开发建议"></a>开发建议</h2><p><strong>Project1</strong></p>
+<ul>
+<li>先看看 badger，了解一下 Txn 和 DB；</li>
+<li>读相应的代码框架，在 engine_util 这个包里，整理每个 API 的功能与使用方法；</li>
+</ul>
+<p><strong>Project2</strong></p>
+<ul>
+<li>好好读 raft 论文，其实很多细节在论文中是提到了的；</li>
+<li>参考 etcd，project2 的设计很多都是和 etcd 大同小异的，看 etcd 源码可以有很大的启发；</li>
+<li>写 Project2A 和 2B 的时候可以先不考虑 2C 的内容，因为少了快照，前两个完成起来会相对简单很多，等写到Project2C 再去前面补充就行，并不会影响到代码框架；</li>
+</ul>
+<p><strong>Project3</strong></p>
+<ul>
+<li>心态，心态，还是心态！</li>
+<li>打日志，一定要打日志，多线程的测试，还带随机数，不打日志有些 bug 根本追踪不出来；</li>
+</ul>
+<p><strong>Project4</strong></p>
+<ul>
+<li>这部分刚看会有些困惑，但是实现起来就比较简单，Project123 都能完成了，这肯定没问题；</li>
+</ul>
+<p><strong>其他</strong></p>
+<ul>
+<li>github 上有个 TinyKV 白皮书，如果没思路了可以参考一下，虽然有一些他写错了或者写的不完善；</li>
+<li>调 bug 时遇到的问题和解决办法都记录下来，不仅仅是为了写文档，更能让我们明白项目中忽略的细节；</li>
+<li>多交流，多分享自己遇见的 bug 或者见解，有时候我们碰见的问题，会被别人一点即通；</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/maemual/raft-zh_cn">Raft 论文（中/英）</a><ul>
+<li>看中文翻译版的就行，个人认为已经翻译的很好了；</li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/Smith-Cruise/TinyKV-White-Paper">Smith-Cruise 的 TinyKV 白皮书</a><ul>
+<li>如果没有思路的话，可以参考一下，但是有些地方写的并不完善；</li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/etcd-io/etcd">etcd</a><ul>
+<li>会对 project2 有很大的帮助</li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="https://www.luozhiyun.com/archives/609">Percolator 论文（中/英）</a><ul>
+<li>project4 会用到</li>
+</ul>
+</li>
+</ul>
 
-.steam-game-tabs {
-  margin-bottom: 15px;
-  margin-top: 15px;
-}
-
-.steam-game-tab {
-  padding: 5px;
-}
-
-.steam-game-active {
-  background: #657b83;
-  color: #fff;
-}
-
-.steam-game-item {
-  position: relative;
-  clear: both;
-  min-height: 100px;
-  border-bottom: 1px #ddd solid;
-}
-
-@media screen and (max-width: 600px) {
-  .steam-game-item {
-    width: 100%;
-  }
-}
-
-.steam-game-picture {
-  left: 0;
-  top: 0px;
-  width: 188px;
-  height: 80px;
-}
-
-.steam-game-info {
-  height: 80px;
-  padding-left: 30%;
-}
-
-.steam-game-meta {
-  font-size: 12px;
-  padding-right: 10px;
-}
-
-.steam-game-pagination {
-  margin-top: 15px;
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-.steam-game-button {
-  padding: 5px;
-  display: inline-block;
-}
-
-.steam-game-button:hover {
-  background: #657b83;
-  color: #fff;
-}
-
-.steam-game-hide {
-  display: none;
-}
-
-.steam-game-show {
-  display: block;
-}
-
-.steam-game-title {
-  font-size: 18px;
-}
-
-.steam-game-title a {
-  line-height: 1;
-  padding: 5px;
-}
-
-.steam-game-title a:hover {
-  padding: 5px;
-  position: relative;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  border: 1px solid rgba(123, 123, 123, .5);
-  -webkit-transition: all .3s;
-  -moz-transition: all .3s;
-  -o-transition: all .3s;
-  transition: all .3s;
-}
-
-.steam-game-link {
-  min-height: 50px;
-}
-
-@media (max-width:400px) {
-  .steam-game-picture {
-    padding-left: 5px;
-  }
-
-  .steam-game-info {
-    position: relative;
-    left: 0;
-    top: 0px;
-    width: 188px;
-  }
-}
-
-.steam-game-picture img {
-  border: 2px solid #7b7b7b;
-  border-radius: 20px 7px;
-}
-
-.steam-game-button {
-  color: #00b8ff !important;
-  -webkit-transition: all .5s;
-  -moz-transition: all .5s;
-  -o-transition: all .5s;
-  transition: all .5s;
-  position: relative;
-}
-
-.steam-game-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  -webkit-transition: all .3s;
-  -moz-transition: all .3s;
-  -o-transition: all .3s;
-  transition: all .3s;
-}
-
-.steam-game-button:hover::before {
-  opacity: 0;
-  -webkit-transform: scale(1.2, 1.2);
-  transform: scale(1.2, 1.2);
-}
-
-.steam-game-button::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  opacity: 0;
-  background-color: rgba(255, 255, 255, .25);
-  -webkit-transition: all .3s;
-  -moz-transition: all .3s;
-  -o-transition: all .3s;
-  transition: all .3s;
-  -webkit-transform: scale(.5, .5);
-  transform: scale(.5, .5);
-}
-
-.steam-game-button:hover::after {
-  opacity: 1;
-  -webkit-transform: scale(1, 1);
-  transform: scale(1, 1);
-}
-</style>
-<div>
-    <div id="steam-item1">
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/431960/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/431960/">Wallpaper Engine：壁纸引擎</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 22 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/431960/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/431960">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1238810/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1238810/">《战地风云 5》</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 19.1 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1238810/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1238810">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/359550/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/false/">Tom Clancy&#39;s Rainbow Six Siege</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 14.6 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/359550/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/359550">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1593500/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1593500/">God of War</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 12.6 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1593500/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1593500">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/477160/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/477160/">人类一败涂地 / Human Fall Flat</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 6.1 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/477160/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/477160">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/239140/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/DyingLight/">Dying Light</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 4.8 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/239140/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/239140">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1366540/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1366540/">戴森球计划</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 3.8 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1366540/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1366540">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/208650/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/208650/">Batman™: Arkham Knight</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 2.8 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/208650/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/208650">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1057090/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1057090/">Ori and the Will of the Wisps</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 2.3 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1057090/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1057090">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/323190/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/323190/">Frostpunk</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 1.3 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/323190/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/323190">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/918570/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/918570/">Century: Age of Ashes</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 0.4 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/918570/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/918570">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/730/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/CSGO/">Counter-Strike: Global Offensive</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 0.2 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/730/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/730">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/501300/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/501300/">What Remains of Edith Finch</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/501300/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/501300">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1091500/">赛博朋克 2077</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1091500/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1091500">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/550/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/L4D2/">Left 4 Dead 2</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/550/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/550">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/242760/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/242760/">The Forest</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/242760/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/242760">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/623990/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/false/">Tom Clancy&#39;s Rainbow Six Siege - Test Server</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/623990/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/623990">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1543030/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1543030/">仙剑奇侠传七</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1543030/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1543030">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1426210/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1426210/">双人成行</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1426210/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1426210">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/349040/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/349040/">火影忍者 疾风传 终极风暴4</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/349040/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/349040">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-pagination">
-    <a class="steam-game-button steam-game-firstpage" href="javascript:;" target="_self" onclick="return false"> 首页</a>
-    <a class="steam-game-button steam-game-previouspage" href="javascript:;" target="_self" onclick="return false">上一页</a>
-    <span class="steam-game-pagenum">2 / 3</span>
-    <a class="steam-game-button steam-game-nextpage" href="javascript:;" target="_self" onclick="return false">下一页</a>
-    <a class="steam-game-button steam-game-lastpage" href="javascript:;" target="_self" onclick="return false">尾页</a>
-</div>    </div>
-</div>
-<script>
-    Element.prototype.siblings = function () {
-    let siblingElement = [];
-    let sibs = this.parentNode.children;
-    for (let i = 0; i < sibs.length; i++) {
-        if (sibs[i] !== this) {
-            siblingElement.push(sibs[i]);
-        }
-    }
-    return siblingElement;
-};
-function tabClick() {
-    //修改标签样式
-    this.classList.add('steam-game-active');
-    let sibs = this.siblings();
-    for (let j = 0; j < sibs.length; j++) {
-        sibs[j].classList.remove('steam-game-active');
-    }
-    //显示对应板块
-    let itemId = this.id.replace('tab', 'item');
-    let target = document.getElementById(itemId);
-    target.classList.remove('steam-game-hide');
-    target.classList.add('steam-game-show');
-    sibs = document.getElementById(itemId).siblings();
-    for (let k = 0; k < sibs.length; k++) {
-        sibs[k].classList.remove('steam-game-show');
-        sibs[k].classList.add('steam-game-hide');
-    }
-}
-let tabs = document.getElementsByClassName("steam-game-tab");
-for (let i = 0; i < tabs.length; i++) {
-    tabs[i].onclick = tabClick;
-    tabs[i].onclick.apply(tabs[i]);
-}    var firstpages = document.getElementsByClassName("steam-game-firstpage");
-var previouspages = document.getElementsByClassName("steam-game-previouspage");
-var nextpages = document.getElementsByClassName("steam-game-nextpage");
-var lastpages = document.getElementsByClassName("steam-game-lastpage");
-var pagenums = document.getElementsByClassName("steam-game-pagenum");
-
-function makePageNum(num, arr) {
-    return (num + 1) + ' / ' + (Math.ceil(arr.length / 10 === 0 ? 1 : Math.ceil(arr.length / 10)));
-}
-
-function firstBtn() {
-    var sibs = this.parentNode.siblings();
-    displayPage(sibs, 0);
-    this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText = makePageNum(0, sibs);
-}
-
-function previousBtn() {
-    var sibs = this.parentNode.siblings();
-    var currNum = this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText;
-    currNum = currNum.substr(0, currNum.indexOf('/') - 1);
-    currNum = parseInt(currNum, 10) - 1;
-    if (currNum > 0) {
-        currNum--;
-    }
-    displayPage(sibs, currNum);
-    this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText = makePageNum(currNum, sibs);
-}
-
-function nextBtn() {
-    var sibs = this.parentNode.siblings();
-    var currNum = this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText;
-    currNum = currNum.substr(0, currNum.indexOf('/') - 1);
-    currNum = parseInt(currNum, 10) - 1;
-    if (currNum < Math.ceil(sibs.length / 10) - 1) {
-        currNum++;
-    }
-    displayPage(sibs, currNum);
-    this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText = makePageNum(currNum, sibs);
-}
-
-function lastBtn() {
-    var sibs = this.parentNode.siblings();
-    displayPage(sibs, Math.ceil(sibs.length / 10) - 1);
-    this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText = makePageNum(Math.ceil(sibs.length / 10) - 1 === -1 ? 0 : Math.ceil(sibs.length / 10) - 1, sibs);
-}
-
-function displayPage(arr, num) {
-    for (var i = 0; i < arr.length; i++) {
-        if (Math.floor(i / 10) === num) {
-            arr[i].classList.remove('steam-game-hide');
-            var img = arr[i].getElementsByTagName('img')[0];
-            img.src = img.getAttribute('data-src');
-        } else {
-            arr[i].classList.add('steam-game-hide');
-        }
-    }
-}
-
-for (var i = 0; i < firstpages.length; i++) {
-
-    //add listener
-    firstpages[i].onclick = firstBtn;
-    previouspages[i].onclick = previousBtn;
-    nextpages[i].onclick = nextBtn;
-    lastpages[i].onclick = lastBtn;
-
-    //set page num
-    var size = pagenums[i].parentNode.siblings().length;
-    pagenums[i].innerText = '1 / ' + (Math.ceil(size / 10) === 0 ? 1 : Math.ceil(size / 10));
-    firstpages[i].click();
-}</script>
                 
             </div>
             <hr/>
@@ -1418,7 +637,7 @@ for (var i = 0; i < firstpages.length; i++) {
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://example.com/steamgames/index.html">http://example.com/steamgames/index.html</a>
+                    <a href="http://example.com/tinykv-2022-xiang-mu-zong-jie/">http://example.com/tinykv-2022-xiang-mu-zong-jie/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -1455,7 +674,15 @@ for (var i = 0; i < firstpages.length; i++) {
                 <div class="post-meta__tag-list" style="display: inline-block;">
                     
                         <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
+                            
+                                <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
+                                    <span class="chip bg-color">分布式</span>
+                                </a>
+                            
+                                <a href="/tags/%E5%AD%98%E5%82%A8/">
+                                    <span class="chip bg-color">存储</span>
+                                </a>
+                            
                         </div>
                     
                 </div>
@@ -1628,13 +855,13 @@ for (var i = 0; i < firstpages.length; i++) {
                 <i class="far fa-dot-circle"></i>&nbsp;本篇
             </div>
             <div class="card">
-                <a href="/steamgames/index.html">
+                <a href="/tinykv-2022-xiang-mu-zong-jie/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="Steam游戏库">
+                        <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="TinyKV-2022 项目总结">
                         
-                        <span class="card-title">Steam游戏库</span>
+                        <span class="card-title">TinyKV-2022 项目总结</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -1649,13 +876,29 @@ for (var i = 0; i < firstpages.length; i++) {
                             </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-user fa-fw"></i>
-                            SrcMiLe
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/" class="post-category">
+                                    分布式
+                                </a>
+                            
                             
                         </span>
                     </div>
                 </div>
 
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
+                        <span class="chip bg-color">分布式</span>
+                    </a>
+                    
+                    <a href="/tags/%E5%AD%98%E5%82%A8/">
+                        <span class="chip bg-color">存储</span>
+                    </a>
+                    
+                </div>
                 
             </div>
         </div>
@@ -1663,16 +906,16 @@ for (var i = 0; i < firstpages.length; i++) {
         
         <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge right-badge text-color">
-                本篇&nbsp;<i class="far fa-dot-circle"></i>
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/steamgames/index.html">
+                <a href="/jail-breaking/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="Steam游戏库">
+                        <img src="/medias/featureimages/9.jpg" class="responsive-img" alt="jail breaking">
                         
-                        <span class="card-title">Steam游戏库</span>
+                        <span class="card-title">jail breaking</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -1683,17 +926,32 @@ for (var i = 0; i < firstpages.length; i++) {
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-09-16
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-06-18
                             </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-user fa-fw"></i>
-                            SrcMiLe
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/Linux/" class="post-category">
+                                    Linux
+                                </a>
+                            
                             
                         </span>
                     </div>
                 </div>
-
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Linux/">
+                        <span class="chip bg-color">Linux</span>
+                    </a>
+                    
+                    <a href="/tags/OSz/">
+                        <span class="chip bg-color">OSz</span>
+                    </a>
+                    
+                </div>
                 
             </div>
         </div>

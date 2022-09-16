@@ -570,7 +570,7 @@
 <li>从主机系统获取IP数据包，因此数据包可以<code>通过隧道</code>发送；</li>
 <li>从隧道获取IP数据包，然后将其<code>转发</code>到主机系统，主机系统将数据包转发到其最终目的地。</li>
 </ul>
-<p>以我的理解，TUN接口就是对IP进行了重造，使原本无法转发的数据包能被转发，具体的流如下图所示：</p>
+<p>以我的理解，TUN接口就是对IP进行了重造，使原本无法转发的数据包能被转发，具体的流程如下图所示：</p>
 <p><img src="https://i.bmp.ovh/imgs/2022/05/06/958baa24656974b3.png"></p>
 <p>知道了基本流程后，开始做实验。</p>
 <h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><p>实验环境为：</p>
@@ -590,7 +590,7 @@ seed@VM:~$ <span class="token function">sudo</span> <span class="token function"
 <span class="token comment"># 创建并运行容器HostU</span>
 seed@VM:~$ <span class="token function">sudo</span> <span class="token function">docker</span> run -it --name<span class="token operator">=</span>HostU --hostname<span class="token operator">=</span>HostU --net<span class="token operator">=</span>extranet --ip<span class="token operator">=</span><span class="token number">10.0</span>.2.7 --privileged <span class="token string">"seedubuntu"</span> /bin/bash
 <span class="token comment"># 创建并运行容器HostV</span>
-    seed@VM:~$ <span class="token function">sudo</span> <span class="token function">docker</span> run -it --name<span class="token operator">=</span>HostV --hostname<span class="token operator">=</span>HostV --net<span class="token operator">=</span>intranet --ip<span class="token operator">=</span><span class="token number">192.168</span>.60.101 --privileged <span class="token string">"seedubuntu"</span> /bin/bash<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+seed@VM:~$ <span class="token function">sudo</span> <span class="token function">docker</span> run -it --name<span class="token operator">=</span>HostV --hostname<span class="token operator">=</span>HostV --net<span class="token operator">=</span>intranet --ip<span class="token operator">=</span><span class="token number">192.168</span>.60.101 --privileged <span class="token string">"seedubuntu"</span> /bin/bash<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>实际上，完成上述工作后，HostU 和 HostV 是可以相互 ping 通的，为了模拟二者不可见的情况，需要将它们的默认路由都删掉：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 删除默认路由</span>
