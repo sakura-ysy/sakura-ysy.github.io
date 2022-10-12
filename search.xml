@@ -4,6 +4,31 @@
   
     
     <entry>
+      <title>布隆过滤器</title>
+      <link href="/bu-long-guo-lu-qi/"/>
+      <url>/bu-long-guo-lu-qi/</url>
+      
+        <content type="html"><![CDATA[<p>BloomFilter 实际上是一个很长的二进制向量和一系列随机映射函数，主要用于判断一个元素是否在一个集合中。</p><p>通常我们要判断一个元素是否在某个集合，一般想到的是将集合中所有元素保存起来，然后通过比较确定。链表、树、哈希表等等数据结构都是这种思路。但是随着集合中元素的增加，我们需要的存储空间也会呈现线性增长。这时，BloomFilter 就诞生了，其具有极低的空间复杂度与时间复杂度。</p><p>在初始状态时，对于长度为 m 的位数组，它的所有位都被置为0，如下图所示：</p><p><img src="https://s1.ax1x.com/2022/10/12/xapAsJ.png" alt="布隆过滤器初始状态"></p><p>当有变量被加入集合时，通过 K 个映射函数将这个变量映射成位图中的 K 个点，把它们置为 1。这里假设有两个变量，共 3 个 Hash 函数。</p><p><img src="https://s1.ax1x.com/2022/10/12/xapdW8.png" alt="映射"></p><p>查询某个变量的时候我们只要看看这些点是不是都是 1 就可以大概率知道集合中有没有它了。</p><ul><li>如果这些点有任何一个 0，则被查询变量一定不在；</li><li>如果都是 1，则被查询变量<strong>很可能</strong>存在；</li></ul><p>第一点很显然，因为存在的变量映射之后一定全 1，所以布隆过滤器不存在假阴性。第二点是因为 Hash 函数存在碰撞的可能，比如 item3 和 item1 的三个 Hash 函数结果都一样，所以布隆过滤器存在假阳性。</p><p>布隆过滤器拥有 O(k) 的时间复杂度，其中 k 为 Hash 函数的个数，通常 k 并不大，所以基本为 O(1)。空间方面，m 位的布隆过滤器最多可以容纳 2^m 个元素，有很大的空间优势。正确度方面，多 Hash 函数大幅度减少了传统哈希表的碰撞率，只不过当元素越来越多时，碰撞率就会越来越大。</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 存储 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 存储 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>LSM-Tree(一) 初识</title>
       <link href="/lsm-tree-yi-chu-shi/"/>
       <url>/lsm-tree-yi-chu-shi/</url>
@@ -19,8 +44,6 @@
       
       
         <tags>
-            
-            <tag> 分布式 </tag>
             
             <tag> 存储 </tag>
             
