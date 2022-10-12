@@ -1,0 +1,1421 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="LSM-Tree(一) 初识, SrcMiLeの杂货铺">
+    <meta name="description" content="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    <title>LSM-Tree(一) 初识 | SrcMiLeの杂货铺</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+
+    <script src="/libs/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+    
+
+                <body>
+                    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/avatar.jpg" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">SrcMiLeの杂货铺</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fas fa-bars"></i></a>
+<ul class="right nav-menu">
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/" class="waves-effect waves-light">
+      
+      <i class="fas fa-home" style="zoom: 0.6;"></i>
+      
+      <span>首页</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/tags" class="waves-effect waves-light">
+      
+      <i class="fas fa-tags" style="zoom: 0.6;"></i>
+      
+      <span>标签</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/categories" class="waves-effect waves-light">
+      
+      <i class="fas fa-bookmark" style="zoom: 0.6;"></i>
+      
+      <span>分类</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/archives" class="waves-effect waves-light">
+      
+      <i class="fas fa-archive" style="zoom: 0.6;"></i>
+      
+      <span>归档</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/about" class="waves-effect waves-light">
+      
+      <i class="fas fa-user-circle" style="zoom: 0.6;"></i>
+      
+      <span>关于</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/contact" class="waves-effect waves-light">
+      
+      <i class="fas fa-comments" style="zoom: 0.6;"></i>
+      
+      <span>留言板</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/friends" class="waves-effect waves-light">
+      
+      <i class="fas fa-address-book" style="zoom: 0.6;"></i>
+      
+      <span>友情链接</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="" class="waves-effect waves-light">
+
+      
+      <i class="fas fa-list" style="zoom: 0.6;"></i>
+      
+      <span>Medias</span>
+      <i class="fas fa-chevron-down" aria-hidden="true" style="zoom: 0.6;"></i>
+    </a>
+    <ul class="sub-nav menus_item_child ">
+      
+      <li>
+        <a href="/movies">
+          
+          <i class="fas fa-film" style="margin-top: -20px; zoom: 0.6;"></i>
+          
+          <span>放映室</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/books">
+          
+          <i class="fas fa-book" style="margin-top: -20px; zoom: 0.6;"></i>
+          
+          <span>破书架</span>
+        </a>
+      </li>
+      
+    </ul>
+    
+  </li>
+  
+  <li>
+    <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+      <i id="searchIcon" class="fas fa-search" title="搜索" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+</ul>
+
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/avatar.jpg" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">SrcMiLeの杂货铺</div>
+        <div class="logo-desc">
+            
+            Never really desperate, only the lost of the soul.
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+        <li class="m-nav-item">
+	  
+		<a href="/" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-home"></i>
+			
+			首页
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/tags" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-tags"></i>
+			
+			标签
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/categories" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-bookmark"></i>
+			
+			分类
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/archives" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-archive"></i>
+			
+			归档
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/about" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-user-circle"></i>
+			
+			关于
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/contact" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-comments"></i>
+			
+			留言板
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/friends" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-address-book"></i>
+			
+			友情链接
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="javascript:;">
+			
+				<i class="fa-fw fas fa-list"></i>
+			
+			Medias
+			<span class="m-icon"><i class="fas fa-chevron-right"></i></span>
+		</a>
+            <ul  style="background:  ;" >
+              
+                <li>
+
+                  <a href="/movies " style="margin-left:75px">
+				  
+				   <i class="fa fas fa-film" style="position: absolute;left:50px" ></i>
+			      
+		          <span>放映室</span>
+                  </a>
+                </li>
+              
+                <li>
+
+                  <a href="/books " style="margin-left:75px">
+				  
+				   <i class="fa fas fa-book" style="position: absolute;left:50px" ></i>
+			      
+		          <span>破书架</span>
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/sakura-ysy" class="waves-effect waves-light" target="_blank">
+                <i class="fab fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/sakura-ysy" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+                        
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/5.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <h1 class="description center-align post-title">LSM-Tree(一) 初识</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        width: 345px;
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        padding: 35px 0 15px 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content {
+        padding-bottom: 30px;
+        overflow: auto;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+
+        position: absolute;
+        right: 23.5vw;
+        display: block;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
+                                <span class="chip bg-color">分布式</span>
+                            </a>
+                        
+                            <a href="/tags/%E5%AD%98%E5%82%A8/">
+                                <span class="chip bg-color">存储</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                存储
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                
+                <div class="post-date info-break-policy">
+                    <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2022-10-12
+                </div>
+                
+
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
+                    3.4k
+                </div>
+                
+
+                
+
+                
+            </div>
+        </div>
+        <hr class="clearfix">
+
+        
+        <!-- 是否加载使用自带的 prismjs. -->
+        <link rel="stylesheet" href="/libs/prism/prism.css">
+        
+
+        
+
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <blockquote>
+<p>写在前面：本篇博客为综述《LSM-based Storage Techniques: A Survey》的学习笔记（一），该综述介绍了 LSM-Tree 的前世今生、思想本质、性能权衡、面临问题、优化方案等等，也是我正式接触 LSTM-Tree 的入门导师。综述对 leveling、tiering、partition 等核心观念进行了较为详细的介绍，对 LSM-Tree 的本质理解还是很有帮助的。不过，毕竟只是一篇综述，想要看清 LSM-Tree 光靠这一篇肯定是不够的，所以还参考了其他的博客。</p>
+<p>好了，我们开始。</p>
+</blockquote>
+<p>都知道，现在的存储体系大多分为 SQL 和 NoSQL，后者即 K-V 存储，LSM-Tree 就是为它服务的一种底层数据结构。现行的大部分 K-V 存储，比如 Rocksdb、Badger 等底层用的都是 LSM-Tree，虽然进行了一定的优化与变式，但本质还是 LSM。所以，LSM-Tree 是什么？为什么要用到 LSM-Tree，要搞清楚这个问题，就需要先明白在 LSM-Tree 出现之前，K-V 存储是什么样的。</p>
+<h2 id="LSM-Tree-诞生之前"><a href="#LSM-Tree-诞生之前" class="headerlink" title="LSM-Tree 诞生之前"></a>LSM-Tree 诞生之前</h2><p>一般来讲，K-V 存储在更新时有两种方案供选择，一种叫<code>就地更新（in-place）</code>，一种叫<code>地外更新（out-of-place）</code>。所谓就地更新，就是直接将原来的记录改了，换成新的记录，比如把 &lt;k1,v1&gt; 改成 &lt;k2,v2&gt;，这样一来就没有 &lt;k1,v1&gt; 这个记录了，查询 k1 的值会直接返回 v1，具有很高的<strong>读效率</strong>。同时，由于更新直接利用原来的空间，不会开辟新的空间，所有具有很高的<strong>空间利用率</strong>。但是，代价就是<strong>写放大</strong>，说人话就是写变慢了。在该策略中，每一次写都会造成随机的 I/O，即要先找到那个 key，然后再做更新，就会导致写速率变慢。</p>
+<p>于此相反，地外更新不会直接更改原来的 &lt;k1,v1&gt;，而是将 &lt;k2,v2&gt; 另外存储在一个新的地方，然后打上 version 表示这个记录才是 k1 最新的值。这样一来，写 k1 时，就无需采用随机 I/O 事先找到 k1，而是直接利用顺序 I/O 将新记录附加上去就行了，相比于就地更新，这种策略具有更好的<strong>读效率</strong>。同时，由于没有覆盖旧记录，所以是<strong>利于回滚</strong>的。但代价就是，具有<strong>读放大</strong>与<strong>空间放大</strong>，这两点很显然，因为同一个 key 对应的记录更多了。</p>
+<img src="LSM-Tree-一-初识/image-20221012111855628.png" alt="image-20221012111855628" style="zoom:67%;" />
+
+<p>地外更新随后成为主流，它为记录的存储提供了一种新的思路：<code>顺序日志</code>。比如早期的 Postgres 项目，会把所有的写操作附件到一个顺序日志中去，只有当原记录过时后才由垃圾回收机制清理，而不是当场覆盖原记录。</p>
+<p>但是很明显，如果日志的结构仅仅是顺序的，那必然不是最优的，因为记录之间潜在的联系没有被利用，大家都像栈元素一样一个一个 push 进日志，肯定是不行的。所以就引出了新的问题，如何进行合理的<code>日志结构化</code>？这就是 LSM 中的 LS 所指的含义，Log-Structured。</p>
+<p>那 Merge 指什么呢？实际上，对于某一个 key，除了最新的那条记录外，其他的记录都是冗余无用的，但是仍然占用了存储空间，所以需要不定期的去进行 Merge 来清除掉冗余的记录，而这就是 LSM-Tree 的核心内容。</p>
+<h2 id="早期-LSM-Tree"><a href="#早期-LSM-Tree" class="headerlink" title="早期 LSM-Tree"></a>早期 LSM-Tree</h2><p>为了解决上面说的问题，LSM-Tree 诞生。就像其名字一样，LSM-Tree 设计的初衷，就是对日志进行一定的<code>合并（merge）</code>，来进行冗余记录的清除，并利用合适的日志结构与合并策略来提高写性能。</p>
+<p>最开始的 LSM-Tree，由一系列的组件构成，我们把它们记作 C0、C1 … Ck。每一个组件内部都是一个 B+ 树，（当然，到后期就不是了，不过这里先不管）。C0 驻留在内存中，为传入的写操作提供服务，而其余的所有 C 均驻留在磁盘中，进行真正的数据存储。所有的组件之间都是递进的，当且仅当 Ci 存满的时候，会触发合并进程，将 Ci 中的一系列叶页面（leaf page）合并到 Ci+1 中，然后 Ci 继续等待来自 Ci-1 的合并，以此类推。这种策略叫作<code>滚动合并</code>。</p>
+<img src="LSM-Tree-一-初识/image-20221012113842778.png" alt="image-20221012113842778" style="zoom:67%;" />
+
+<p>值得注意的是，只有当所有组件之间的大小比 Ti = |Ci + 1|/|Ci| 相同时，写入性能才得到优化。我不知道为什么，在 LSM-Tree 的原始论文中有推导，不过我没看，私以为记个结论就行。这一个结论，直接影响到后续有关 LSM-Tree 的实现与优化。</p>
+<h2 id="LSM-Tree-基本结构"><a href="#LSM-Tree-基本结构" class="headerlink" title="LSM-Tree 基本结构"></a>LSM-Tree 基本结构</h2><p>如今的 LSM-Tree 实现仍然应用地外更新来减少随机 I/O。所有写操作都附加到内存组件中。插入或更新操作只是添加一个新条目，而删除操作则添加一个反事项条目，表明某个键已被删除。当组件满时，多个组件会合并为一个<strong>新的</strong>组件，而无需修改现有组件，这是前面提到的滚动合并是不一样的。</p>
+<p>那么磁盘组件是如何组织并且合并的呢？LSM-Tree 提供了两种合并策略：<code>leveling</code> 和 <code>tiering</code> 。这两种策略都将磁盘组件组织为逻辑级别，级别之间的关系由一个 size ratio 控制，该参数名为 <code>T</code>。</p>
+<h3 id="leveling-amp-tiering"><a href="#leveling-amp-tiering" class="headerlink" title="leveling &amp; tiering"></a>leveling &amp; tiering</h3><p>leveling 策略中，每一层<strong>只有一个</strong>磁盘组件 ，每一个 SSTable 的空间容量满足比率 T，且保持不变。当位于级别 L 的组件被填满时，它就会和位于级别 L+1 的组件合并，注意，是覆盖性合并，即直接更改原 L+1 级的组件。用图来表示，如下：</p>
+<img src="LSM-Tree-一-初识/image-20221012162412679.png" alt="image-20221012162412679" style="zoom:67%;" />
+
+<p>与此相反，tiering 策略中每一层都有 <strong>T 个</strong>组件，意味着每层的组件数目都相同。同时，一层中的各个组件大小相同。当级别 L 被填满时（该级别出现了 T 个组件），该层的 T 个组件会合并为一个新的组件，进入级别 L+1。这也就解释了为什么每一层都只能有 T 个组件，因为只有这样才能保证层与层之间的空间容量比为 T。该策略用图来表示，如下：</p>
+<img src="LSM-Tree-一-初识/image-20221012163255625.png" alt="image-20221012163255625" style="zoom:67%;" />
+
+<p>通常，leveling 策略会优化读性能，因为每一层只有一个组件，搜索的组件数就会少。而 tiering 策略的则优化写性能，因为它降低了合并频率。</p>
+<p>下面给出两种策略的各种操作复杂度，有些项的具体推导我暂时还没懂，个人觉得综述里写的推导有点泛，某些我还没看明白。都看懂了我再回来更新。</p>
+<p><img src="/LSM-Tree-%E4%B8%80-%E5%88%9D%E8%AF%86/image-20221012163754659.png" alt="image-20221012163754659"></p>
+<p>其中，T 如上文所述，L 表示层级的数量，B 表示页面大小（一页中存有多少个条目），P 表示一个磁盘组件中有多少个页面（虽然最后的结论中没有P）。Long/Short Range Query 指范围查询的长短，由范围中的唯一键数目决定。记查询范围中唯一键的数目为 s，如果 S/B &gt; 2L，那么就称为 Long，反之为 short。此外，在单点查询中为什么 Zero-Result 和 Non-Zero-Result 差别会这么大，这是应为运用了<code>布隆过滤器</code>，这是用来快速判断某个 key 是否存在的工具，但是具有假阳性的概率。在另一篇博客中我会介绍它：<a href="">布隆过滤器</a>。</p>
+<p>定性总结一下：</p>
+<ul>
+<li>leveling：读优化、空间优化、写放大；</li>
+<li>tiering：写优化、读放大、空间放大；</li>
+</ul>
+<p>但实际上，我们现在用的并不是这两种策略，而是采用了<code>分区（partition）</code>的优化。</p>
+<h3 id="partition"><a href="#partition" class="headerlink" title="partition"></a>partition</h3><p>在阐述 LSM-Tree 的分区策略之前，现简要提一嘴现在各个组件的常用数据结构，直接以 Rocksdb 为例。LSM-Tree有三个重要组成部分：<code>MemTable</code>、<code>Immutable MemTable</code>、<code>SSTable</code>。</p>
+<ul>
+<li><p><strong>MemTable</strong>：</p>
+<p>MemTable 是在<strong>内存</strong>中的数据结构，直接服务传入的写操作，并暂存最近更新的数据，即上述提及的组件<code>C0</code>。它会按照 key 有序地组织这些数据，但具体如何组织，不同的存储引擎用的方式不一样。在 Rocksdb 中，采用 <code>跳表（skip-list）</code> 来保证内存中的 key 有序。至于什么是跳表，这在我的另一篇博客中会单独进行阐述：<a href="xxxx">skip-list 数据结构分析</a>。</p>
+<p>因为数据暂存在内存中，没有持久化，因此通常使用 <code>WAL(Write-ahead logging)</code> 的方式来保证数据的可靠性。</p>
+</li>
+<li><p><strong>Immutable MemTable</strong>：</p>
+<p>当 MemTable 达到一定大小后，会<strong>转变</strong>成 Immutable MemTable。这个东西是将 MemTable 转变为 SSTable 的一种中间状态。在转存过程中，新来的写操作由新的 MemTable 处理，并不会阻塞数据更新。</p>
+</li>
+<li><p><strong>SSTable</strong>：</p>
+<p>在 Rocksdb 中，每一个磁盘组件被分为若干个 SSTable。简要说一下，SSTable 包含数据块列表和索引块，数据块存储按 key 排序的键值对，索引块存储所有数据块的 key 范围 。对 SSTable 的学习与分析，我也写在了另一篇博客中：<a href="xxx">SSTable 数据结构分析</a>。</p>
+</li>
+</ul>
+<p>再来看一下，LSM-Tree 的基本结构如下图所示：</p>
+<p><img src="/LSM-Tree-%E4%B8%80-%E5%88%9D%E8%AF%86/image-20221012170737483.png" alt="image-20221012170737483"></p>
+<p>注意到，在红框中，已经不是磁盘组件了，而是被分为了多个 SSTable。分区也分为两种，分别针对 leveling 与 tiering，但是在开始介绍两种分区策略之前，请先记住分区的核心思想：</p>
+<blockquote>
+<p>只合并带有重叠键的 SSTable</p>
+</blockquote>
+<h4 id="partitioned-leveling"><a href="#partitioned-leveling" class="headerlink" title="partitioned leveling"></a>partitioned leveling</h4><p>在 partitioned leveling 策略中，每一层依然只有一个磁盘组件，层与层之间的大小比率依然是 T，但是每个磁盘组件都被分为若干个<strong>互不重叠</strong>且大小相近的 SSTable，这就意味着每个 key 在一层中只会出现一次，不存在冗余。该策略的合并步骤为：</p>
+<ol>
+<li>L1 的总大小超过自身空间限制。</li>
+<li>从 L1 中至少选择一个 SSTable，然后把它跟 L2 中有重叠的部分进行合并。</li>
+<li>合并后生成的新 SSTable 先不着急直接至于 L2 中。因为要保证每一个 SSTable 的大小相近，所以合并后需要先分化成多个小点的 SSTable，然后再置于 L2 中。</li>
+<li>如果 L2 合并后的大小超过了自身限制，那么重复上述过程，向 L3 合并。</li>
+</ol>
+<p>用一张图来表示，如下：</p>
+<img src="LSM-Tree-一-初识/image-20221012171508914.png" alt="image-20221012171508914" style="zoom: 50%;" />
+
+<p>需要注意的是，L0 的磁盘组件没有分区，因为它们是直接从内存中刷新的。这种设计还可以帮助系统吸收写突发，因为它可以容忍 L0 上的多个未分区组件。</p>
+<h4 id="partitioned-tiering"><a href="#partitioned-tiering" class="headerlink" title="partitioned tiering"></a>partitioned tiering</h4><p>不同于 p-leveling，p-tiering 策略允许层级中包含多个键范围重叠的 SSTable，但是这些 SSTable 必须要通过一定的方式组织起来。在该策略中，有两种组织方式可供选择，分别为<code>垂直分组（vertical grouping）</code>与<code>水平分组（horizontal grouping）</code>。</p>
+<h5 id="vertical-grouping"><a href="#vertical-grouping" class="headerlink" title="vertical grouping"></a>vertical grouping</h5><p>在垂直分组中，每一层级中具有重叠范围的 SSTable 会被分为一组，使得组与组之间不会产生重叠，这样看来，垂直分组像是 p-leveling 的一种变式。其合并流程为：</p>
+<ol>
+<li>L1 的总大小超过自身空间限制。</li>
+<li>从 L1 中至少选择一组，然后将该组内的所有 SSTable 合并。</li>
+<li>合并后，根据 L2 的分组情况，将合并后的内容分为了多个不重叠的 SSTable。</li>
+<li>每一个 SSTable 分别插入 L2 中对应范围的组。</li>
+<li>如果 L2 合并后的大小超过了自身限制，那么重复上述过程，向 L3 合并。</li>
+</ol>
+<p>用一张图来表示，如下：</p>
+<img src="LSM-Tree-一-初识/image-20221012172637184.png" alt="image-20221012172637184" style="zoom: 50%;" />
+
+<h5 id="horizontal-grouping"><a href="#horizontal-grouping" class="headerlink" title="horizontal grouping"></a>horizontal grouping</h5><p>在水平分组中，每一个磁盘组件都自成一组，组与组之间允许有重叠，但是组内的 SSTable 不会有重叠。其合并流程为：</p>
+<ol>
+<li>L1 的总大小超过自身空间限制。</li>
+<li>在 L1 的所有组中选择具有重叠键的 SSTable，将它们合并。</li>
+<li>将合并后的内容分为了多个不重叠的 SSTable，然后放入 L2 中的某一个组中。</li>
+<li>如果 L2 合并后的大小超过了自身限制，那么重复上述过程，向 L3 合并。</li>
+</ol>
+<p>用一张图来表示，如下：</p>
+<img src="LSM-Tree-一-初识/image-20221012173113303.png" alt="image-20221012173113303" style="zoom: 50%;" />
+
+<h4 id="为什么要分区"><a href="#为什么要分区" class="headerlink" title="为什么要分区"></a>为什么要分区</h4><p>无论是哪种分区策略，都有如下两大优点：</p>
+<ul>
+<li>分区将一个大型组件拆分成多个较小的 SSTable，就意味着将原来的大型合并操作拆分为多个较小的合并操作，从而限制了每个合并操作的处理时间以及创建新组件所需的临时磁盘空间。</li>
+<li>分区可以通过只合并具有重叠键的 SSTable 来优化顺序创建 key 的工作负载。对于按顺序创建的 key，基本上不执行合并，因为没有具有重叠键的 SSTable。</li>
+</ul>
+
+                
+            </div>
+            <hr/>
+
+            
+
+    <div class="reprint" id="reprint-statement">
+        
+            <div class="reprint__author">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-user">
+                        文章作者:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="/about" rel="external nofollow noreferrer">SrcMiLe</a>
+                </span>
+            </div>
+            <div class="reprint__type">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-link">
+                        文章链接:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="http://example.com/lsm-tree-yi-chu-shi/">http://example.com/lsm-tree-yi-chu-shi/</a>
+                </span>
+            </div>
+            <div class="reprint__notice">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-copyright">
+                        版权声明:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    本博客所有文章除特別声明外，均采用
+                    <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="external nofollow noreferrer" target="_blank">CC BY 4.0</a>
+                    许可协议。转载请注明来源
+                    <a href="/about" target="_blank">SrcMiLe</a>
+                    !
+                </span>
+            </div>
+        
+    </div>
+
+    <script async defer>
+      document.addEventListener("copy", function (e) {
+        let toastHTML = '<span>复制成功，请遵循本文的转载规则</span><button class="btn-flat toast-action" onclick="navToReprintStatement()" style="font-size: smaller">查看</a>';
+        M.toast({html: toastHTML})
+      });
+
+      function navToReprintStatement() {
+        $("html, body").animate({scrollTop: $("#reprint-statement").offset().top - 80}, 800);
+      }
+    </script>
+
+
+
+            <div class="tag_share" style="display: block;">
+                <div class="post-meta__tag-list" style="display: inline-block;">
+                    
+                        <div class="article-tag">
+                            
+                                <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
+                                    <span class="chip bg-color">分布式</span>
+                                </a>
+                            
+                                <a href="/tags/%E5%AD%98%E5%82%A8/">
+                                    <span class="chip bg-color">存储</span>
+                                </a>
+                            
+                        </div>
+                    
+                </div>
+                <div class="post_share" style="zoom: 80%; width: fit-content; display: inline-block; float: right; margin: -0.15rem 0;">
+                    <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+<div id="article-share">
+
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+                </div>
+            </div>
+            
+                <style>
+    #reward {
+        margin: 40px 0;
+        text-align: center;
+    }
+
+    #reward .reward-link {
+        font-size: 1.4rem;
+        line-height: 38px;
+    }
+
+    #reward .btn-floating:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #rewardModal {
+        width: 320px;
+        height: 350px;
+    }
+
+    #rewardModal .reward-title {
+        margin: 15px auto;
+        padding-bottom: 5px;
+    }
+
+    #rewardModal .modal-content {
+        padding: 10px;
+    }
+
+    #rewardModal .close {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        color: rgba(0, 0, 0, 0.5);
+        font-size: 1.3rem;
+        line-height: 20px;
+        cursor: pointer;
+    }
+
+    #rewardModal .close:hover {
+        color: #ef5350;
+        transform: scale(1.3);
+        -moz-transform:scale(1.3);
+        -webkit-transform:scale(1.3);
+        -o-transform:scale(1.3);
+    }
+
+    #rewardModal .reward-tabs {
+        margin: 0 auto;
+        width: 210px;
+    }
+
+    .reward-tabs .tabs {
+        height: 38px;
+        margin: 10px auto;
+        padding-left: 0;
+    }
+
+    .reward-content ul {
+        padding-left: 0 !important;
+    }
+
+    .reward-tabs .tabs .tab {
+        height: 38px;
+        line-height: 38px;
+    }
+
+    .reward-tabs .tab a {
+        color: #fff;
+        background-color: #ccc;
+    }
+
+    .reward-tabs .tab a:hover {
+        background-color: #ccc;
+        color: #fff;
+    }
+
+    .reward-tabs .wechat-tab .active {
+        color: #fff !important;
+        background-color: #22AB38 !important;
+    }
+
+    .reward-tabs .alipay-tab .active {
+        color: #fff !important;
+        background-color: #019FE8 !important;
+    }
+
+    .reward-tabs .reward-img {
+        width: 210px;
+        height: 210px;
+    }
+</style>
+
+<div id="reward">
+    <a href="#rewardModal" class="reward-link modal-trigger btn-floating btn-medium waves-effect waves-light red">赏</a>
+
+    <!-- Modal Structure -->
+    <div id="rewardModal" class="modal">
+        <div class="modal-content">
+            <a class="close modal-close"><i class="fas fa-times"></i></a>
+            <h4 class="reward-title">你的赏识是我前进的动力</h4>
+            <div class="reward-content">
+                <div class="reward-tabs">
+                    <ul class="tabs row">
+                        <li class="tab col s6 alipay-tab waves-effect waves-light"><a href="#alipay">支付宝</a></li>
+                        <li class="tab col s6 wechat-tab waves-effect waves-light"><a href="#wechat">微 信</a></li>
+                    </ul>
+                    <div id="alipay">
+                        <img src="/medias/reward/alipay.jpg" class="reward-img" alt="支付宝打赏二维码">
+                    </div>
+                    <div id="wechat">
+                        <img src="/medias/reward/wechat.jpg" class="reward-img" alt="微信打赏二维码">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('.tabs').tabs();
+    });
+</script>
+
+            
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
+            <div class="card">
+                <a href="/lsm-tree-yi-chu-shi/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/5.jpg" class="responsive-img" alt="LSM-Tree(一) 初识">
+                        
+                        <span class="card-title">LSM-Tree(一) 初识</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-12
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
+                        <span class="chip bg-color">分布式</span>
+                    </a>
+                    
+                    <a href="/tags/%E5%AD%98%E5%82%A8/">
+                        <span class="chip bg-color">存储</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/tinykv-2022-xiang-mu-zong-jie/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="TinyKV-2022 项目总结">
+                        
+                        <span class="card-title">TinyKV-2022 项目总结</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-09-16
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/" class="post-category">
+                                    分布式
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
+                        <span class="chip bg-color">分布式</span>
+                    </a>
+                    
+                    <a href="/tags/%E5%AD%98%E5%82%A8/">
+                        <span class="chip bg-color">存储</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+
+<!-- 代码块功能依赖 -->
+<script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
+
+<!-- 代码语言 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeLang.js"></script>
+
+
+<!-- 代码块复制 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeCopy.js"></script>
+
+
+<!-- 代码块收缩 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeShrink.js"></script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget card" style="background-color: white;">
+            <div class="toc-title"><i class="far fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fas fa-list-ul"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            collapseDepth: Number('0'),
+            headingSelector: 'h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).hide();
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).show();
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+
+                            <footer class="page-footer bg-color">
+    
+    <div class="container row center-align" style="margin-bottom: 15px !important;">
+        <div class="col s12 m8 l8 copy-right">
+            Copyright&nbsp;&copy;
+            
+                <span id="year">2022</span>
+            
+            <span id="year">2022</span>
+            <a href="/about" target="_blank">SrcMiLe</a>
+            |&nbsp;Powered by&nbsp;<a href="https://hexo.io/" target="_blank">Hexo</a>
+            |&nbsp;Theme&nbsp;<a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>
+            <br>
+            
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="far fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fas fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            
+            <br>
+            
+            <span id="sitetime">载入运行时间...</span>
+            <script>
+                function siteTime() {
+                    var seconds = 1000;
+                    var minutes = seconds * 60;
+                    var hours = minutes * 60;
+                    var days = hours * 24;
+                    var years = days * 365;
+                    var today = new Date();
+                    var startYear = "2022";
+                    var startMonth = "1";
+                    var startDate = "12";
+                    var startHour = "0";
+                    var startMinute = "0";
+                    var startSecond = "0";
+                    var todayYear = today.getFullYear();
+                    var todayMonth = today.getMonth() + 1;
+                    var todayDate = today.getDate();
+                    var todayHour = today.getHours();
+                    var todayMinute = today.getMinutes();
+                    var todaySecond = today.getSeconds();
+                    var t1 = Date.UTC(startYear, startMonth, startDate, startHour, startMinute, startSecond);
+                    var t2 = Date.UTC(todayYear, todayMonth, todayDate, todayHour, todayMinute, todaySecond);
+                    var diff = t2 - t1;
+                    var diffYears = Math.floor(diff / years);
+                    var diffDays = Math.floor((diff / days) - diffYears * 365);
+                    var diffHours = Math.floor((diff - (diffYears * 365 + diffDays) * days) / hours);
+                    var diffMinutes = Math.floor((diff - (diffYears * 365 + diffDays) * days - diffHours * hours) /
+                        minutes);
+                    var diffSeconds = Math.floor((diff - (diffYears * 365 + diffDays) * days - diffHours * hours -
+                        diffMinutes * minutes) / seconds);
+                    if (startYear == todayYear) {
+                        document.getElementById("year").innerHTML = todayYear;
+                        document.getElementById("sitetime").innerHTML = "本站已安全运行 " + diffDays + " 天 " + diffHours +
+                            " 小时 " + diffMinutes + " 分钟 " + diffSeconds + " 秒";
+                    } else {
+                        document.getElementById("year").innerHTML = startYear + " - " + todayYear;
+                        document.getElementById("sitetime").innerHTML = "本站已安全运行 " + diffYears + " 年 " + diffDays +
+                            " 天 " + diffHours + " 小时 " + diffMinutes + " 分钟 " + diffSeconds + " 秒";
+                    }
+                }
+                setInterval(siteTime, 1000);
+            </script>
+            
+            <br>
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/sakura-ysy" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fab fa-github"></i>
+    </a>
+
+
+
+    <a href="mailto:2575633193@qq.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
+        <i class="fas fa-envelope-open"></i>
+    </a>
+
+
+
+
+
+
+
+    <a href="tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=2575633193" class="tooltipped" target="_blank" data-tooltip="QQ联系我: 2575633193" data-position="top" data-delay="50">
+        <i class="fab fa-qq"></i>
+    </a>
+
+
+
+
+
+
+
+    <a href="/atom.xml" class="tooltipped" target="_blank" data-tooltip="RSS 订阅" data-position="top" data-delay="50">
+        <i class="fas fa-rss"></i>
+    </a>
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+                                <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fas fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+$(function () {
+    var searchFunc = function (path, search_id, content_id) {
+        'use strict';
+        $.ajax({
+            url: path,
+            dataType: "xml",
+            success: function (xmlResponse) {
+                // get the contents from search data
+                var datas = $("entry", xmlResponse).map(function () {
+                    return {
+                        title: $("title", this).text(),
+                        content: $("content", this).text(),
+                        url: $("url", this).text()
+                    };
+                }).get();
+                var $input = document.getElementById(search_id);
+                var $resultContent = document.getElementById(content_id);
+                $input.addEventListener('input', function () {
+                    var str = '<ul class=\"search-result-list\">';
+                    var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                    $resultContent.innerHTML = "";
+                    if (this.value.trim().length <= 0) {
+                        return;
+                    }
+                    // perform local searching
+                    datas.forEach(function (data) {
+                        var isMatch = true;
+                        var data_title = data.title.trim().toLowerCase();
+                        var data_content = data.content.trim().replace(/<[^>]+>/g, "").toLowerCase();
+                        var data_url = data.url;
+                        data_url = data_url.indexOf('/') === 0 ? data.url : '/' + data_url;
+                        var index_title = -1;
+                        var index_content = -1;
+                        var first_occur = -1;
+                        // only match artiles with not empty titles and contents
+                        if (data_title !== '' && data_content !== '') {
+                            keywords.forEach(function (keyword, i) {
+                                index_title = data_title.indexOf(keyword);
+                                index_content = data_content.indexOf(keyword);
+                                if (index_title < 0 && index_content < 0) {
+                                    isMatch = false;
+                                } else {
+                                    if (index_content < 0) {
+                                        index_content = 0;
+                                    }
+                                    if (i === 0) {
+                                        first_occur = index_content;
+                                    }
+                                }
+                            });
+                        }
+                        // show search results
+                        if (isMatch) {
+                            str += "<li><a href='" + data_url + "' class='search-result-title'>" + data_title + "</a>";
+                            var content = data.content.trim().replace(/<[^>]+>/g, "");
+                            if (first_occur >= 0) {
+                                // cut out 100 characters
+                                var start = first_occur - 20;
+                                var end = first_occur + 80;
+                                if (start < 0) {
+                                    start = 0;
+                                }
+                                if (start === 0) {
+                                    end = 100;
+                                }
+                                if (end > content.length) {
+                                    end = content.length;
+                                }
+                                var match_content = content.substr(start, end);
+                                // highlight all keywords
+                                keywords.forEach(function (keyword) {
+                                    var regS = new RegExp(keyword, "gi");
+                                    match_content = match_content.replace(regS, "<em class=\"search-keyword\">" + keyword + "</em>");
+                                });
+
+                                str += "<p class=\"search-result\">" + match_content + "...</p>"
+                            }
+                            str += "</li>";
+                        }
+                    });
+                    str += "</ul>";
+                    $resultContent.innerHTML = str;
+                });
+            }
+        });
+    };
+
+    searchFunc('/search.xml', 'searchInput', 'searchResult');
+});
+</script>
+
+                                    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+</div>
+
+
+                                        <script
+                                            src="/libs/materialize/materialize.min.js"></script>
+                                        <script
+                                            src="/libs/masonry/masonry.pkgd.min.js"></script>
+                                        <script
+                                            src="/libs/aos/aos.js"></script>
+                                        <script
+                                            src="/libs/scrollprogress/scrollProgress.min.js"></script>
+                                        <script
+                                            src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+                                        <script
+                                            src="/js/matery.js"></script>
+
+                                        <!-- Baidu Analytics -->
+
+                                            <!-- Baidu Push -->
+
+<script>
+    (function () {
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https') {
+            bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        } else {
+            bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+                                                
+                                                        
+                                                            <script async
+                                                                src="/libs/others/busuanzi.pure.mini.js"></script>
+                                                            
+
+                                                                
+
+                                                                        
+
+                                                                                
+                                                                                        
+
+                                                                                                
+                                                                                                    
+                                                                                                        <script
+                                                                                                            type="text/javascript"
+                                                                                                            size="150"
+                                                                                                            alpha='0.6'
+                                                                                                            zIndex="-1"
+                                                                                                            src="/libs/background/ribbon-refresh.min.js"
+                                                                                                            async="async"></script>
+                                                                                                        
+
+                                                                                                            
+
+                                                                                                                    
+                                                                                                                        <script
+                                                                                                                            src="/libs/instantpage/instantpage.js"
+                                                                                                                            type="module"></script>
+                                                                                                                        
+
+                </body>
+
+</html>
+
+<!-- 樱花 -->
+<script type="text/javascript" src="/js/sakura.js"></script>

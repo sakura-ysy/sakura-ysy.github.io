@@ -618,21 +618,22 @@
     
     <div class="col s12" >
         
-            <div class="post-card" style="background-image: url('/medias/featureimages/6.jpg')">
+            <div class="post-card" style="background-image: url('/medias/featureimages/5.jpg')">
             
             <div class="post-body">
                 <div class="post-categories">
                     
                         
-                            <a href="/categories/Docker/" class="category">Docker</a>
+                            <a href="/categories/%E5%AD%98%E5%82%A8/" class="category">存储</a>
                         
                     
                 </div>
-                <a href="/docker-ji-chu-yi-chu-shi/">
-                    <h3 class="post-title">Docker基础(一): 初识</h3>
+                <a href="/lsm-tree-yi-chu-shi/">
+                    <h3 class="post-title">LSM-Tree(一) 初识</h3>
                 </a>
-                <p class="post-description">假设你已经开发了一个Java项目，你所用的开发设备上已经配好了所有的相关环境，比如java8/mysql/redis等等。现在，你需要将你的源码交付给其他开发人员和测试人</p>
-                <a href="/docker-ji-chu-yi-chu-shi/" class="read-more btn waves-effect waves-light" style="background: linear-gradient(to right, #FF5E3A 0%, #FF2A68 100%)" target="_blank">
+                <p class="post-description">
+写在前面：本篇博客为综述《LSM-based Storage Techniques: A Survey》的学习笔记（一），该综述介绍了 LSM-Tree 的前世今生、思</p>
+                <a href="/lsm-tree-yi-chu-shi/" class="read-more btn waves-effect waves-light" style="background: linear-gradient(to right, #FF5E3A 0%, #FF2A68 100%)" target="_blank">
                     <i class="icon far fa-eye fa-fw"></i>阅读更多
                 </a>
             </div>
@@ -704,6 +705,58 @@
     <!-- 所有文章卡片 -->
     <article id="articles" class="container articles">
         <div class="row article-row">
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/lsm-tree-yi-chu-shi/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/5.jpg" class="responsive-img" alt="LSM-Tree(一) 初识">
+                            
+                            <span class="card-title">LSM-Tree(一) 初识</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                
+写在前面：本篇博客为综述《LSM-based Storage Techniques: A Survey》的学习笔记（一），该综述介绍了 LSM-Tree 的前世今生、思想本质、性能权衡、面临问题、优化方案等等，也是我正式接触 LSTM-T
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-12
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fas fa-bookmark fa-fw icon-category"></i>
+                                
+                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
+                                </a>
+                                
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
+                            <span class="chip bg-color">分布式</span>
+                        </a>
+                        
+                        <a href="/tags/%E5%AD%98%E5%82%A8/">
+                            <span class="chip bg-color">存储</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
             
             <div class="article col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
@@ -1116,70 +1169,6 @@ Linux Cgroups (Control Groups ）提供
                         
                         <a href="/tags/Linux/">
                             <span class="chip bg-color">Linux</span>
-                        </a>
-                        
-                    </div>
-                    
-                </div>
-            </div>
-            
-            <div class="article col s12 m6 l4" data-aos="zoom-in">
-                <div class="card">
-                    <a href="/k8s-yuan-ma-er-pod-chuang-jian-guo-cheng-zhong-container-de-juan-gua-zai/">
-                        <div class="card-image">
-                            
-                            
-                            <img src="/medias/featureimages/10.jpg" class="responsive-img" alt="k8s源码(二): Pod创建过程中Container的卷挂载">
-                            
-                            <span class="card-title">k8s源码(二): Pod创建过程中Container的卷挂载</span>
-                        </div>
-                    </a>
-
-                    <div class="card-content article-content">
-                        <div class="summary block-with-text">
-                            
-                                ​    直入正题，本文意在整理出Pod创建过程中和Volume挂载有关的源码及其调用过程。这部分的源码解读我并没有找到什么参考资料，所以会不全，也可能有错。
-syncPod直接从syncPod开始看，如上一篇博客（Pod创建流程）中所写，
-                            
-                        </div>
-                        <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-03-10
-                            </span>
-                            <span class="publish-author">
-                                
-                                <i class="fas fa-bookmark fa-fw icon-category"></i>
-                                
-                                <a href="/categories/k8s%E6%BA%90%E7%A0%81/" class="post-category">
-                                    k8s源码
-                                </a>
-                                
-                                
-                            </span>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card-action article-tags">
-                        
-                        <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                            <span class="chip bg-color">云计算</span>
-                        </a>
-                        
-                        <a href="/tags/k8s/">
-                            <span class="chip bg-color">k8s</span>
-                        </a>
-                        
-                        <a href="/tags/pod/">
-                            <span class="chip bg-color">pod</span>
-                        </a>
-                        
-                        <a href="/tags/kubelet/">
-                            <span class="chip bg-color">kubelet</span>
-                        </a>
-                        
-                        <a href="/tags/volume/">
-                            <span class="chip bg-color">volume</span>
                         </a>
                         
                     </div>
