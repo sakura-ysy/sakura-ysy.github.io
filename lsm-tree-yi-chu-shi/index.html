@@ -592,8 +592,9 @@
 <h3 id="partition"><a href="#partition" class="headerlink" title="partition"></a>partition</h3><p>在阐述 LSM-Tree 的分区策略之前，现简要提一嘴现在各个组件的常用数据结构，直接以 Rocksdb 为例。LSM-Tree有三个重要组成部分：<code>MemTable</code>、<code>Immutable MemTable</code>、<code>SSTable</code>。</p>
 <ul>
 <li><p><strong>MemTable</strong>：</p>
-<p>MemTable 是在<strong>内存</strong>中的数据结构，直接服务传入的写操作，并暂存最近更新的数据，即上述提及的组件<code>C0</code>。它会按照 key 有序地组织这些数据，但具体如何组织，不同的存储引擎用的方式不一样。在 Rocksdb 中，采用 <code>跳表（skip-list）</code> 来保证内存中的 key 有序。至于什么是跳表，这在我的另一篇博客中会单独进行阐述：<a href="xxxx">skip-list 数据结构分析</a>。</p>
+<p>MemTable 是在<strong>内存</strong>中的数据结构，直接服务传入的写操作，并暂存最近更新的数据，即上述提及的组件<code>C0</code>。它会按照 key 有序地组织这些数据，但具体如何组织，不同的存储引擎用的方式不一样。在 Rocksdb 中，采用 <code>跳表（skip-list）</code> 来保证内存中的 key 有序。</p>
 <p>因为数据暂存在内存中，没有持久化，因此通常使用 <code>WAL(Write-ahead logging)</code> 的方式来保证数据的可靠性。</p>
+<p>ps.）跳表，是个超级牛逼的查找数据结构，可以理解为一个能够实现二分查找的链表。我本来打算写一篇博客记录的，但搜到了一篇非常详细的跳表解析博客，增删查都写的很清晰，尤其是增加操作中的随机索引建立过程，写的很明白，所以这里就直接引用了：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/9d8296562806">skip-list 详细分析</a></p>
 </li>
 <li><p><strong>Immutable MemTable</strong>：</p>
 <p>当 MemTable 达到一定大小后，会<strong>转变</strong>成 Immutable MemTable。这个东西是将 MemTable 转变为 SSTable 的一种中间状态。在转存过程中，新来的写操作由新的 MemTable 处理，并不会阻塞数据更新。</p>
