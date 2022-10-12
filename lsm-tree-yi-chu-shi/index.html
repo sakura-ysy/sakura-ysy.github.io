@@ -582,7 +582,7 @@
 <p>通常，leveling 策略会优化读性能，因为每一层只有一个组件，搜索的组件数就会少。而 tiering 策略的则优化写性能，因为它降低了合并频率。</p>
 <p>下面给出两种策略的各种操作复杂度，有些项的具体推导我暂时还没懂，个人觉得综述里写的推导有点泛，某些我还没看明白。都看懂了我再回来更新。</p>
 <p><img src="https://s1.ax1x.com/2022/10/12/xUzZ6J.png" alt="image-20221012163754659"></p>
-<p>其中，T 如上文所述，L 表示层级的数量，B 表示页面大小（一页中存有多少个条目），P 表示一个磁盘组件中有多少个页面（虽然最后的结论中没有P）。Long/Short Range Query 指范围查询的长短，由范围中的唯一键数目决定。记查询范围中唯一键的数目为 s，如果 S/B &gt; 2L，那么就称为 Long，反之为 short。此外，在单点查询中为什么 Zero-Result 和 Non-Zero-Result 差别会这么大，这是应为运用了<code>布隆过滤器</code>，这是用来快速判断某个 key 是否存在的工具，但是具有假阳性的概率。在另一篇博客中我会介绍它：<a href="">布隆过滤器</a>。</p>
+<p>其中，T 如上文所述，L 表示层级的数量，B 表示页面大小（一页中存有多少个条目），P 表示一个磁盘组件中有多少个页面（虽然最后的结论中没有P）。Long/Short Range Query 指范围查询的长短，由范围中的唯一键数目决定。记查询范围中唯一键的数目为 s，如果 S/B &gt; 2L，那么就称为 Long，反之为 short。此外，在单点查询中为什么 Zero-Result 和 Non-Zero-Result 差别会这么大，这是应为运用了<code>布隆过滤器</code>，这是用来快速判断某个 key 是否存在的工具，但是具有假阳性的概率。在另一篇博客中我会介绍它：<a target="_blank" rel="noopener" href="https://yesiyuan.cn/bu-long-guo-lu-qi/">布隆过滤器</a>。</p>
 <p>定性总结一下：</p>
 <ul>
 <li>leveling：读优化、空间优化、写放大；</li>
@@ -600,7 +600,7 @@
 <p>当 MemTable 达到一定大小后，会<strong>转变</strong>成 Immutable MemTable。这个东西是将 MemTable 转变为 SSTable 的一种中间状态。在转存过程中，新来的写操作由新的 MemTable 处理，并不会阻塞数据更新。</p>
 </li>
 <li><p><strong>SSTable</strong>：</p>
-<p>在 Rocksdb 中，每一个磁盘组件被分为若干个 SSTable。简要说一下，SSTable 包含数据块列表和索引块，数据块存储按 key 排序的键值对，索引块存储所有数据块的 key 范围 。对 SSTable 的学习与分析，我也写在了另一篇博客中：<a href="xxx">SSTable 数据结构分析</a>。</p>
+<p>在 Rocksdb 中，每一个磁盘组件被分为若干个 SSTable。简要说一下，SSTable 包含数据块列表和索引块，数据块存储按 key 排序的键值对，索引块存储所有数据块的 key 范围 。对 SSTable 的学习与分析，我也写在了另一篇博客中：<a target="_blank" rel="noopener" href="https://yesiyuan.cn/sstable-jie-shao/">SSTable 数据结构分析</a>。</p>
 </li>
 </ul>
 <p>再来看一下，LSM-Tree 的基本结构如下图所示：</p>
