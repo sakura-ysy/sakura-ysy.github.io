@@ -570,7 +570,7 @@
 <p><img src="http://img1.tbcdn.cn/L1/461/1/4c483c166e3b04f211db66ab3b7a62c07fab3f2b" alt="sstable 粗略结构"></p>
 <p>从上图可以看到，因为 SSTable 文件中所有的键值对 &lt;key,value&gt; 是存放到一起的，所以 SSTable 在序列化成文件之后，是<strong>不可变</strong>的，因为此时的 SSTable，就类似于一个数组一样，如果插入或者删除，需要移动一大片数据，开销很大。</p>
 <p>然而实际上，BigTable 中的 SSTable 结构比上面那张图复杂的多，它长这样：</p>
-<p><img src="/SSTable-%E4%BB%8B%E7%BB%8D/xaiQAA-166557801251712.png" alt="sstable 详细结构"></p>
+<p><img src="https://s1.ax1x.com/2022/10/12/xaiQAA.png" alt="sstable 详细结构"></p>
 <p>SSTable 中的数据按 key 排序后存放在连续的数据块（Block） 中，Block 之间也有序。在众多 Block 之后，为索引块，其中存着每一个 Block 的索引，由每个 Block 最后一行的 key 组成，由用于数据查询中定位 Block。接着，存放布隆过滤器和表格的 Schema 信息。最后，存放固定大小的 Trailer 以及 Trailer的 Offset。</p>
 <ul>
 <li>Data Block：存放连续的数据块。</li>
