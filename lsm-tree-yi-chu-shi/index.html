@@ -565,27 +565,27 @@
 <p>都知道，现在的存储体系大多分为 SQL 和 NoSQL，后者即 K-V 存储，LSM-Tree 就是为它服务的一种底层数据结构。现行的大部分 K-V 存储，比如 Rocksdb、Badger 等底层用的都是 LSM-Tree，虽然进行了一定的优化与变式，但本质还是 LSM。所以，LSM-Tree 是什么？为什么要用到 LSM-Tree，要搞清楚这个问题，就需要先明白在 LSM-Tree 出现之前，K-V 存储是什么样的。</p>
 <h2 id="LSM-Tree-诞生之前"><a href="#LSM-Tree-诞生之前" class="headerlink" title="LSM-Tree 诞生之前"></a>LSM-Tree 诞生之前</h2><p>一般来讲，K-V 存储在更新时有两种方案供选择，一种叫<code>就地更新（in-place）</code>，一种叫<code>地外更新（out-of-place）</code>。所谓就地更新，就是直接将原来的记录改了，换成新的记录，比如把 &lt;k1,v1&gt; 改成 &lt;k2,v2&gt;，这样一来就没有 &lt;k1,v1&gt; 这个记录了，查询 k1 的值会直接返回 v1，具有很高的<strong>读效率</strong>。同时，由于更新直接利用原来的空间，不会开辟新的空间，所有具有很高的<strong>空间利用率</strong>。但是，代价就是<strong>写放大</strong>，说人话就是写变慢了。在该策略中，每一次写都会造成随机的 I/O，即要先找到那个 key，然后再做更新，就会导致写速率变慢。</p>
 <p>于此相反，地外更新不会直接更改原来的 &lt;k1,v1&gt;，而是将 &lt;k2,v2&gt; 另外存储在一个新的地方，然后打上 version 表示这个记录才是 k1 最新的值。这样一来，写 k1 时，就无需采用随机 I/O 事先找到 k1，而是直接利用顺序 I/O 将新记录附加上去就行了，相比于就地更新，这种策略具有更好的<strong>读效率</strong>。同时，由于没有覆盖旧记录，所以是<strong>利于回滚</strong>的。但代价就是，具有<strong>读放大</strong>与<strong>空间放大</strong>，这两点很显然，因为同一个 key 对应的记录更多了。</p>
-<img src="LSM-Tree-一-初识/image-20221012111855628.png" alt="image-20221012111855628" style="zoom:67%;" />
+<img src="https://s1.ax1x.com/2022/10/12/xUxLY8.png" alt="image-20221012111855628" style="zoom: 50%;" />
 
 <p>地外更新随后成为主流，它为记录的存储提供了一种新的思路：<code>顺序日志</code>。比如早期的 Postgres 项目，会把所有的写操作附件到一个顺序日志中去，只有当原记录过时后才由垃圾回收机制清理，而不是当场覆盖原记录。</p>
 <p>但是很明显，如果日志的结构仅仅是顺序的，那必然不是最优的，因为记录之间潜在的联系没有被利用，大家都像栈元素一样一个一个 push 进日志，肯定是不行的。所以就引出了新的问题，如何进行合理的<code>日志结构化</code>？这就是 LSM 中的 LS 所指的含义，Log-Structured。</p>
 <p>那 Merge 指什么呢？实际上，对于某一个 key，除了最新的那条记录外，其他的记录都是冗余无用的，但是仍然占用了存储空间，所以需要不定期的去进行 Merge 来清除掉冗余的记录，而这就是 LSM-Tree 的核心内容。</p>
 <h2 id="早期-LSM-Tree"><a href="#早期-LSM-Tree" class="headerlink" title="早期 LSM-Tree"></a>早期 LSM-Tree</h2><p>为了解决上面说的问题，LSM-Tree 诞生。就像其名字一样，LSM-Tree 设计的初衷，就是对日志进行一定的<code>合并（merge）</code>，来进行冗余记录的清除，并利用合适的日志结构与合并策略来提高写性能。</p>
 <p>最开始的 LSM-Tree，由一系列的组件构成，我们把它们记作 C0、C1 … Ck。每一个组件内部都是一个 B+ 树，（当然，到后期就不是了，不过这里先不管）。C0 驻留在内存中，为传入的写操作提供服务，而其余的所有 C 均驻留在磁盘中，进行真正的数据存储。所有的组件之间都是递进的，当且仅当 Ci 存满的时候，会触发合并进程，将 Ci 中的一系列叶页面（leaf page）合并到 Ci+1 中，然后 Ci 继续等待来自 Ci-1 的合并，以此类推。这种策略叫作<code>滚动合并</code>。</p>
-<img src="image-20221012113842778.png" alt="image-20221012113842778" style="zoom:67%;" />
+<img src="https://s1.ax1x.com/2022/10/12/xUxzOs.png" alt="image-20221012113842778" style="zoom:67%;" />
 
 <p>值得注意的是，只有当所有组件之间的大小比 Ti = |Ci + 1|/|Ci| 相同时，写入性能才得到优化。我不知道为什么，在 LSM-Tree 的原始论文中有推导，不过我没看，私以为记个结论就行。这一个结论，直接影响到后续有关 LSM-Tree 的实现与优化。</p>
 <h2 id="LSM-Tree-基本结构"><a href="#LSM-Tree-基本结构" class="headerlink" title="LSM-Tree 基本结构"></a>LSM-Tree 基本结构</h2><p>如今的 LSM-Tree 实现仍然应用地外更新来减少随机 I/O。所有写操作都附加到内存组件中。插入或更新操作只是添加一个新条目，而删除操作则添加一个反事项条目，表明某个键已被删除。当组件满时，多个组件会合并为一个<strong>新的</strong>组件，而无需修改现有组件，这是前面提到的滚动合并是不一样的。</p>
 <p>那么磁盘组件是如何组织并且合并的呢？LSM-Tree 提供了两种合并策略：<code>leveling</code> 和 <code>tiering</code> 。这两种策略都将磁盘组件组织为逻辑级别，级别之间的关系由一个 size ratio 控制，该参数名为 <code>T</code>。</p>
 <h3 id="leveling-amp-tiering"><a href="#leveling-amp-tiering" class="headerlink" title="leveling &amp; tiering"></a>leveling &amp; tiering</h3><p>leveling 策略中，每一层<strong>只有一个</strong>磁盘组件 ，每一个 SSTable 的空间容量满足比率 T，且保持不变。当位于级别 L 的组件被填满时，它就会和位于级别 L+1 的组件合并，注意，是覆盖性合并，即直接更改原 L+1 级的组件。用图来表示，如下：</p>
-<img src="LSM-Tree-一-初识/image-20221012162412679.png" alt="image-20221012162412679" style="zoom:67%;" />
+<img src="https://s1.ax1x.com/2022/10/12/xUzpmn.png" alt="image-20221012162412679" style="zoom:67%;" />
 
 <p>与此相反，tiering 策略中每一层都有 <strong>T 个</strong>组件，意味着每层的组件数目都相同。同时，一层中的各个组件大小相同。当级别 L 被填满时（该级别出现了 T 个组件），该层的 T 个组件会合并为一个新的组件，进入级别 L+1。这也就解释了为什么每一层都只能有 T 个组件，因为只有这样才能保证层与层之间的空间容量比为 T。该策略用图来表示，如下：</p>
-<img src="LSM-Tree-一-初识/image-20221012163255625.png" alt="image-20221012163255625" style="zoom:67%;" />
+<img src="https://s1.ax1x.com/2022/10/12/xUzVl4.png" alt="image-20221012163255625" style="zoom:67%;" />
 
 <p>通常，leveling 策略会优化读性能，因为每一层只有一个组件，搜索的组件数就会少。而 tiering 策略的则优化写性能，因为它降低了合并频率。</p>
 <p>下面给出两种策略的各种操作复杂度，有些项的具体推导我暂时还没懂，个人觉得综述里写的推导有点泛，某些我还没看明白。都看懂了我再回来更新。</p>
-<p><img src="/LSM-Tree-%E4%B8%80-%E5%88%9D%E8%AF%86/image-20221012163754659.png" alt="image-20221012163754659"></p>
+<p><img src="https://s1.ax1x.com/2022/10/12/xUzZ6J.png" alt="image-20221012163754659"></p>
 <p>其中，T 如上文所述，L 表示层级的数量，B 表示页面大小（一页中存有多少个条目），P 表示一个磁盘组件中有多少个页面（虽然最后的结论中没有P）。Long/Short Range Query 指范围查询的长短，由范围中的唯一键数目决定。记查询范围中唯一键的数目为 s，如果 S/B &gt; 2L，那么就称为 Long，反之为 short。此外，在单点查询中为什么 Zero-Result 和 Non-Zero-Result 差别会这么大，这是应为运用了<code>布隆过滤器</code>，这是用来快速判断某个 key 是否存在的工具，但是具有假阳性的概率。在另一篇博客中我会介绍它：<a href="">布隆过滤器</a>。</p>
 <p>定性总结一下：</p>
 <ul>
@@ -607,7 +607,7 @@
 </li>
 </ul>
 <p>再来看一下，LSM-Tree 的基本结构如下图所示：</p>
-<p><img src="/LSM-Tree-%E4%B8%80-%E5%88%9D%E8%AF%86/image-20221012170737483.png" alt="image-20221012170737483"></p>
+<p><img src="https://s1.ax1x.com/2022/10/12/xUzu01.png" alt="image-20221012170737483"></p>
 <p>注意到，在红框中，已经不是磁盘组件了，而是被分为了多个 SSTable。分区也分为两种，分别针对 leveling 与 tiering，但是在开始介绍两种分区策略之前，请先记住分区的核心思想：</p>
 <blockquote>
 <p>只合并带有重叠键的 SSTable</p>
@@ -620,7 +620,7 @@
 <li>如果 L2 合并后的大小超过了自身限制，那么重复上述过程，向 L3 合并。</li>
 </ol>
 <p>用一张图来表示，如下：</p>
-<img src="LSM-Tree-一-初识/image-20221012171508914.png" alt="image-20221012171508914" style="zoom: 50%;" />
+<img src="https://s1.ax1x.com/2022/10/12/xUzltK.png" alt="image-20221012171508914" style="zoom: 50%;" />
 
 <p>需要注意的是，L0 的磁盘组件没有分区，因为它们是直接从内存中刷新的。这种设计还可以帮助系统吸收写突发，因为它可以容忍 L0 上的多个未分区组件。</p>
 <h4 id="partitioned-tiering"><a href="#partitioned-tiering" class="headerlink" title="partitioned tiering"></a>partitioned tiering</h4><p>不同于 p-leveling，p-tiering 策略允许层级中包含多个键范围重叠的 SSTable，但是这些 SSTable 必须要通过一定的方式组织起来。在该策略中，有两种组织方式可供选择，分别为<code>垂直分组（vertical grouping）</code>与<code>水平分组（horizontal grouping）</code>。</p>
@@ -633,7 +633,7 @@
 <li>如果 L2 合并后的大小超过了自身限制，那么重复上述过程，向 L3 合并。</li>
 </ol>
 <p>用一张图来表示，如下：</p>
-<img src="LSM-Tree-一-初识/image-20221012172637184.png" alt="image-20221012172637184" style="zoom: 50%;" />
+<img src="https://s1.ax1x.com/2022/10/12/xUzG1e.png" alt="image-20221012172637184" style="zoom: 50%;" />
 
 <h5 id="horizontal-grouping"><a href="#horizontal-grouping" class="headerlink" title="horizontal grouping"></a>horizontal grouping</h5><p>在水平分组中，每一个磁盘组件都自成一组，组与组之间允许有重叠，但是组内的 SSTable 不会有重叠。其合并流程为：</p>
 <ol>
@@ -643,7 +643,7 @@
 <li>如果 L2 合并后的大小超过了自身限制，那么重复上述过程，向 L3 合并。</li>
 </ol>
 <p>用一张图来表示，如下：</p>
-<img src="LSM-Tree-一-初识/image-20221012173113303.png" alt="image-20221012173113303" style="zoom: 50%;" />
+<img src="https://s1.ax1x.com/2022/10/12/xUzwAP.png" alt="image-20221012173113303" style="zoom: 50%;" />
 
 <h4 id="为什么要分区"><a href="#为什么要分区" class="headerlink" title="为什么要分区"></a>为什么要分区</h4><p>无论是哪种分区策略，都有如下两大优点：</p>
 <ul>
