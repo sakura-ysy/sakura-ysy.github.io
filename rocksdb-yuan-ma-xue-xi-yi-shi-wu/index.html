@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    6.4k
+                    6.7k
                 </div>
                 
 
@@ -559,6 +559,7 @@
         <div class="card-content article-card-content">
             <div id="articleContent">
                 <p>本篇博客试图从宏观上理一下 RocksDB 有关事务的部分。内容包含 DB、Transaction、WriteBatch、Sequence Num、Snapshot、Lock 等等。</p>
+<p>注：本篇博客除了另行说明的代码截图版本为<code>v5.18.4</code>，其余所有代码框里的代码版本均为 <code>v7.7.3</code>。</p>
 <h2 id="事务类"><a href="#事务类" class="headerlink" title="事务类"></a>事务类</h2><p>首先，和事务有关的主要类关系，如下图所示（<a target="_blank" rel="noopener" href="https://www.yuque.com/u2153859/opg8lz/glq0ay/edit">画板地址</a>），图只罗列了部分，很不全，画板会更新。</p>
 <p><img src="https://s1.ax1x.com/2022/10/16/xBaYq0.png" alt="事务类关系"></p>
 <h3 id="DB-相关"><a href="#DB-相关" class="headerlink" title="DB 相关"></a>DB 相关</h3><p>这一部分的类会实现底层的读写等操作，提供 API 供真正的事务去调用，相当于整个事务模块的基石，由接口类 DB 派生而来。</p>
@@ -778,7 +779,7 @@ Status OptimisticTransaction::TryLock(ColumnFamilyHandle* column_family,
   return Status::OK();
 &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>这个 TryLock 就比较简单了，根本就没有锁，而是通过给 key 标记一个 sequenceNum 来防止冲突，也就是我们说的 version，基于版本的并发控制。它会先生产一个新的 sequenceNum ，然后通过 TrackKey 将其和 key 整合起来。怎么整合的，以及整合后 key 的结构是什么，这些以后都会说，这里先不管这么细。</p>
+<p>这个 TryLock 就比较简单了，根本就没有锁，它会先生产一个新的 sequenceNum ，然后通过 TrackKey 将其和 key 整合起来。怎么整合的，以及整合后 key 的结构是什么，这些以后都会说，这里先不管这么细。</p>
 <p>这个 sequenceNum ，会在 Commit 的时候用来检测冲突，检测操作封装在 CheckTransactionForConflict 中，Commit 会调用这个函数。该函数源码如下：</p>
 <pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; Returns OK if it is safe to commit this transaction.  Returns Status::Busy
 &#x2F;&#x2F; if there are read or write conflicts that would prevent us from committing OR
@@ -896,7 +897,7 @@ Status OptimisticTransaction::CheckTransactionForConflicts(DB* db) &#123;
 <p>因此，重现表述一下第 2 点。WriteBatchWithIndex 可以通过 GetWriteBatch() 获取到事务的 ReadableWriteBatch，进而凭借它来通过 offset 读取到 WriteBatch 中的某一条写操作。</p>
 <p>总结一下，在事务没有 Commit 之前，数据还不在 Memtable 中，而是存在 WriteBatch 里，如果有需要，这时候可以通过 WriteBatchWithIndex 来拿到自己刚刚写入的但还没有提交的数据。</p>
 <h2 id="事务实现"><a href="#事务实现" class="headerlink" title="事务实现"></a>事务实现</h2><p>RocksDB 提供了乐观事务和悲观事务，前者通过 MVCC 进行并发控制，后者采用锁机制，本节就大体介绍一下相关的内容。</p>
-<h3 id="乐观事务"><a href="#乐观事务" class="headerlink" title="乐观事务"></a>乐观事务</h3><h4 id="sequence-number"><a href="#sequence-number" class="headerlink" title="sequence number"></a>sequence number</h4><p>RocksDB 的乐观事务通过 sequence number 机制来实现 MVCC。RocksDB 中的每一条记录都有一个 sequence number, 这个 sequence number 存储在记录的 key 中，整合后的类名为 InternalKey，对应结构名为 ParsedInternalKey。</p>
+<h3 id="乐观事务"><a href="#乐观事务" class="headerlink" title="乐观事务"></a>乐观事务</h3><h4 id="sequence-number"><a href="#sequence-number" class="headerlink" title="sequence number"></a>sequence number</h4><p>RocksDB 中的每一条记录都有一个 sequence number, 这个 sequence number 存储在记录的 key 中，整合后的类名为 InternalKey，对应结构名为 ParsedInternalKey。</p>
 <pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">class InternalKey &#123;
  private:
   std::string rep_;
@@ -911,7 +912,10 @@ Status OptimisticTransaction::CheckTransactionForConflicts(DB* db) &#123;
   &#125;
 &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>其中，rep_ 就是 string 形式的 encoded key，对应结构 ParsedInternalKey。</p>
+<p>注意，InternalKey 有两个构造函数，一个含有 ts（time stamp），一个没有。这里需要特别关注的是，ts 是从 v6.6.4 版本才开始有的，在 v5.18.4 以及之前的代码中，根本没有 ts 这个东西。</p>
+<p><img src="https://s1.ax1x.com/2022/10/19/xsvnaQ.png" alt="xsvnaQ.png"></p>
+<p>在这一小节，我们先不管 ts 是个啥，就按照没有 ts 的 InternalKey 来分析。</p>
+<p>那么，rep_ 就是 string 形式的 ParsedInternalKey。</p>
 <pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">struct ParsedInternalKey &#123;
   Slice user_key;
   SequenceNumber sequence;
@@ -944,12 +948,34 @@ Status OptimisticTransaction::CheckTransactionForConflicts(DB* db) &#123;
 
 <ul>
 <li>user_key：key。</li>
-<li>seq_num：全局递增 sequence number，用于 MVCC。</li>
+<li>seq_num：全局递增 sequence number，用于给同一个 key 的不同操作区分先后。</li>
 <li>value_type：这个和 &lt;key,value&gt; 中的 value 不一样，它实际指的是对这个 key 的操作类型，而不是值类型。比如 Delete、Merge、Rollback 等。</li>
 </ul>
 <p>接着，internl_key 会被封装为 memtable_key，与 memtable_value（这个结构我还没找到在哪）一起组成 &lt;key, value&gt; 写进 memtable 中。整个 &lt;key, value&gt; 结构如下：</p>
 <p><img src="https://s1.ax1x.com/2022/10/18/xrMd8x.png" alt="memtable中的&lt;key,value&gt;"></p>
-<p>对于同样的 user_key 记录，在 RocksDB 中可能存在多条，但他们的 sequence number 不同。sequence number 是实现事务处理的关键，同时也是 MVCC 的基础。</p>
+<p>对于同样的 user_key 记录，在 RocksDB 中可能存在多条，但他们的 sequence number 不同。</p>
+<h4 id="time-stamp-since-v6-6-4"><a href="#time-stamp-since-v6-6-4" class="headerlink" title="time stamp (since v6.6.4)"></a>time stamp (since v6.6.4)</h4><p>自从 v6.6.4 开始，InternalKey 就加入了 ts 来进行多版本并发控制了。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">InternalKey(const Slice&amp; _user_key, SequenceNumber s, ValueType t, Slice ts) &#123;
+    AppendInternalKeyWithDifferentTimestamp(
+        &amp;rep_, ParsedInternalKey(_user_key, s, t), ts);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>但是 ParsedInternalKey 的结构并没有变，只是在转化为 string 时，多整合了一个 ts。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void AppendInternalKeyWithDifferentTimestamp(std::string* result,
+                                             const ParsedInternalKey&amp; key,
+                                             const Slice&amp; ts) &#123;
+  assert(key.user_key.size() &gt;&#x3D; ts.size());
+  result-&gt;append(key.user_key.data(), key.user_key.size() - ts.size());
+  result-&gt;append(ts.data(), ts.size());
+  PutFixed64(result, PackSequenceAndType(key.sequence, key.type));
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这样一来，InternalKey 的结构就变成了下面这样：</p>
+<img src="https://s1.ax1x.com/2022/10/19/xyPrhF.png" alt="新的InternalKey " style="zoom: 50%;" />
+
+<p>至于为什么要引入 ts，我现在也没有搞清除。但可以确定的是，它是用来解决并发冲突的，ts 可以充当 version，用来表明每一个记录的产生时间，从而区分出并发事务的先后。可以猜想，seq 做不到的一些并发控制，致使了 ts 的出现。但至于怎么用，这要到后面具体研究读写源码时才能清除，现在我也不知道。</p>
+<p>同样的，既然 InternalKey _key 被加上了 ts，那么 memtale_key 中的 internal_key 也要加上对应的 ts。</p>
+<p><img src="https://s1.ax1x.com/2022/10/19/xyPXHP.png" alt="新的MemtableKey"></p>
 <h4 id="snapshot"><a href="#snapshot" class="headerlink" title="snapshot"></a>snapshot</h4><p>snapshot 是 RocksDB 的快照信息，它实际就是对应一个 sequence number 。简单来讲，假设 snapshot 的 sequence number 为 sa，那么对于此 snapshot 来说，只能看到 sequence number &lt;= sa 的记录，其余的均看不见。</p>
 <p>snapshot 没有复杂的类继承关系，主要就一条 Snapshot —&gt; SnapshotImpl。</p>
 <p><img src="https://s1.ax1x.com/2022/10/18/xrQARx.png" alt="snapshot类关系"></p>

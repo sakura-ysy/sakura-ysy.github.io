@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="k8s源码系列文章, SrcMiLeの杂货铺">
+    <meta name="keywords" content="RocksDB源码学习(二): 读(一), SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>k8s源码系列文章 | SrcMiLeの杂货铺</title>
+    <title>RocksDB源码学习(二): 读(一) | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -379,12 +379,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/20.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/22.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">k8s源码系列文章</h1>
+                    <h1 class="description center-align post-title">RocksDB源码学习(二): 读(一)</h1>
                 </div>
             </div>
         </div>
@@ -500,12 +500,12 @@
                     
                     <div class="article-tag">
                         
-                            <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                                <span class="chip bg-color">云计算</span>
+                            <a href="/tags/%E5%AD%98%E5%82%A8/">
+                                <span class="chip bg-color">存储</span>
                             </a>
                         
-                            <a href="/tags/k8s/">
-                                <span class="chip bg-color">k8s</span>
+                            <a href="/tags/rocksdb/">
+                                <span class="chip bg-color">rocksdb</span>
                             </a>
                         
                     </div>
@@ -516,8 +516,8 @@
                     <div class="post-cate">
                         <i class="fas fa-bookmark fa-fw icon-category"></i>
                         
-                            <a href="/categories/k8s%E6%BA%90%E7%A0%81/" class="post-category">
-                                k8s源码
+                            <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                存储
                             </a>
                         
                     </div>
@@ -529,7 +529,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2022-10-18
+                    2022-10-19
                 </div>
                 
 
@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    23
+                    3.1k
                 </div>
                 
 
@@ -558,10 +558,358 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <ul>
-<li><a target="_blank" rel="noopener" href="https://yesiyuan.cn/k8s-yuan-ma-yi-pod-chuang-jian-liu-cheng/">k8s源码(一): Pod创建流程</a></li>
-<li><a target="_blank" rel="noopener" href="https://yesiyuan.cn/k8s-yuan-ma-er-pod-chuang-jian-guo-cheng-zhong-container-de-juan-gua-zai/">k8s源码(二): Pod创建过程中Container的卷挂载</a></li>
+                <p>还没写完。</p>
+<p>RocksDB 的所有对记录 delete 和 update 操作，都不是就地删或者就地更新，而是新增一个记录表示这个操作，而这个记录也是一个 &lt;k, v&gt;，和其他所有的 &lt;k, v&gt; 按照同样的方式存储。看完 <a target="_blank" rel="noopener" href="https://yesiyuan.cn/">RocksDB源码学习(一)</a> 那一章就知道，key 实际上是存在 user_key =&gt; internal_key =&gt; memetable_key 这一个转化过程的，从 internl_key 开始，就可以通过 valueType 部分区分出这个 &lt;k, v&gt; 具体是什么操作类型，是插入、删除、更新还是别的什么。很直观的来看，我们只需要读取插入和更新的 &lt;k, v&gt;，删除的 &lt;k, v&gt; 就不用管了。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">enum ValueType : unsigned char &#123;
+  kTypeDeletion &#x3D; 0x0,
+  kTypeValue &#x3D; 0x1,  &#x2F;&#x2F; 这个就是 put，表示插入或更新，即这个值是要读的
+  kTypeMerge &#x3D; 0x2,
+  &#x2F;&#x2F; ...
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>同一个 key 通过 sequence num 区分不同记录的时间先后，就像一个时间戳一样。而我们的读操作，实际上就是如何读到一个 key 最新的记录，而且是带数据的记录。RocksDB中，数据是保存在两个地方，一个是 memtable（内存），一个是 sstable（磁盘），因此 RocksDB 读数据也是依次从这两个地方读取.</p>
+<ul>
+<li><strong>memtable</strong>：在 RocksDB 中 memtable 的默认实现是 skiplist，RocksDB 会将用户传入的 user_key 改变为memtable 内部的 key（internal_key_size+internal_key），然后再加上用户传入的 value 之后，作为一个element 加入到 skiplist，而我们读取的时候需要读取到最新的那条数据。</li>
+<li><strong>sstable</strong>：除 L0 层之外，记录在每一层中有序，排序的依据依次是 user_key 升序，sequence num 降序，type 降序。除 L0 层之外，每一层中的各 sstable 所存储的 key 范围不会重叠，但 L0 层可能出现重叠。因此，在 L0 需要读取所有 sstable，在其他层只要读到一个就行。</li>
 </ul>
+<p>本篇博客只讨论在 memtable 中的读取。</p>
+<hr>
+<p>我们知道，用户显示传入的 key 只是 user_key，它需要先被转换为 internal_key，其格式如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">user_key + sequence + type<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>转换函数为：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">InternalKey(const Slice&amp; _user_key, SequenceNumber s, ValueType t, Slice ts) &#123;
+    AppendInternalKeyWithDifferentTimestamp(
+        &amp;rep_, ParsedInternalKey(_user_key, s, t), ts);
+&#125;
+void AppendInternalKey(std::string* result, const ParsedInternalKey&amp; key) &#123;
+  result-&gt;append(key.user_key.data(), key.user_key.size());
+  PutFixed64(result, PackSequenceAndType(key.sequence, key.type));
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>我们知道，RocksDB 按照 user_key 升序，seq 降序，type 降序，三者优先级依次降低的方式组织 internal_key。因此，只要读取到对应 user_key 的最大 seq，就算读取成功。internal_key 的比较器如下所示，返回 0 表示 a == b，-1 表示 a &lt; b，+1 表示 a &gt; b。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">int InternalKeyComparator::Compare(const ParsedInternalKey&amp; a,
+                                   const ParsedInternalKey&amp; b) const &#123;
+  &#x2F;&#x2F; Order by:
+  &#x2F;&#x2F;    increasing user key (according to user-supplied comparator)
+  &#x2F;&#x2F;    decreasing sequence number
+  &#x2F;&#x2F;    decreasing type (though sequence# should be enough to disambiguate)
+  int r &#x3D; user_comparator_.Compare(a.user_key, b.user_key);
+  if (r &#x3D;&#x3D; 0) &#123;
+    if (a.sequence &gt; b.sequence) &#123;
+      r &#x3D; -1;
+    &#125; else if (a.sequence &lt; b.sequence) &#123;
+      r &#x3D; +1;
+    &#125; else if (a.type &gt; b.type) &#123;
+      r &#x3D; -1;
+    &#125; else if (a.type &lt; b.type) &#123;
+      r &#x3D; +1;
+    &#125;
+  &#125;
+  return r;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>当用户想要查找 user_key 时，RocksDB 会首先为本次查找构建一个 LookupKey，该类会在 DBImpl::Get() 中用的。LookupKey 和普通的 key 差不多，也是存在 user_key、 internal_key 和 memtable_key 的形式，其源码如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; A helper class useful for DBImpl::Get()
+class LookupKey &#123;
+ public:
+  &#x2F;&#x2F; Initialize *this for looking up user_key at a snapshot with
+  &#x2F;&#x2F; the specified sequence number.
+  LookupKey(const Slice&amp; _user_key, SequenceNumber sequence,
+            const Slice* ts &#x3D; nullptr);
+
+  ~LookupKey();
+
+  &#x2F;&#x2F; Return a key suitable for lookup in a MemTable.
+  Slice memtable_key() const &#123;
+    return Slice(start_, static_cast&lt;size_t&gt;(end_ - start_));
+  &#125;
+
+  &#x2F;&#x2F; Return an internal key (suitable for passing to an internal iterator)
+  Slice internal_key() const &#123;
+    return Slice(kstart_, static_cast&lt;size_t&gt;(end_ - kstart_));
+  &#125;
+
+  &#x2F;&#x2F; Return the user key
+  Slice user_key() const &#123;
+    return Slice(kstart_, static_cast&lt;size_t&gt;(end_ - kstart_ - 8));
+  &#125;
+
+ private:
+  &#x2F;&#x2F; We construct a char array of the form:
+  &#x2F;&#x2F;    klength  varint32               &lt;-- start_
+  &#x2F;&#x2F;    userkey  char[klength]          &lt;-- kstart_
+  &#x2F;&#x2F;    tag      uint64
+  &#x2F;&#x2F;                                    &lt;-- end_
+  &#x2F;&#x2F; The array is a suitable MemTable key.
+  &#x2F;&#x2F; The suffix starting with &quot;userkey&quot; can be used as an InternalKey.
+  const char* start_;
+  const char* kstart_;
+  const char* end_;
+  char space_[200];  &#x2F;&#x2F; Avoid allocation for short keys
+
+  &#x2F;&#x2F; No copying allowed
+  LookupKey(const LookupKey&amp;);
+  void operator&#x3D;(const LookupKey&amp;);
+&#125;;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>可以看到，kstart_ 就是 internal_key，start_ 就是 memtable_key。注意到，LookupKey 的构造函数中，需要传入一个 user_key 、一个 seq 和一个 ts，其中 user_key 当然是要查询的 user_key，那么 seq 是哪里来的呢？</p>
+<p>我们查看 LookupKey 的调用者，也就是 DBImpl::GetImpl()，其部分源码如下，我们只看和 seq 有关的部分。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">Status DBImpl::GetImpl(const ReadOptions&amp; read_options, const Slice&amp; key,
+                       GetImplOptions&amp; get_impl_options) &#123;
+  &#x2F;&#x2F; ...
+  SequenceNumber snapshot;
+  if (read_options.snapshot !&#x3D; nullptr) &#123;
+    if (get_impl_options.callback) &#123;
+      &#x2F;&#x2F; Already calculated based on read_options.snapshot
+      snapshot &#x3D; get_impl_options.callback-&gt;max_visible_seq();
+    &#125; else &#123;
+      snapshot &#x3D;
+          reinterpret_cast&lt;const SnapshotImpl*&gt;(read_options.snapshot)-&gt;number_;
+    &#125;
+  &#125; else &#123;
+    &#x2F;&#x2F; Note that the snapshot is assigned AFTER referencing the super
+    &#x2F;&#x2F; version because otherwise a flush happening in between may compact away
+    &#x2F;&#x2F; data for the snapshot, so the reader would see neither data that was be
+    &#x2F;&#x2F; visible to the snapshot before compaction nor the newer data inserted
+    &#x2F;&#x2F; afterwards.
+    snapshot &#x3D; GetLastPublishedSequence();
+    if (get_impl_options.callback) &#123;
+      &#x2F;&#x2F; The unprep_seqs are not published for write unprepared, so it could be
+      &#x2F;&#x2F; that max_visible_seq is larger. Seek to the std::max of the two.
+      &#x2F;&#x2F; However, we still want our callback to contain the actual snapshot so
+      &#x2F;&#x2F; that it can do the correct visibility filtering.
+      get_impl_options.callback-&gt;Refresh(snapshot);
+
+      &#x2F;&#x2F; Internally, WriteUnpreparedTxnReadCallback::Refresh would set
+      &#x2F;&#x2F; max_visible_seq &#x3D; max(max_visible_seq, snapshot)
+      &#x2F;&#x2F;
+      &#x2F;&#x2F; Currently, the commented out assert is broken by
+      &#x2F;&#x2F; InvalidSnapshotReadCallback, but if write unprepared recovery followed
+      &#x2F;&#x2F; the regular transaction flow, then this special read callback would not
+      &#x2F;&#x2F; be needed.
+      &#x2F;&#x2F;
+      &#x2F;&#x2F; assert(callback-&gt;max_visible_seq() &gt;&#x3D; snapshot);
+      snapshot &#x3D; get_impl_options.callback-&gt;max_visible_seq();
+    &#125;
+  &#125;
+  &#x2F;&#x2F; If timestamp is used, we use read callback to ensure &lt;key,t,s&gt; is returned
+  &#x2F;&#x2F; only if t &lt;&#x3D; read_opts.timestamp and s &lt;&#x3D; snapshot.
+  &#x2F;&#x2F; HACK: temporarily overwrite input struct field but restore
+  SaveAndRestore&lt;ReadCallback*&gt; restore_callback(&amp;get_impl_options.callback);
+  const Comparator* ucmp &#x3D; get_impl_options.column_family-&gt;GetComparator();
+  assert(ucmp);
+  if (ucmp-&gt;timestamp_size() &gt; 0) &#123;
+    assert(!get_impl_options
+                .callback);  &#x2F;&#x2F; timestamp with callback is not supported
+    read_cb.Refresh(snapshot);
+    get_impl_options.callback &#x3D; &amp;read_cb;
+  &#125;
+  TEST_SYNC_POINT(&quot;DBImpl::GetImpl:3&quot;);
+  TEST_SYNC_POINT(&quot;DBImpl::GetImpl:4&quot;);
+
+  &#x2F;&#x2F; Prepare to store a list of merge operations if merge occurs.
+  MergeContext merge_context;
+  SequenceNumber max_covering_tombstone_seq &#x3D; 0;
+
+  Status s;
+  &#x2F;&#x2F; First look in the memtable, then in the immutable memtable (if any).
+  &#x2F;&#x2F; s is both in&#x2F;out. When in, s could either be OK or MergeInProgress.
+  &#x2F;&#x2F; merge_operands will contain the sequence of merges in the latter case.
+  LookupKey lkey(key, snapshot, read_options.timestamp);
+  &#x2F;&#x2F; ...
+  if (!skip_memtable) &#123;
+      &#x2F;&#x2F; ...
+  &#125;
+  &#x2F;&#x2F; ...
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>在 <a target="_blank" rel="noopener" href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-yi-shi-wu">RocksDB源码学习(一)</a> 中提到，RocksDB 的读实际上是快照读，即先生成一个 snapshot ，这个 snapshot 就是一个 seq，然后只读取该 seq 以及之前的记录，往后的均视为在读操作之后才发生的操作，所以不可见。而 GetImpl() 中就会生成这个 snapshot，然后把它视为 LookupKey 的 seq，然后只查找该 seq 之前的记录。</p>
+<p>先不管 get_impl_options.callback 是什么。简单的来看，GetImpl() 首先会询问 read_options 中是否有对 snapshot 的要求，毕竟配置大于一切。如果没有，那么就通过 GetLastPublishedSequence() 获取到最新的 seq 作为 snapshot。该函数内容如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">virtual SequenceNumber GetLastPublishedSequence() const &#123;
+    if (last_seq_same_as_publish_seq_) &#123;
+        return versions_-&gt;LastSequence();
+    &#125; else &#123;
+        return versions_-&gt;LastPublishedSequence();
+    &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>也就是，返回当前 version 的最新一个 seq。</p>
+<p>GetImpl() 构造完 LookupKey 之后，会判断是否跳过 memtable，如果否，将会调用 MemTable::Get() 函数。该函数的部分内容如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">bool MemTable::Get(const LookupKey&amp; key, std::string* value,
+                   PinnableWideColumns* columns, std::string* timestamp,
+                   Status* s, MergeContext* merge_context,
+                   SequenceNumber* max_covering_tombstone_seq,
+                   SequenceNumber* seq, const ReadOptions&amp; read_opts,
+                   bool immutable_memtable, ReadCallback* callback,
+                   bool* is_blob_index, bool do_merge) &#123;
+  &#x2F;&#x2F; ...
+  bool bloom_checked &#x3D; false;
+  if (bloom_filter_) &#123;
+    &#x2F;&#x2F; when both memtable_whole_key_filtering and prefix_extractor_ are set,
+    &#x2F;&#x2F; only do whole key filtering for Get() to save CPU
+    if (moptions_.memtable_whole_key_filtering) &#123;
+      may_contain &#x3D; bloom_filter_-&gt;MayContain(user_key_without_ts);
+      bloom_checked &#x3D; true;
+    &#125; else &#123;
+      assert(prefix_extractor_);
+      if (prefix_extractor_-&gt;InDomain(user_key_without_ts)) &#123;
+        may_contain &#x3D; bloom_filter_-&gt;MayContain(
+            prefix_extractor_-&gt;Transform(user_key_without_ts));
+        bloom_checked &#x3D; true;
+      &#125;
+    &#125;
+  &#125;
+
+  if (bloom_filter_ &amp;&amp; !may_contain) &#123;
+    &#x2F;&#x2F; iter is null if prefix bloom says the key does not exist
+    PERF_COUNTER_ADD(bloom_memtable_miss_count, 1);
+    *seq &#x3D; kMaxSequenceNumber;
+  &#125; else &#123;
+    if (bloom_checked) &#123;
+      PERF_COUNTER_ADD(bloom_memtable_hit_count, 1);
+    &#125;
+    GetFromTable(key, *max_covering_tombstone_seq, do_merge, callback,
+                 is_blob_index, value, columns, timestamp, s, merge_context,
+                 seq, &amp;found_final_value, &amp;merge_in_progress);
+  &#125;
+  &#x2F;&#x2F;...
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>在截取的这部分代码中，会首先通过 bloom_filter 进行存在性检查，如果得到了阴性，那么就不会在往下进行读操作了，如果得到了阳性，那么就调用 MemTable::GetFromTable() 来进一步读取。所以，Get() 的核心就是使用 bloom_filter 进行存在性检查，之后的读操作由 GetFromTable() 来完成。函数完整代码如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void MemTable::GetFromTable(const LookupKey&amp; key,
+                            SequenceNumber max_covering_tombstone_seq,
+                            bool do_merge, ReadCallback* callback,
+                            bool* is_blob_index, std::string* value,
+                            PinnableWideColumns* columns,
+                            std::string* timestamp, Status* s,
+                            MergeContext* merge_context, SequenceNumber* seq,
+                            bool* found_final_value, bool* merge_in_progress) &#123;
+  Saver saver;
+  saver.status &#x3D; s;
+  saver.found_final_value &#x3D; found_final_value;
+  saver.merge_in_progress &#x3D; merge_in_progress;
+  saver.key &#x3D; &amp;key;
+  saver.value &#x3D; value;
+  saver.columns &#x3D; columns;
+  saver.timestamp &#x3D; timestamp;
+  saver.seq &#x3D; kMaxSequenceNumber;
+  saver.mem &#x3D; this;
+  saver.merge_context &#x3D; merge_context;
+  saver.max_covering_tombstone_seq &#x3D; max_covering_tombstone_seq;
+  saver.merge_operator &#x3D; moptions_.merge_operator;
+  saver.logger &#x3D; moptions_.info_log;
+  saver.inplace_update_support &#x3D; moptions_.inplace_update_support;
+  saver.statistics &#x3D; moptions_.statistics;
+  saver.clock &#x3D; clock_;
+  saver.callback_ &#x3D; callback;
+  saver.is_blob_index &#x3D; is_blob_index;
+  saver.do_merge &#x3D; do_merge;
+  saver.allow_data_in_errors &#x3D; moptions_.allow_data_in_errors;
+  saver.protection_bytes_per_key &#x3D; moptions_.protection_bytes_per_key;
+  table_-&gt;Get(key, &amp;saver, SaveValue);
+  *seq &#x3D; saver.seq;
+&#125;	<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这一大堆代码只干了两件事，其一是构造 Saver，其二是将其交给 MemTableRep::Get() 来进一步执行读取。我们一个一个说，先看 Saver，这个结构用来保存读取时的上下文，比如 LookupKey、MemTable、SequenceNumber 等等，代码如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">struct Saver &#123;
+  Status* status;
+  const LookupKey* key;
+  bool* found_final_value;  &#x2F;&#x2F; Is value set correctly? Used by KeyMayExist
+  bool* merge_in_progress;
+  std::string* value;
+  PinnableWideColumns* columns;
+  SequenceNumber seq;
+  std::string* timestamp;
+  const MergeOperator* merge_operator;
+  &#x2F;&#x2F; the merge operations encountered;
+  MergeContext* merge_context;
+  SequenceNumber max_covering_tombstone_seq;
+  MemTable* mem;
+  Logger* logger;
+  Statistics* statistics;
+  bool inplace_update_support;
+  bool do_merge;
+  SystemClock* clock;
+
+  ReadCallback* callback_;
+  bool* is_blob_index;
+  bool allow_data_in_errors;
+  size_t protection_bytes_per_key;
+  bool CheckCallback(SequenceNumber _seq) &#123;
+    if (callback_) &#123;
+      return callback_-&gt;IsVisible(_seq);
+    &#125;
+    return true;
+  &#125;
+&#125;;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>在构造 Saver 部分，先看这几个字段：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">saver.key &#x3D; &amp;key;
+saver.value &#x3D; value;
+saver.seq &#x3D; kMaxSequenceNumber;
+saver.mem &#x3D; this;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>其中，saver.key 就是传入的 LookupKey，saver.value 就是要保存值的地址，saver.mem 就是当前的 MemTable 类。需要注意的是，saver.seq 被设置为了 kMaxSequenceNumber，即最大的 seq。</p>
+<p>接下来，查看 MemTable::Get()，其完整代码如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void MemTableRep::Get(const LookupKey&amp; k, void* callback_args,
+                      bool (*callback_func)(void* arg, const char* entry)) &#123;
+  auto iter &#x3D; GetDynamicPrefixIterator();
+  for (iter-&gt;Seek(k.internal_key(), k.memtable_key().data());
+       iter-&gt;Valid() &amp;&amp; callback_func(callback_args, iter-&gt;key());
+       iter-&gt;Next()) &#123;
+  &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>需要知道的是，MemTableRep 这个类用来抽象不同的 MemTable 的实现，也就是说它是一个虚类，然后不同的MemTable 实现了它。实现它的数据结构有很多，每一个派生类都是一个实现方式，如下：</p>
+<p><img src="https://s1.ax1x.com/2022/10/19/xsoPX9.png" alt="MemTableRep类关系"></p>
+<p>但是注意，MemTableRep::Get() 没有被声明为 virtual ！也就说，具体使用哪一个函数体，将由调用者指针的类型决定，而非其指向的对象类型决定。在 MemTable::GetFromTable() 中，通过 table_ —&gt; Get(xx) 语句调用，而 table_ 的类型为 std::unique_ptr&lt; MemTable &gt;，即 MemTable*，所以不管 table_ 具体指向哪个派生类，其 Get() 的函数体均为 MemTableRep::Get() 中定义的函数体，而非派生类的函数体。</p>
+<p>那么怎么区别不同的 MemTable 实现（也就是派生类）呢？关键在于迭代器的生成。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">auto iter &#x3D; GetDynamicPrefixIterator();<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>上述通过 GetDynamicPrefixIterator() 生成一个迭代器，其类型为 auto。而 GetDynamicPrefixIterator() 被声明为了 virtual，说明其函数体由 table_ 具体指向的对象类型决定，即由派生类决定。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">class MemTableRep &#123;
+  &#x2F;&#x2F; ...
+  virtual Iterator* GetIterator(Arena* arena &#x3D; nullptr) &#x3D; 0;
+
+  virtual Iterator* GetDynamicPrefixIterator(Arena* arena &#x3D; nullptr) &#123;
+    return GetIterator(arena);
+  &#125;
+  &#x2F;&#x2F; ...
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>每个派生均有自己的迭代器，而 RocksDB 默认使用 SkipList，即 table_ 实际指向 SkipListRep 对象。</p>
+<p><img src="https://s1.ax1x.com/2022/10/19/xsTi8S.png" alt="迭代器的不同实现"></p>
+<p>迭代器的具体实现这里先不说，后续会专门进行 SkipList 的源码分析，那篇博客里会细说。但是不论怎么实现的， Seek() 和 Next() 的功能都是一致的，只是性能的差异罢了。继续回到 MemTableRep::Get() 中，有两个关键点，一个是 iter —&gt; Seek()，一个是 callback_func()，我们一个一个分析。</p>
+<p>iter —&gt; Seek() 传递了两个参数，internal_key 和 memtable_key，也就是 kstart_ 和 start_。为了搞清楚这两个成员的内容，我们进入 LookupKey 的构造函数中看一看：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">LookupKey::LookupKey(const Slice&amp; _user_key, SequenceNumber s,
+                     const Slice* ts) &#123;
+  size_t usize &#x3D; _user_key.size();
+  size_t ts_sz &#x3D; (nullptr &#x3D;&#x3D; ts) ? 0 : ts-&gt;size();
+  size_t needed &#x3D; usize + ts_sz + 13;  &#x2F;&#x2F; A conservative estimate
+  char* dst;
+  if (needed &lt;&#x3D; sizeof(space_)) &#123;
+    dst &#x3D; space_;
+  &#125; else &#123;
+    dst &#x3D; new char[needed];
+  &#125;
+  start_ &#x3D; dst;
+  &#x2F;&#x2F; NOTE: We don&#39;t support users keys of more than 2GB :)
+  dst &#x3D; EncodeVarint32(dst, static_cast&lt;uint32_t&gt;(usize + ts_sz + 8));
+  kstart_ &#x3D; dst;
+  memcpy(dst, _user_key.data(), usize);
+  dst +&#x3D; usize;
+  if (nullptr !&#x3D; ts) &#123;
+    memcpy(dst, ts-&gt;data(), ts_sz);
+    dst +&#x3D; ts_sz;
+  &#125;
+  EncodeFixed64(dst, PackSequenceAndType(s, kValueTypeForSeek));
+  dst +&#x3D; 8;
+  end_ &#x3D; dst;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
 
                 
             </div>
@@ -588,7 +936,7 @@
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://example.com/k8s-yuan-ma-xi-lie-wen-zhang/">http://example.com/k8s-yuan-ma-xi-lie-wen-zhang/</a>
+                    <a href="http://example.com/rocksdb-yuan-ma-xue-xi-er-du-yi/">http://example.com/rocksdb-yuan-ma-xue-xi-er-du-yi/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -626,12 +974,12 @@
                     
                         <div class="article-tag">
                             
-                                <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                                    <span class="chip bg-color">云计算</span>
+                                <a href="/tags/%E5%AD%98%E5%82%A8/">
+                                    <span class="chip bg-color">存储</span>
                                 </a>
                             
-                                <a href="/tags/k8s/">
-                                    <span class="chip bg-color">k8s</span>
+                                <a href="/tags/rocksdb/">
+                                    <span class="chip bg-color">rocksdb</span>
                                 </a>
                             
                         </div>
@@ -801,9 +1149,10 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
                 <a href="/rocksdb-yuan-ma-xue-xi-er-du-yi/">
                     <div class="card-image">
@@ -821,9 +1170,9 @@
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2022-10-19
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-19
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -836,6 +1185,7 @@
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
@@ -858,13 +1208,13 @@
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/lsm-tree-xi-lie-wen-zhang/">
+                <a href="/k8s-yuan-ma-xi-lie-wen-zhang/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/6.jpg" class="responsive-img" alt="LSM-Tree系列文章">
+                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="k8s源码系列文章">
                         
-                        <span class="card-title">LSM-Tree系列文章</span>
+                        <span class="card-title">k8s源码系列文章</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -881,8 +1231,8 @@
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
-                                    存储
+                            <a href="/categories/k8s%E6%BA%90%E7%A0%81/" class="post-category">
+                                    k8s源码
                                 </a>
                             
                             
@@ -892,12 +1242,12 @@
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/LSM-Tree/">
-                        <span class="chip bg-color">LSM-Tree</span>
+                    <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
+                        <span class="chip bg-color">云计算</span>
                     </a>
                     
-                    <a href="/tags/%E5%AD%98%E5%82%A8/">
-                        <span class="chip bg-color">存储</span>
+                    <a href="/tags/k8s/">
+                        <span class="chip bg-color">k8s</span>
                     </a>
                     
                 </div>
