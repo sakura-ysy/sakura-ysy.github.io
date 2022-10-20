@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    6.9k
+                    6.5k
                 </div>
                 
 
@@ -567,24 +567,24 @@
 
 <p>其中，最重要的两个类为 TransactionDB 与 DBImpl，前者实现事务的管理，后者实现 DB 接口类中的各个函数。</p>
 <h4 id="TransactionDB"><a href="#TransactionDB" class="headerlink" title="TransactionDB"></a>TransactionDB</h4><p>TransactionDB 声明于 <code>include\rocksdb\utilities\transaction_db.h</code> 中，其可以理解为 Transaction 的容器，一个 TransactionDB 内部可以有多个 Transaction，看下这个类的源码，其中就有创建和获取 Transaction。</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">class TransactionDB : public StackableDB &#123;
- public:
-  &#x2F;&#x2F; Starts a new Transaction.
-  &#x2F;&#x2F;
-  &#x2F;&#x2F; Caller is responsible for deleting the returned transaction when no
-  &#x2F;&#x2F; longer needed.
-  &#x2F;&#x2F;
-  &#x2F;&#x2F; If old_txn is not null, BeginTransaction will reuse this Transaction
-  &#x2F;&#x2F; handle instead of allocating a new one.  This is an optimization to avoid
-  &#x2F;&#x2F; extra allocations when repeatedly creating transactions.
-  virtual Transaction* BeginTransaction(
-      const WriteOptions&amp; write_options,
-      const TransactionOptions&amp; txn_options &#x3D; TransactionOptions(),
-      Transaction* old_txn &#x3D; nullptr) &#x3D; 0;
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">TransactionDB</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">StackableDB</span></span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token comment">// Starts a new Transaction.</span>
+  <span class="token comment">//</span>
+  <span class="token comment">// Caller is responsible for deleting the returned transaction when no</span>
+  <span class="token comment">// longer needed.</span>
+  <span class="token comment">//</span>
+  <span class="token comment">// If old_txn is not null, BeginTransaction will reuse this Transaction</span>
+  <span class="token comment">// handle instead of allocating a new one.  This is an optimization to avoid</span>
+  <span class="token comment">// extra allocations when repeatedly creating transactions.</span>
+  <span class="token keyword">virtual</span> Transaction<span class="token operator">*</span> <span class="token function">BeginTransaction</span><span class="token punctuation">(</span>
+      <span class="token keyword">const</span> WriteOptions<span class="token operator">&amp;</span> write_options<span class="token punctuation">,</span>
+      <span class="token keyword">const</span> TransactionOptions<span class="token operator">&amp;</span> txn_options <span class="token operator">=</span> <span class="token function">TransactionOptions</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+      Transaction<span class="token operator">*</span> old_txn <span class="token operator">=</span> <span class="token keyword">nullptr</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
 
-  virtual Transaction* GetTransactionByName(const TransactionName&amp; name) &#x3D; 0;
-  virtual void GetAllPreparedTransactions(std::vector&lt;Transaction*&gt;* trans) &#x3D; 0;
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  <span class="token keyword">virtual</span> Transaction<span class="token operator">*</span> <span class="token function">GetTransactionByName</span><span class="token punctuation">(</span><span class="token keyword">const</span> TransactionName<span class="token operator">&amp;</span> name<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token keyword">virtual</span> <span class="token keyword">void</span> <span class="token function">GetAllPreparedTransactions</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>Transaction<span class="token operator">*</span><span class="token operator">></span><span class="token operator">*</span> trans<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h4 id="DBImpl"><a href="#DBImpl" class="headerlink" title="DBImpl"></a>DBImpl</h4><p>接下来关注 DBImpl，这个类声明于 <code>db\db_impl\db_impl.h</code> 中，可以说是整个事务框架中<strong>最重要</strong>的一个类，因为它才是真正实现所有读写以及 LSM-Tree 相关操作的实现类，先来看下官方的解释：</p>
 <blockquote>
@@ -608,195 +608,195 @@
 
 <p>事务分为悲观事务和乐观事务，分别为 PessimisticTransaction 和 OptimisticTransaction。其中，前者认为会通过加锁的方式解决写冲突，后者会通过 version 的方式来解决写冲突。</p>
 <p>为了明晰两者的差别，我们先看一下 Transaction::Put 方法：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">Status TransactionBaseImpl::Put(ColumnFamilyHandle* column_family,
-                                const Slice&amp; key, const Slice&amp; value,
-                                const bool assume_tracked) &#123;
-  const bool do_validate &#x3D; !assume_tracked;
-  Status s &#x3D; TryLock(column_family, key, false &#x2F;* read_only *&#x2F;,
-                     true &#x2F;* exclusive *&#x2F;, do_validate, assume_tracked);
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp">Status <span class="token class-name">TransactionBaseImpl</span><span class="token double-colon punctuation">::</span><span class="token function">Put</span><span class="token punctuation">(</span>ColumnFamilyHandle<span class="token operator">*</span> column_family<span class="token punctuation">,</span>
+                                <span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> key<span class="token punctuation">,</span> <span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> value<span class="token punctuation">,</span>
+                                <span class="token keyword">const</span> <span class="token keyword">bool</span> assume_tracked<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token keyword">const</span> <span class="token keyword">bool</span> do_validate <span class="token operator">=</span> <span class="token operator">!</span>assume_tracked<span class="token punctuation">;</span>
+  Status s <span class="token operator">=</span> <span class="token function">TryLock</span><span class="token punctuation">(</span>column_family<span class="token punctuation">,</span> key<span class="token punctuation">,</span> <span class="token boolean">false</span> <span class="token comment">/* read_only */</span><span class="token punctuation">,</span>
+                     <span class="token boolean">true</span> <span class="token comment">/* exclusive */</span><span class="token punctuation">,</span> do_validate<span class="token punctuation">,</span> assume_tracked<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  if (s.ok()) &#123;
-    s &#x3D; GetBatchForWrite()-&gt;Put(column_family, key, value);
-    if (s.ok()) &#123;
-      num_puts_++;
-    &#125;
-  &#125;
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span><span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    s <span class="token operator">=</span> <span class="token function">GetBatchForWrite</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">Put</span><span class="token punctuation">(</span>column_family<span class="token punctuation">,</span> key<span class="token punctuation">,</span> value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span><span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      num_puts_<span class="token operator">++</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
 
-  return s;
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  <span class="token keyword">return</span> s<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>细节我们先不深究，但是可以看出来，Put 操作，首先要对 key 进行 “加锁”，然后在把写操作写进 WriteBatch 中。Transaction 不会直接把写操作执行，而是写放进 WriteBatch 中，等 Commit 了之后一同写进去，这点和 TinyKV 类似。 至于 WriteBatch 的内容，后面会分析，这里先过掉。</p>
 <p>实际上，不管是 PessimisticTransaction  还是 OptimisticTransaction，Put 的时候用到都是上面那个方法体，只不过，那个所谓的 “加锁” 操作变了，也就是 TryLock，直接区分了两种事务的核心。二者均重载了 TryLock，一个以 lock 的方式，一个以 version 的方式。</p>
 <h4 id="PessimisticTransaction"><a href="#PessimisticTransaction" class="headerlink" title="PessimisticTransaction"></a>PessimisticTransaction</h4><p>其 TryLock 部分源码如下：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; Attempt to lock this key.
-&#x2F;&#x2F; Returns OK if the key has been successfully locked.  Non-ok, otherwise.
-&#x2F;&#x2F; If check_shapshot is true and this transaction has a snapshot set,
-&#x2F;&#x2F; this key will only be locked if there have been no writes to this key since
-&#x2F;&#x2F; the snapshot time.
-Status PessimisticTransaction::TryLock(ColumnFamilyHandle* column_family,
-                                       const Slice&amp; key, bool read_only,
-                                       bool exclusive, const bool do_validate,
-                                       const bool assume_tracked) &#123;
-  &#x2F;&#x2F; ...
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// Attempt to lock this key.</span>
+<span class="token comment">// Returns OK if the key has been successfully locked.  Non-ok, otherwise.</span>
+<span class="token comment">// If check_shapshot is true and this transaction has a snapshot set,</span>
+<span class="token comment">// this key will only be locked if there have been no writes to this key since</span>
+<span class="token comment">// the snapshot time.</span>
+Status <span class="token class-name">PessimisticTransaction</span><span class="token double-colon punctuation">::</span><span class="token function">TryLock</span><span class="token punctuation">(</span>ColumnFamilyHandle<span class="token operator">*</span> column_family<span class="token punctuation">,</span>
+                                       <span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> key<span class="token punctuation">,</span> <span class="token keyword">bool</span> read_only<span class="token punctuation">,</span>
+                                       <span class="token keyword">bool</span> exclusive<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">bool</span> do_validate<span class="token punctuation">,</span>
+                                       <span class="token keyword">const</span> <span class="token keyword">bool</span> assume_tracked<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token comment">// ...</span>
 
-  &#x2F;&#x2F; Lock this key if this transactions hasn&#39;t already locked it or we require
-  &#x2F;&#x2F; an upgrade.
-  if (!previously_locked || lock_upgrade) &#123;
-    s &#x3D; txn_db_impl_-&gt;TryLock(this, cfh_id, key_str, exclusive);
-  &#125;
+  <span class="token comment">// Lock this key if this transactions hasn't already locked it or we require</span>
+  <span class="token comment">// an upgrade.</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>previously_locked <span class="token operator">||</span> lock_upgrade<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    s <span class="token operator">=</span> txn_db_impl_<span class="token operator">-></span><span class="token function">TryLock</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> cfh_id<span class="token punctuation">,</span> key_str<span class="token punctuation">,</span> exclusive<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
 
-  const ColumnFamilyHandle* const cfh &#x3D;
-      column_family ? column_family : db_impl_-&gt;DefaultColumnFamily();
-  assert(cfh);
-  const Comparator* const ucmp &#x3D; cfh-&gt;GetComparator();
-  assert(ucmp);
-  size_t ts_sz &#x3D; ucmp-&gt;timestamp_size();
+  <span class="token keyword">const</span> ColumnFamilyHandle<span class="token operator">*</span> <span class="token keyword">const</span> cfh <span class="token operator">=</span>
+      column_family <span class="token operator">?</span> column_family <span class="token operator">:</span> db_impl_<span class="token operator">-></span><span class="token function">DefaultColumnFamily</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>cfh<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> Comparator<span class="token operator">*</span> <span class="token keyword">const</span> ucmp <span class="token operator">=</span> cfh<span class="token operator">-></span><span class="token function">GetComparator</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>ucmp<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  size_t ts_sz <span class="token operator">=</span> ucmp<span class="token operator">-></span><span class="token function">timestamp_size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  SetSnapshotIfNeeded();
+  <span class="token function">SetSnapshotIfNeeded</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  &#x2F;&#x2F; Even though we do not care about doing conflict checking for this write,
-  &#x2F;&#x2F; we still need to take a lock to make sure we do not cause a conflict with
-  &#x2F;&#x2F; some other write.  However, we do not need to check if there have been
-  &#x2F;&#x2F; any writes since this transaction&#39;s snapshot.
-  &#x2F;&#x2F; TODO(agiardullo): could optimize by supporting shared txn locks in the
-  &#x2F;&#x2F; future.
-  SequenceNumber tracked_at_seq &#x3D;
-      status.locked ? status.seq : kMaxSequenceNumber;
-  if (!do_validate || (snapshot_ &#x3D;&#x3D; nullptr &amp;&amp;
-                       (0 &#x3D;&#x3D; ts_sz || kMaxTxnTimestamp &#x3D;&#x3D; read_timestamp_))) &#123;
-    if (assume_tracked &amp;&amp; !previously_locked &amp;&amp;
-        tracked_locks_-&gt;IsPointLockSupported()) &#123;
-      s &#x3D; Status::InvalidArgument(
-          &quot;assume_tracked is set but it is not tracked yet&quot;);
-    &#125;
-    &#x2F;&#x2F; Need to remember the earliest sequence number that we know that this
-    &#x2F;&#x2F; key has not been modified after.  This is useful if this same
-    &#x2F;&#x2F; transaction later tries to lock this key again.
-    if (tracked_at_seq &#x3D;&#x3D; kMaxSequenceNumber) &#123;
-      &#x2F;&#x2F; Since we haven&#39;t checked a snapshot, we only know this key has not
-      &#x2F;&#x2F; been modified since after we locked it.
-      &#x2F;&#x2F; Note: when last_seq_same_as_publish_seq_&#x3D;&#x3D;false this is less than the
-      &#x2F;&#x2F; latest allocated seq but it is ok since i) this is just a heuristic
-      &#x2F;&#x2F; used only as a hint to avoid actual check for conflicts, ii) this would
-      &#x2F;&#x2F; cause a false positive only if the snapthot is taken right after the
-      &#x2F;&#x2F; lock, which would be an unusual sequence.
-      tracked_at_seq &#x3D; db_-&gt;GetLatestSequenceNumber();
-    &#125;
-  &#125; else if (s.ok()) &#123;
-    &#x2F;&#x2F; If a snapshot is set, we need to make sure the key hasn&#39;t been modified
-    &#x2F;&#x2F; since the snapshot.  This must be done after we locked the key.
-    &#x2F;&#x2F; If we already have validated an earilier snapshot it must has been
-    &#x2F;&#x2F; reflected in tracked_at_seq and ValidateSnapshot will return OK.
-    s &#x3D; ValidateSnapshot(column_family, key, &amp;tracked_at_seq);
+  <span class="token comment">// Even though we do not care about doing conflict checking for this write,</span>
+  <span class="token comment">// we still need to take a lock to make sure we do not cause a conflict with</span>
+  <span class="token comment">// some other write.  However, we do not need to check if there have been</span>
+  <span class="token comment">// any writes since this transaction's snapshot.</span>
+  <span class="token comment">// TODO(agiardullo): could optimize by supporting shared txn locks in the</span>
+  <span class="token comment">// future.</span>
+  SequenceNumber tracked_at_seq <span class="token operator">=</span>
+      status<span class="token punctuation">.</span>locked <span class="token operator">?</span> status<span class="token punctuation">.</span>seq <span class="token operator">:</span> kMaxSequenceNumber<span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>do_validate <span class="token operator">||</span> <span class="token punctuation">(</span>snapshot_ <span class="token operator">==</span> <span class="token keyword">nullptr</span> <span class="token operator">&amp;&amp;</span>
+                       <span class="token punctuation">(</span><span class="token number">0</span> <span class="token operator">==</span> ts_sz <span class="token operator">||</span> kMaxTxnTimestamp <span class="token operator">==</span> read_timestamp_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>assume_tracked <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>previously_locked <span class="token operator">&amp;&amp;</span>
+        tracked_locks_<span class="token operator">-></span><span class="token function">IsPointLockSupported</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      s <span class="token operator">=</span> <span class="token class-name">Status</span><span class="token double-colon punctuation">::</span><span class="token function">InvalidArgument</span><span class="token punctuation">(</span>
+          <span class="token string">"assume_tracked is set but it is not tracked yet"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">// Need to remember the earliest sequence number that we know that this</span>
+    <span class="token comment">// key has not been modified after.  This is useful if this same</span>
+    <span class="token comment">// transaction later tries to lock this key again.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>tracked_at_seq <span class="token operator">==</span> kMaxSequenceNumber<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      <span class="token comment">// Since we haven't checked a snapshot, we only know this key has not</span>
+      <span class="token comment">// been modified since after we locked it.</span>
+      <span class="token comment">// Note: when last_seq_same_as_publish_seq_==false this is less than the</span>
+      <span class="token comment">// latest allocated seq but it is ok since i) this is just a heuristic</span>
+      <span class="token comment">// used only as a hint to avoid actual check for conflicts, ii) this would</span>
+      <span class="token comment">// cause a false positive only if the snapthot is taken right after the</span>
+      <span class="token comment">// lock, which would be an unusual sequence.</span>
+      tracked_at_seq <span class="token operator">=</span> db_<span class="token operator">-></span><span class="token function">GetLatestSequenceNumber</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span><span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// If a snapshot is set, we need to make sure the key hasn't been modified</span>
+    <span class="token comment">// since the snapshot.  This must be done after we locked the key.</span>
+    <span class="token comment">// If we already have validated an earilier snapshot it must has been</span>
+    <span class="token comment">// reflected in tracked_at_seq and ValidateSnapshot will return OK.</span>
+    s <span class="token operator">=</span> <span class="token function">ValidateSnapshot</span><span class="token punctuation">(</span>column_family<span class="token punctuation">,</span> key<span class="token punctuation">,</span> <span class="token operator">&amp;</span>tracked_at_seq<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-    if (!s.ok()) &#123;
-      &#x2F;&#x2F; Failed to validate key
-      &#x2F;&#x2F; Unlock key we just locked
-      if (lock_upgrade) &#123;
-        s &#x3D; txn_db_impl_-&gt;TryLock(this, cfh_id, key_str, false &#x2F;* exclusive *&#x2F;);
-        assert(s.ok());
-      &#125; else if (!previously_locked) &#123;
-        txn_db_impl_-&gt;UnLock(this, cfh_id, key.ToString());
-      &#125;
-    &#125;
-  &#125;
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>s<span class="token punctuation">.</span><span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      <span class="token comment">// Failed to validate key</span>
+      <span class="token comment">// Unlock key we just locked</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>lock_upgrade<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        s <span class="token operator">=</span> txn_db_impl_<span class="token operator">-></span><span class="token function">TryLock</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> cfh_id<span class="token punctuation">,</span> key_str<span class="token punctuation">,</span> <span class="token boolean">false</span> <span class="token comment">/* exclusive */</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">assert</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span><span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>previously_locked<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        txn_db_impl_<span class="token operator">-></span><span class="token function">UnLock</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">,</span> cfh_id<span class="token punctuation">,</span> key<span class="token punctuation">.</span><span class="token function">ToString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
 
-  if (s.ok()) &#123;
-    &#x2F;&#x2F; We must track all the locked keys so that we can unlock them later. If
-    &#x2F;&#x2F; the key is already locked, this func will update some stats on the
-    &#x2F;&#x2F; tracked key. It could also update the tracked_at_seq if it is lower
-    &#x2F;&#x2F; than the existing tracked key seq. These stats are necessary for
-    &#x2F;&#x2F; RollbackToSavePoint to determine whether a key can be safely removed
-    &#x2F;&#x2F; from tracked_keys_. Removal can only be done if a key was only locked
-    &#x2F;&#x2F; during the current savepoint.
-    &#x2F;&#x2F;
-    &#x2F;&#x2F; Recall that if assume_tracked is true, we assume that TrackKey has been
-    &#x2F;&#x2F; called previously since the last savepoint, with the same exclusive
-    &#x2F;&#x2F; setting, and at a lower sequence number, so skipping here should be
-    &#x2F;&#x2F; safe.
-    if (!assume_tracked) &#123;
-      TrackKey(cfh_id, key_str, tracked_at_seq, read_only, exclusive);
-    &#125; else &#123;
-#ifndef NDEBUG
-      if (tracked_locks_-&gt;IsPointLockSupported()) &#123;
-        PointLockStatus lock_status &#x3D;
-            tracked_locks_-&gt;GetPointLockStatus(cfh_id, key_str);
-        assert(lock_status.locked);
-        assert(lock_status.seq &lt;&#x3D; tracked_at_seq);
-        assert(lock_status.exclusive &#x3D;&#x3D; exclusive);
-      &#125;
-#endif
-    &#125;
-  &#125;
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span><span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// We must track all the locked keys so that we can unlock them later. If</span>
+    <span class="token comment">// the key is already locked, this func will update some stats on the</span>
+    <span class="token comment">// tracked key. It could also update the tracked_at_seq if it is lower</span>
+    <span class="token comment">// than the existing tracked key seq. These stats are necessary for</span>
+    <span class="token comment">// RollbackToSavePoint to determine whether a key can be safely removed</span>
+    <span class="token comment">// from tracked_keys_. Removal can only be done if a key was only locked</span>
+    <span class="token comment">// during the current savepoint.</span>
+    <span class="token comment">//</span>
+    <span class="token comment">// Recall that if assume_tracked is true, we assume that TrackKey has been</span>
+    <span class="token comment">// called previously since the last savepoint, with the same exclusive</span>
+    <span class="token comment">// setting, and at a lower sequence number, so skipping here should be</span>
+    <span class="token comment">// safe.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>assume_tracked<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      <span class="token function">TrackKey</span><span class="token punctuation">(</span>cfh_id<span class="token punctuation">,</span> key_str<span class="token punctuation">,</span> tracked_at_seq<span class="token punctuation">,</span> read_only<span class="token punctuation">,</span> exclusive<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">ifndef</span> <span class="token expression">NDEBUG</span></span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>tracked_locks_<span class="token operator">-></span><span class="token function">IsPointLockSupported</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        PointLockStatus lock_status <span class="token operator">=</span>
+            tracked_locks_<span class="token operator">-></span><span class="token function">GetPointLockStatus</span><span class="token punctuation">(</span>cfh_id<span class="token punctuation">,</span> key_str<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">assert</span><span class="token punctuation">(</span>lock_status<span class="token punctuation">.</span>locked<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">assert</span><span class="token punctuation">(</span>lock_status<span class="token punctuation">.</span>seq <span class="token operator">&lt;=</span> tracked_at_seq<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">assert</span><span class="token punctuation">(</span>lock_status<span class="token punctuation">.</span>exclusive <span class="token operator">==</span> exclusive<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span></span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
 
-  return s;
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  <span class="token keyword">return</span> s<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>可以看到，该函数的核心就是通过调用 txn_db_impl_-&gt;TryLock 来进行加锁。其中，txn_db_impl 的类型就是 PessimisticTransactionDB，这也反映了 xxxTransaction  调到最后都是 TransactionDB。</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">PessimisticTransactionDB* txn_db_impl_;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp">PessimisticTransactionDB<span class="token operator">*</span> txn_db_impl_<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <p>那我们就看一下 PessimisticTransactionDB 的 TryLock 是什么样的，其源码如下：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">Status PessimisticTransactionDB::TryLock(PessimisticTransaction* txn,
-                                         uint32_t cfh_id,
-                                         const std::string&amp; key,
-                                         bool exclusive) &#123;
-    return lock_manager_-&gt;TryLock(txn, cfh_id, key, GetEnv(), exclusive);
-&#125;
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp">Status <span class="token class-name">PessimisticTransactionDB</span><span class="token double-colon punctuation">::</span><span class="token function">TryLock</span><span class="token punctuation">(</span>PessimisticTransaction<span class="token operator">*</span> txn<span class="token punctuation">,</span>
+                                         <span class="token keyword">uint32_t</span> cfh_id<span class="token punctuation">,</span>
+                                         <span class="token keyword">const</span> std<span class="token double-colon punctuation">::</span>string<span class="token operator">&amp;</span> key<span class="token punctuation">,</span>
+                                         <span class="token keyword">bool</span> exclusive<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> lock_manager_<span class="token operator">-></span><span class="token function">TryLock</span><span class="token punctuation">(</span>txn<span class="token punctuation">,</span> cfh_id<span class="token punctuation">,</span> key<span class="token punctuation">,</span> <span class="token function">GetEnv</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> exclusive<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
 
-&#x2F;&#x2F; 补充
-&#x2F;&#x2F; std::shared_ptr&lt;LockManager&gt; lock_manager_; <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token comment">// 补充</span>
+<span class="token comment">// std::shared_ptr&lt;LockManager> lock_manager_; </span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>可以看到，最后实际执行加锁的其实是 LockManager 这个类，这个类我们先不管，到这只需要明白 PessimisticTransaction 是通过它来对 key 进行加锁的就行，细节之后再分析。</p>
 <h4 id="OptimisticTransaction"><a href="#OptimisticTransaction" class="headerlink" title="OptimisticTransaction"></a>OptimisticTransaction</h4><p>不同于 PessimisticTransaction ，OptimisticTransaction 没有 lock 一说，用的是 version 的思想，也就是 MVCC，多版本并发控制。其 TryLock 全部源码如下：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; Record this key so that we can check it for conflicts at commit time.
-&#x2F;&#x2F;
-&#x2F;&#x2F; &#39;exclusive&#39; is unused for OptimisticTransaction.
-Status OptimisticTransaction::TryLock(ColumnFamilyHandle* column_family,
-                                      const Slice&amp; key, bool read_only,
-                                      bool exclusive, const bool do_validate,
-                                      const bool assume_tracked) &#123;
-  assert(!assume_tracked);  &#x2F;&#x2F; not supported
-  (void)assume_tracked;
-  if (!do_validate) &#123;
-    return Status::OK();
-  &#125;
-  uint32_t cfh_id &#x3D; GetColumnFamilyID(column_family);
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// Record this key so that we can check it for conflicts at commit time.</span>
+<span class="token comment">//</span>
+<span class="token comment">// 'exclusive' is unused for OptimisticTransaction.</span>
+Status <span class="token class-name">OptimisticTransaction</span><span class="token double-colon punctuation">::</span><span class="token function">TryLock</span><span class="token punctuation">(</span>ColumnFamilyHandle<span class="token operator">*</span> column_family<span class="token punctuation">,</span>
+                                      <span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> key<span class="token punctuation">,</span> <span class="token keyword">bool</span> read_only<span class="token punctuation">,</span>
+                                      <span class="token keyword">bool</span> exclusive<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">bool</span> do_validate<span class="token punctuation">,</span>
+                                      <span class="token keyword">const</span> <span class="token keyword">bool</span> assume_tracked<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span>assume_tracked<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">// not supported</span>
+  <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>assume_tracked<span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>do_validate<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">return</span> <span class="token class-name">Status</span><span class="token double-colon punctuation">::</span><span class="token function">OK</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">uint32_t</span> cfh_id <span class="token operator">=</span> <span class="token function">GetColumnFamilyID</span><span class="token punctuation">(</span>column_family<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  SetSnapshotIfNeeded();
+  <span class="token function">SetSnapshotIfNeeded</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  SequenceNumber seq;
-  if (snapshot_) &#123;
-    seq &#x3D; snapshot_-&gt;GetSequenceNumber();
-  &#125; else &#123;
-    seq &#x3D; db_-&gt;GetLatestSequenceNumber();
-  &#125;
+  SequenceNumber seq<span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>snapshot_<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    seq <span class="token operator">=</span> snapshot_<span class="token operator">-></span><span class="token function">GetSequenceNumber</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+    seq <span class="token operator">=</span> db_<span class="token operator">-></span><span class="token function">GetLatestSequenceNumber</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
 
-  std::string key_str &#x3D; key.ToString();
+  std<span class="token double-colon punctuation">::</span>string key_str <span class="token operator">=</span> key<span class="token punctuation">.</span><span class="token function">ToString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  TrackKey(cfh_id, key_str, seq, read_only, exclusive);
+  <span class="token function">TrackKey</span><span class="token punctuation">(</span>cfh_id<span class="token punctuation">,</span> key_str<span class="token punctuation">,</span> seq<span class="token punctuation">,</span> read_only<span class="token punctuation">,</span> exclusive<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  &#x2F;&#x2F; Always return OK. Confilct checking will happen at commit time.
-  return Status::OK();
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  <span class="token comment">// Always return OK. Confilct checking will happen at commit time.</span>
+  <span class="token keyword">return</span> <span class="token class-name">Status</span><span class="token double-colon punctuation">::</span><span class="token function">OK</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>这个 TryLock 就比较简单了，根本就没有锁，它会先生产一个新的 sequenceNum ，然后通过 TrackKey 将其和 key 整合起来。怎么整合的，以及整合后 key 的结构是什么，这些以后都会说，这里先不管这么细。</p>
 <p>这个 sequenceNum ，会在 Commit 的时候用来检测冲突，检测操作封装在 CheckTransactionForConflict 中，Commit 会调用这个函数。该函数源码如下：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; Returns OK if it is safe to commit this transaction.  Returns Status::Busy
-&#x2F;&#x2F; if there are read or write conflicts that would prevent us from committing OR
-&#x2F;&#x2F; if we can not determine whether there would be any such conflicts.
-&#x2F;&#x2F;
-&#x2F;&#x2F; Should only be called on writer thread in order to avoid any race conditions
-&#x2F;&#x2F; in detecting write conflicts.
-Status OptimisticTransaction::CheckTransactionForConflicts(DB* db) &#123;
-  auto db_impl &#x3D; static_cast_with_check&lt;DBImpl&gt;(db);
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// Returns OK if it is safe to commit this transaction.  Returns Status::Busy</span>
+<span class="token comment">// if there are read or write conflicts that would prevent us from committing OR</span>
+<span class="token comment">// if we can not determine whether there would be any such conflicts.</span>
+<span class="token comment">//</span>
+<span class="token comment">// Should only be called on writer thread in order to avoid any race conditions</span>
+<span class="token comment">// in detecting write conflicts.</span>
+Status <span class="token class-name">OptimisticTransaction</span><span class="token double-colon punctuation">::</span><span class="token function">CheckTransactionForConflicts</span><span class="token punctuation">(</span>DB<span class="token operator">*</span> db<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token keyword">auto</span> db_impl <span class="token operator">=</span> <span class="token generic-function"><span class="token function">static_cast_with_check</span><span class="token generic class-name"><span class="token operator">&lt;</span>DBImpl<span class="token operator">></span></span></span><span class="token punctuation">(</span>db<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  &#x2F;&#x2F; Since we are on the write thread and do not want to block other writers,
-  &#x2F;&#x2F; we will do a cache-only conflict check.  This can result in TryAgain
-  &#x2F;&#x2F; getting returned if there is not sufficient memtable history to check
-  &#x2F;&#x2F; for conflicts.
-  return TransactionUtil::CheckKeysForConflicts(db_impl, *tracked_locks_,
-                                                true &#x2F;* cache_only *&#x2F;);
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  <span class="token comment">// Since we are on the write thread and do not want to block other writers,</span>
+  <span class="token comment">// we will do a cache-only conflict check.  This can result in TryAgain</span>
+  <span class="token comment">// getting returned if there is not sufficient memtable history to check</span>
+  <span class="token comment">// for conflicts.</span>
+  <span class="token keyword">return</span> <span class="token class-name">TransactionUtil</span><span class="token double-colon punctuation">::</span><span class="token function">CheckKeysForConflicts</span><span class="token punctuation">(</span>db_impl<span class="token punctuation">,</span> <span class="token operator">*</span>tracked_locks_<span class="token punctuation">,</span>
+                                                <span class="token boolean">true</span> <span class="token comment">/* cache_only */</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>具体怎么检测的，我们先不管。</p>
 <h3 id="WriteBatch-相关"><a href="#WriteBatch-相关" class="headerlink" title="WriteBatch 相关"></a>WriteBatch 相关</h3><p>如前文所述，事务会将所有的写操作追加进同一个 WriteBatch 中，直到 Commit 时才向 DB 中进行写入。与 WriteBatch 有关的主要为 4 个类，如下：</p>
@@ -812,136 +812,136 @@ Status OptimisticTransaction::CheckTransactionForConflicts(DB* db) &#123;
 <li>通过函数 GetWriteBatch()，可以得到这个事务的 WriteBatch；</li>
 </ol>
 <p>这里我们提下第二点。GetWriteBatch() 的定义很简单，就一句话，如下：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">WriteBatch* WriteBatchWithIndex::GetWriteBatch() &#123; return &amp;rep-&gt;write_batch; &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp">WriteBatch<span class="token operator">*</span> <span class="token class-name">WriteBatchWithIndex</span><span class="token double-colon punctuation">::</span><span class="token function">GetWriteBatch</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> <span class="token operator">&amp;</span>rep<span class="token operator">-></span>write_batch<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <p>也即，它会返回 WriteBatchWithIndex 中一个名为 rep 的成员的 write_batch 字段。而 rep 是一个 Rep 类型的结构指针，如下：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">class WriteBatchWithIndex &#123;
-    &#x2F;&#x2F; ...
-    private:
-    	struct Rep;
-    	std::unique_ptr&lt;Rep&gt; rep;
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">WriteBatchWithIndex</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// ...</span>
+    <span class="token keyword">private</span><span class="token operator">:</span>
+    	<span class="token keyword">struct</span> <span class="token class-name">Rep</span><span class="token punctuation">;</span>
+    	std<span class="token double-colon punctuation">::</span>unique_ptr<span class="token operator">&lt;</span>Rep<span class="token operator">></span> rep<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>跟进 Rep 结构，其结构体如下：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">struct WriteBatchWithIndex::Rep &#123;
-  explicit Rep(const Comparator* index_comparator, size_t reserved_bytes &#x3D; 0,
-               size_t max_bytes &#x3D; 0, bool _overwrite_key &#x3D; false,
-               size_t protection_bytes_per_key &#x3D; 0)
-      : write_batch(reserved_bytes, max_bytes, protection_bytes_per_key,
-                    index_comparator ? index_comparator-&gt;timestamp_size() : 0),
-        comparator(index_comparator, &amp;write_batch),
-        skip_list(comparator, &amp;arena),
-        overwrite_key(_overwrite_key),
-        last_entry_offset(0),
-        last_sub_batch_offset(0),
-        sub_batch_cnt(1) &#123;&#125;
-  ReadableWriteBatch write_batch;
-  WriteBatchEntryComparator comparator;
-  Arena arena;
-  WriteBatchEntrySkipList skip_list;
-  bool overwrite_key;
-  size_t last_entry_offset;
-  &#x2F;&#x2F; The starting offset of the last sub-batch. A sub-batch starts right before
-  &#x2F;&#x2F; inserting a key that is a duplicate of a key in the last sub-batch. Zero,
-  &#x2F;&#x2F; the default, means that no duplicate key is detected so far.
-  size_t last_sub_batch_offset;
-  &#x2F;&#x2F; Total number of sub-batches in the write batch. Default is 1.
-  size_t sub_batch_cnt;
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">struct</span> <span class="token class-name">WriteBatchWithIndex</span><span class="token operator">:</span><span class="token base-clause"><span class="token operator">:</span><span class="token class-name">Rep</span></span> <span class="token punctuation">&#123;</span>
+  <span class="token keyword">explicit</span> <span class="token function">Rep</span><span class="token punctuation">(</span><span class="token keyword">const</span> Comparator<span class="token operator">*</span> index_comparator<span class="token punctuation">,</span> size_t reserved_bytes <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span>
+               size_t max_bytes <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token keyword">bool</span> _overwrite_key <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+               size_t protection_bytes_per_key <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+      <span class="token operator">:</span> <span class="token function">write_batch</span><span class="token punctuation">(</span>reserved_bytes<span class="token punctuation">,</span> max_bytes<span class="token punctuation">,</span> protection_bytes_per_key<span class="token punctuation">,</span>
+                    index_comparator <span class="token operator">?</span> index_comparator<span class="token operator">-></span><span class="token function">timestamp_size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token function">comparator</span><span class="token punctuation">(</span>index_comparator<span class="token punctuation">,</span> <span class="token operator">&amp;</span>write_batch<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token function">skip_list</span><span class="token punctuation">(</span>comparator<span class="token punctuation">,</span> <span class="token operator">&amp;</span>arena<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token function">overwrite_key</span><span class="token punctuation">(</span>_overwrite_key<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token function">last_entry_offset</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token function">last_sub_batch_offset</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token function">sub_batch_cnt</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+  ReadableWriteBatch write_batch<span class="token punctuation">;</span>
+  WriteBatchEntryComparator comparator<span class="token punctuation">;</span>
+  Arena arena<span class="token punctuation">;</span>
+  WriteBatchEntrySkipList skip_list<span class="token punctuation">;</span>
+  <span class="token keyword">bool</span> overwrite_key<span class="token punctuation">;</span>
+  size_t last_entry_offset<span class="token punctuation">;</span>
+  <span class="token comment">// The starting offset of the last sub-batch. A sub-batch starts right before</span>
+  <span class="token comment">// inserting a key that is a duplicate of a key in the last sub-batch. Zero,</span>
+  <span class="token comment">// the default, means that no duplicate key is detected so far.</span>
+  size_t last_sub_batch_offset<span class="token punctuation">;</span>
+  <span class="token comment">// Total number of sub-batches in the write batch. Default is 1.</span>
+  size_t sub_batch_cnt<span class="token punctuation">;</span>
 
-  &#x2F;&#x2F; Remember current offset of internal write batch, which is used as
-  &#x2F;&#x2F; the starting offset of the next record.
-  void SetLastEntryOffset() &#123; last_entry_offset &#x3D; write_batch.GetDataSize(); &#125;
+  <span class="token comment">// Remember current offset of internal write batch, which is used as</span>
+  <span class="token comment">// the starting offset of the next record.</span>
+  <span class="token keyword">void</span> <span class="token function">SetLastEntryOffset</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> last_entry_offset <span class="token operator">=</span> write_batch<span class="token punctuation">.</span><span class="token function">GetDataSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
 
-  &#x2F;&#x2F; In overwrite mode, find the existing entry for the same key and update it
-  &#x2F;&#x2F; to point to the current entry.
-  &#x2F;&#x2F; Return true if the key is found and updated.
-  bool UpdateExistingEntry(ColumnFamilyHandle* column_family, const Slice&amp; key,
-                           WriteType type);
-  bool UpdateExistingEntryWithCfId(uint32_t column_family_id, const Slice&amp; key,
-                                   WriteType type);
+  <span class="token comment">// In overwrite mode, find the existing entry for the same key and update it</span>
+  <span class="token comment">// to point to the current entry.</span>
+  <span class="token comment">// Return true if the key is found and updated.</span>
+  <span class="token keyword">bool</span> <span class="token function">UpdateExistingEntry</span><span class="token punctuation">(</span>ColumnFamilyHandle<span class="token operator">*</span> column_family<span class="token punctuation">,</span> <span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> key<span class="token punctuation">,</span>
+                           WriteType type<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">bool</span> <span class="token function">UpdateExistingEntryWithCfId</span><span class="token punctuation">(</span><span class="token keyword">uint32_t</span> column_family_id<span class="token punctuation">,</span> <span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> key<span class="token punctuation">,</span>
+                                   WriteType type<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  &#x2F;&#x2F; Add the recent entry to the update.
-  &#x2F;&#x2F; In overwrite mode, if key already exists in the index, update it.
-  void AddOrUpdateIndex(ColumnFamilyHandle* column_family, const Slice&amp; key,
-                        WriteType type);
-  void AddOrUpdateIndex(const Slice&amp; key, WriteType type);
+  <span class="token comment">// Add the recent entry to the update.</span>
+  <span class="token comment">// In overwrite mode, if key already exists in the index, update it.</span>
+  <span class="token keyword">void</span> <span class="token function">AddOrUpdateIndex</span><span class="token punctuation">(</span>ColumnFamilyHandle<span class="token operator">*</span> column_family<span class="token punctuation">,</span> <span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> key<span class="token punctuation">,</span>
+                        WriteType type<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token function">AddOrUpdateIndex</span><span class="token punctuation">(</span><span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> key<span class="token punctuation">,</span> WriteType type<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  &#x2F;&#x2F; Allocate an index entry pointing to the last entry in the write batch and
-  &#x2F;&#x2F; put it to skip list.
-  void AddNewEntry(uint32_t column_family_id);
+  <span class="token comment">// Allocate an index entry pointing to the last entry in the write batch and</span>
+  <span class="token comment">// put it to skip list.</span>
+  <span class="token keyword">void</span> <span class="token function">AddNewEntry</span><span class="token punctuation">(</span><span class="token keyword">uint32_t</span> column_family_id<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  &#x2F;&#x2F; Clear all updates buffered in this batch.
-  void Clear();
-  void ClearIndex();
+  <span class="token comment">// Clear all updates buffered in this batch.</span>
+  <span class="token keyword">void</span> <span class="token function">Clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">void</span> <span class="token function">ClearIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  &#x2F;&#x2F; Rebuild index by reading all records from the batch.
-  &#x2F;&#x2F; Returns non-ok status on corruption.
-  Status ReBuildIndex();
-&#125;;
+  <span class="token comment">// Rebuild index by reading all records from the batch.</span>
+  <span class="token comment">// Returns non-ok status on corruption.</span>
+  Status <span class="token function">ReBuildIndex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
 <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>注意到，write_batch 的类型为 ReadableWriteBatch，字面意思就是可读的 WriteBatch，而整个类型里只有一个函数，专门用于通过 offset 来找到 WriteBatch 中某一条写操作，如下：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">class ReadableWriteBatch : public WriteBatch &#123;
- public:
-  explicit ReadableWriteBatch(size_t reserved_bytes &#x3D; 0, size_t max_bytes &#x3D; 0,
-                              size_t protection_bytes_per_key &#x3D; 0,
-                              size_t default_cf_ts_sz &#x3D; 0)
-      : WriteBatch(reserved_bytes, max_bytes, protection_bytes_per_key,
-                   default_cf_ts_sz) &#123;&#125;
-  &#x2F;&#x2F; Retrieve some information from a write entry in the write batch, given
-  &#x2F;&#x2F; the start offset of the write entry.
-  Status GetEntryFromDataOffset(size_t data_offset, WriteType* type, Slice* Key,
-                                Slice* value, Slice* blob, Slice* xid) const;
-&#125;;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">ReadableWriteBatch</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">WriteBatch</span></span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token keyword">explicit</span> <span class="token function">ReadableWriteBatch</span><span class="token punctuation">(</span>size_t reserved_bytes <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> size_t max_bytes <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span>
+                              size_t protection_bytes_per_key <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span>
+                              size_t default_cf_ts_sz <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+      <span class="token operator">:</span> <span class="token function">WriteBatch</span><span class="token punctuation">(</span>reserved_bytes<span class="token punctuation">,</span> max_bytes<span class="token punctuation">,</span> protection_bytes_per_key<span class="token punctuation">,</span>
+                   default_cf_ts_sz<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+  <span class="token comment">// Retrieve some information from a write entry in the write batch, given</span>
+  <span class="token comment">// the start offset of the write entry.</span>
+  Status <span class="token function">GetEntryFromDataOffset</span><span class="token punctuation">(</span>size_t data_offset<span class="token punctuation">,</span> WriteType<span class="token operator">*</span> type<span class="token punctuation">,</span> Slice<span class="token operator">*</span> Key<span class="token punctuation">,</span>
+                                Slice<span class="token operator">*</span> value<span class="token punctuation">,</span> Slice<span class="token operator">*</span> blob<span class="token punctuation">,</span> Slice<span class="token operator">*</span> xid<span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>因此，重现表述一下第 2 点。WriteBatchWithIndex 可以通过 GetWriteBatch() 获取到事务的 ReadableWriteBatch，进而凭借它来通过 offset 读取到 WriteBatch 中的某一条写操作。</p>
 <p>总结一下，在事务没有 Commit 之前，数据还不在 Memtable 中，而是存在 WriteBatch 里，如果有需要，这时候可以通过 WriteBatchWithIndex 来拿到自己刚刚写入的但还没有提交的数据。</p>
 <h2 id="事务实现"><a href="#事务实现" class="headerlink" title="事务实现"></a>事务实现</h2><p>RocksDB 提供了乐观事务和悲观事务，前者通过 MVCC 进行并发控制，后者采用锁机制，本节就大体介绍一下相关的内容。</p>
 <h3 id="乐观事务"><a href="#乐观事务" class="headerlink" title="乐观事务"></a>乐观事务</h3><h4 id="sequence-number"><a href="#sequence-number" class="headerlink" title="sequence number"></a>sequence number</h4><p>RocksDB 中的每一条记录都有一个 sequence number, 这个 sequence number 存储在记录的 key 中，整合后的类名为 InternalKey，对应结构名为 ParsedInternalKey。</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">class InternalKey &#123;
- private:
-  std::string rep_;
- public:
-  InternalKey() &#123;&#125;  &#x2F;&#x2F; Leave rep_ as empty to indicate it is invalid
-  InternalKey(const Slice&amp; _user_key, SequenceNumber s, ValueType t) &#123;
-    AppendInternalKey(&amp;rep_, ParsedInternalKey(_user_key, s, t));
-  &#125;
-  InternalKey(const Slice&amp; _user_key, SequenceNumber s, ValueType t, Slice ts) &#123;
-    AppendInternalKeyWithDifferentTimestamp(
-        &amp;rep_, ParsedInternalKey(_user_key, s, t), ts);
-  &#125;
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">InternalKey</span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  std<span class="token double-colon punctuation">::</span>string rep_<span class="token punctuation">;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  <span class="token function">InternalKey</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>  <span class="token comment">// Leave rep_ as empty to indicate it is invalid</span>
+  <span class="token function">InternalKey</span><span class="token punctuation">(</span><span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> _user_key<span class="token punctuation">,</span> SequenceNumber s<span class="token punctuation">,</span> ValueType t<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">AppendInternalKey</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>rep_<span class="token punctuation">,</span> <span class="token function">ParsedInternalKey</span><span class="token punctuation">(</span>_user_key<span class="token punctuation">,</span> s<span class="token punctuation">,</span> t<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token function">InternalKey</span><span class="token punctuation">(</span><span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> _user_key<span class="token punctuation">,</span> SequenceNumber s<span class="token punctuation">,</span> ValueType t<span class="token punctuation">,</span> Slice ts<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">AppendInternalKeyWithDifferentTimestamp</span><span class="token punctuation">(</span>
+        <span class="token operator">&amp;</span>rep_<span class="token punctuation">,</span> <span class="token function">ParsedInternalKey</span><span class="token punctuation">(</span>_user_key<span class="token punctuation">,</span> s<span class="token punctuation">,</span> t<span class="token punctuation">)</span><span class="token punctuation">,</span> ts<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>注意，InternalKey 有两个构造函数，一个含有 ts（time stamp），一个没有。这里需要特别关注的是，ts 是从 v6.6.4 版本才开始有的，在 v5.18.4 以及之前的代码中，根本没有 ts 这个东西。</p>
 <p><img src="https://s1.ax1x.com/2022/10/19/xsvnaQ.png" alt="xsvnaQ.png"></p>
 <p>在这一小节，我们先不管 ts 是个啥，就按照没有 ts 的 InternalKey 来分析。</p>
 <p>那么，rep_ 就是 string 形式的 ParsedInternalKey。</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">struct ParsedInternalKey &#123;
-  Slice user_key;
-  SequenceNumber sequence;
-  ValueType type;
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">struct</span> <span class="token class-name">ParsedInternalKey</span> <span class="token punctuation">&#123;</span>
+  Slice user_key<span class="token punctuation">;</span>
+  SequenceNumber sequence<span class="token punctuation">;</span>
+  ValueType type<span class="token punctuation">;</span>
 
-  ParsedInternalKey()
-      : sequence(kMaxSequenceNumber),
-        type(kTypeDeletion)  &#x2F;&#x2F; Make code analyzer happy
-  &#123;&#125;                         &#x2F;&#x2F; Intentionally left uninitialized (for speed)
-  &#x2F;&#x2F; u contains timestamp if user timestamp feature is enabled.
-  ParsedInternalKey(const Slice&amp; u, const SequenceNumber&amp; seq, ValueType t)
-      : user_key(u), sequence(seq), type(t) &#123;&#125;
-  std::string DebugString(bool log_err_key, bool hex) const;
+  <span class="token function">ParsedInternalKey</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token operator">:</span> <span class="token function">sequence</span><span class="token punctuation">(</span>kMaxSequenceNumber<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token function">type</span><span class="token punctuation">(</span>kTypeDeletion<span class="token punctuation">)</span>  <span class="token comment">// Make code analyzer happy</span>
+  <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>                         <span class="token comment">// Intentionally left uninitialized (for speed)</span>
+  <span class="token comment">// u contains timestamp if user timestamp feature is enabled.</span>
+  <span class="token function">ParsedInternalKey</span><span class="token punctuation">(</span><span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> u<span class="token punctuation">,</span> <span class="token keyword">const</span> SequenceNumber<span class="token operator">&amp;</span> seq<span class="token punctuation">,</span> ValueType t<span class="token punctuation">)</span>
+      <span class="token operator">:</span> <span class="token function">user_key</span><span class="token punctuation">(</span>u<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">sequence</span><span class="token punctuation">(</span>seq<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">type</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span>
+  std<span class="token double-colon punctuation">::</span>string <span class="token function">DebugString</span><span class="token punctuation">(</span><span class="token keyword">bool</span> log_err_key<span class="token punctuation">,</span> <span class="token keyword">bool</span> hex<span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
 
-  void clear() &#123;
-    user_key.clear();
-    sequence &#x3D; 0;
-    type &#x3D; kTypeDeletion;
-  &#125;
+  <span class="token keyword">void</span> <span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    user_key<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    sequence <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    type <span class="token operator">=</span> kTypeDeletion<span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
 
-  void SetTimestamp(const Slice&amp; ts) &#123;
-    assert(ts.size() &lt;&#x3D; user_key.size());
-    const char* addr &#x3D; user_key.data() + user_key.size() - ts.size();
-    memcpy(const_cast&lt;char*&gt;(addr), ts.data(), ts.size());
-  &#125;
-&#125;;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  <span class="token keyword">void</span> <span class="token function">SetTimestamp</span><span class="token punctuation">(</span><span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> ts<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>ts<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;=</span> user_key<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> addr <span class="token operator">=</span> user_key<span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> user_key<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> ts<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">memcpy</span><span class="token punctuation">(</span><span class="token generic-function"><span class="token function">const_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">char</span><span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>addr<span class="token punctuation">)</span><span class="token punctuation">,</span> ts<span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> ts<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>可以看出，InternalKey 的结构如下：</p>
 <img src="https://s1.ax1x.com/2022/10/18/xrKhB4.png" alt="InternalKey结构" style="zoom: 67%;" />
@@ -961,30 +961,30 @@ Status OptimisticTransaction::CheckTransactionForConflicts(DB* db) &#123;
 <li>无需加锁了；</li>
 </ul>
 <h4 id="time-stamp-since-v6-6-4"><a href="#time-stamp-since-v6-6-4" class="headerlink" title="time stamp (since v6.6.4)"></a>time stamp (since v6.6.4)</h4><p>自从 v6.6.4 开始，InternalKey 就加入了 ts 来进行多版本并发控制了。</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">InternalKey(const Slice&amp; _user_key, SequenceNumber s, ValueType t, Slice ts) &#123;
-    AppendInternalKeyWithDifferentTimestamp(
-        &amp;rep_, ParsedInternalKey(_user_key, s, t), ts);
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token function">InternalKey</span><span class="token punctuation">(</span><span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> _user_key<span class="token punctuation">,</span> SequenceNumber s<span class="token punctuation">,</span> ValueType t<span class="token punctuation">,</span> Slice ts<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">AppendInternalKeyWithDifferentTimestamp</span><span class="token punctuation">(</span>
+        <span class="token operator">&amp;</span>rep_<span class="token punctuation">,</span> <span class="token function">ParsedInternalKey</span><span class="token punctuation">(</span>_user_key<span class="token punctuation">,</span> s<span class="token punctuation">,</span> t<span class="token punctuation">)</span><span class="token punctuation">,</span> ts<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>但是 ParsedInternalKey 的字段并没有变，只是在转化为 string 时，多整合了一个 ts，且是整合进 user_key 中。</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void AppendInternalKeyWithDifferentTimestamp(std::string* result,
-                                             const ParsedInternalKey&amp; key,
-                                             const Slice&amp; ts) &#123;
-  assert(key.user_key.size() &gt;&#x3D; ts.size());
-  result-&gt;append(key.user_key.data(), key.user_key.size() - ts.size());
-  result-&gt;append(ts.data(), ts.size());
-  PutFixed64(result, PackSequenceAndType(key.sequence, key.type));
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">void</span> <span class="token function">AppendInternalKeyWithDifferentTimestamp</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>string<span class="token operator">*</span> result<span class="token punctuation">,</span>
+                                             <span class="token keyword">const</span> ParsedInternalKey<span class="token operator">&amp;</span> key<span class="token punctuation">,</span>
+                                             <span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> ts<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>key<span class="token punctuation">.</span>user_key<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">>=</span> ts<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  result<span class="token operator">-></span><span class="token function">append</span><span class="token punctuation">(</span>key<span class="token punctuation">.</span>user_key<span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> key<span class="token punctuation">.</span>user_key<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> ts<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  result<span class="token operator">-></span><span class="token function">append</span><span class="token punctuation">(</span>ts<span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> ts<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">PutFixed64</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> <span class="token function">PackSequenceAndType</span><span class="token punctuation">(</span>key<span class="token punctuation">.</span>sequence<span class="token punctuation">,</span> key<span class="token punctuation">.</span>type<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>注意到，虽然加上了 ts，但 ts 使用的是原来 user_key 的末尾空间，也就是 internal_key 的大小并没有变，只是在 user_key 的末尾部分整合上了 ts。同时，在 ParsedInternalKey 中也加入了新的函数，名为 SetTimestamp() ，其功能就是把 ts 整合进 user_key 的末尾成为新的 user_key。</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">struct ParsedInternalKey &#123;
-  &#x2F;&#x2F; ...
-  void SetTimestamp(const Slice&amp; ts) &#123;
-    assert(ts.size() &lt;&#x3D; user_key.size());
-    const char* addr &#x3D; user_key.data() + user_key.size() - ts.size();
-    memcpy(const_cast&lt;char*&gt;(addr), ts.data(), ts.size());
-  &#125;
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">struct</span> <span class="token class-name">ParsedInternalKey</span> <span class="token punctuation">&#123;</span>
+  <span class="token comment">// ...</span>
+  <span class="token keyword">void</span> <span class="token function">SetTimestamp</span><span class="token punctuation">(</span><span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> ts<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>ts<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;=</span> user_key<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">const</span> <span class="token keyword">char</span><span class="token operator">*</span> addr <span class="token operator">=</span> user_key<span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> user_key<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> ts<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">memcpy</span><span class="token punctuation">(</span><span class="token generic-function"><span class="token function">const_cast</span><span class="token generic class-name"><span class="token operator">&lt;</span><span class="token keyword">char</span><span class="token operator">*</span><span class="token operator">></span></span></span><span class="token punctuation">(</span>addr<span class="token punctuation">)</span><span class="token punctuation">,</span> ts<span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> ts<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>这样一来，InternalKey 的结构就变成了下面这样：</p>
 <img src="https://s1.ax1x.com/2022/10/20/xy7qbj.png" alt="xy7qbj.png" style="zoom: 50%;" />
@@ -996,37 +996,37 @@ Status OptimisticTransaction::CheckTransactionForConflicts(DB* db) &#123;
 <p>snapshot 没有复杂的类继承关系，主要就一条 Snapshot —&gt; SnapshotImpl。</p>
 <p><img src="https://s1.ax1x.com/2022/10/18/xrQARx.png" alt="snapshot类关系"></p>
 <p>其实现类如下：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; Each SnapshotImpl corresponds to a particular sequence number.
-class SnapshotImpl : public Snapshot &#123;
- public:
-  SequenceNumber number_;  &#x2F;&#x2F; const after creation
-  &#x2F;&#x2F; It indicates the smallest uncommitted data at the time the snapshot was
-  &#x2F;&#x2F; taken. This is currently used by WritePrepared transactions to limit the
-  &#x2F;&#x2F; scope of queries to IsInSnapshot.
-  SequenceNumber min_uncommitted_ &#x3D; kMinUnCommittedSeq;
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// Each SnapshotImpl corresponds to a particular sequence number.</span>
+<span class="token keyword">class</span> <span class="token class-name">SnapshotImpl</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">Snapshot</span></span> <span class="token punctuation">&#123;</span>
+ <span class="token keyword">public</span><span class="token operator">:</span>
+  SequenceNumber number_<span class="token punctuation">;</span>  <span class="token comment">// const after creation</span>
+  <span class="token comment">// It indicates the smallest uncommitted data at the time the snapshot was</span>
+  <span class="token comment">// taken. This is currently used by WritePrepared transactions to limit the</span>
+  <span class="token comment">// scope of queries to IsInSnapshot.</span>
+  SequenceNumber min_uncommitted_ <span class="token operator">=</span> kMinUnCommittedSeq<span class="token punctuation">;</span>
 
-  SequenceNumber GetSequenceNumber() const override &#123; return number_; &#125;
+  SequenceNumber <span class="token function">GetSequenceNumber</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token keyword">override</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> number_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
 
-  int64_t GetUnixTime() const override &#123; return unix_time_; &#125;
+  <span class="token keyword">int64_t</span> <span class="token function">GetUnixTime</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token keyword">override</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> unix_time_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
 
-  uint64_t GetTimestamp() const override &#123; return timestamp_; &#125;
+  <span class="token keyword">uint64_t</span> <span class="token function">GetTimestamp</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token keyword">override</span> <span class="token punctuation">&#123;</span> <span class="token keyword">return</span> timestamp_<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
 
- private:
-  friend class SnapshotList;
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token keyword">friend</span> <span class="token keyword">class</span> <span class="token class-name">SnapshotList</span><span class="token punctuation">;</span>
 
-  &#x2F;&#x2F; SnapshotImpl is kept in a doubly-linked circular list
-  SnapshotImpl* prev_;
-  SnapshotImpl* next_;
+  <span class="token comment">// SnapshotImpl is kept in a doubly-linked circular list</span>
+  SnapshotImpl<span class="token operator">*</span> prev_<span class="token punctuation">;</span>
+  SnapshotImpl<span class="token operator">*</span> next_<span class="token punctuation">;</span>
 
-  SnapshotList* list_;                 &#x2F;&#x2F; just for sanity checks
+  SnapshotList<span class="token operator">*</span> list_<span class="token punctuation">;</span>                 <span class="token comment">// just for sanity checks</span>
 
-  int64_t unix_time_;
+  <span class="token keyword">int64_t</span> unix_time_<span class="token punctuation">;</span>
 
-  uint64_t timestamp_;
+  <span class="token keyword">uint64_t</span> timestamp_<span class="token punctuation">;</span>
 
-  &#x2F;&#x2F; Will this snapshot be used by a Transaction to do write-conflict checking?
-  bool is_write_conflict_boundary_;
-&#125;;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  <span class="token comment">// Will this snapshot be used by a Transaction to do write-conflict checking?</span>
+  <span class="token keyword">bool</span> is_write_conflict_boundary_<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>主要得到的信息如下：</p>
 <ul>
@@ -1037,175 +1037,175 @@ class SnapshotImpl : public Snapshot &#123;
 <p>我们知道，删除记录并不是直接删掉，而是追加一条 Delete 日志，原记录依旧保持。但是，老旧的无用记录不可能一直保存着，所以会在 Merge（又叫 Compact）时清除掉。清除的大致逻辑为，从全局双向链表中取出 sequence number 最小的 snapshot。 如果已删除的老记录 sequence number &lt;= 该snapshot， 那么这些老记录在 Merge 时可以清理掉。</p>
 <h3 id="悲观事务"><a href="#悲观事务" class="headerlink" title="悲观事务"></a>悲观事务</h3><h4 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h4><p>悲观事务通过锁机制来进行并发控制，与其有关的有三大结构体：LockInfo、LockMapStripe、LockMap，三者均位于 <code>utilities/transactions/lock/point/point_lock_manager.cc</code> 中。</p>
 <p>LockInfo：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">struct LockInfo &#123;
-  bool exclusive;
-  autovector&lt;TransactionID&gt; txn_ids;
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">struct</span> <span class="token class-name">LockInfo</span> <span class="token punctuation">&#123;</span>
+  <span class="token keyword">bool</span> exclusive<span class="token punctuation">;</span>
+  autovector<span class="token operator">&lt;</span>TransactionID<span class="token operator">></span> txn_ids<span class="token punctuation">;</span>
 
-  &#x2F;&#x2F; Transaction locks are not valid after this time in us
-  uint64_t expiration_time;
+  <span class="token comment">// Transaction locks are not valid after this time in us</span>
+  <span class="token keyword">uint64_t</span> expiration_time<span class="token punctuation">;</span>
   
-  &#x2F;&#x2F; ...
-&#125;;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>LockInfo 代表一个锁，分为独占锁和共享锁，由 txn_ids 表示其被哪些事务持有。如果 exclusive 为 true，说明该锁为独占锁，那么仅由 txn_ids[0] 来持有该锁；如果 exclusive 为 false，说明该锁为共享锁，那么由 txn_ids 中的全部事务共同持有。expiration_time 为该锁的超时时间，超过该时间后锁失效。</p>
 <p>LockMapStripe：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">struct LockMapStripe &#123;
-  &#x2F;&#x2F; ...
-  UnorderedMap&lt;std::string, LockInfo&gt; keys;
-&#125;;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">struct</span> <span class="token class-name">LockMapStripe</span> <span class="token punctuation">&#123;</span>
+  <span class="token comment">// ...</span>
+  UnorderedMap<span class="token operator">&lt;</span>std<span class="token double-colon punctuation">::</span>string<span class="token punctuation">,</span> LockInfo<span class="token operator">></span> keys<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>LockMapStripe 维护一个 map，用来指明 key 与 lock 的对应关系，即哪个 key 被哪个 lock 锁住。</p>
 <p>LockMap：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">struct LockMap &#123;
-  &#x2F;&#x2F; ...
-  &#x2F;&#x2F; Number of sepearate LockMapStripes to create, each with their own Mutex
-  const size_t num_stripes_;
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">struct</span> <span class="token class-name">LockMap</span> <span class="token punctuation">&#123;</span>
+  <span class="token comment">// ...</span>
+  <span class="token comment">// Number of sepearate LockMapStripes to create, each with their own Mutex</span>
+  <span class="token keyword">const</span> size_t num_stripes_<span class="token punctuation">;</span>
 
-  &#x2F;&#x2F; Count of keys that are currently locked in this column family.
-  &#x2F;&#x2F; (Only maintained if PointLockManager::max_num_locks_ is positive.)
-  std::atomic&lt;int64_t&gt; lock_cnt&#123;0&#125;;
+  <span class="token comment">// Count of keys that are currently locked in this column family.</span>
+  <span class="token comment">// (Only maintained if PointLockManager::max_num_locks_ is positive.)</span>
+  std<span class="token double-colon punctuation">::</span>atomic<span class="token operator">&lt;</span><span class="token keyword">int64_t</span><span class="token operator">></span> lock_cnt<span class="token punctuation">&#123;</span><span class="token number">0</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
 
-  std::vector&lt;LockMapStripe*&gt; lock_map_stripes_;
+  std<span class="token double-colon punctuation">::</span>vector<span class="token operator">&lt;</span>LockMapStripe<span class="token operator">*</span><span class="token operator">></span> lock_map_stripes_<span class="token punctuation">;</span>
 
-  size_t GetStripe(const std::string&amp; key) const;
-&#125;;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  size_t <span class="token function">GetStripe</span><span class="token punctuation">(</span><span class="token keyword">const</span> std<span class="token double-colon punctuation">::</span>string<span class="token operator">&amp;</span> key<span class="token punctuation">)</span> <span class="token keyword">const</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>这个结构看上去就很奇怪，为什么还要费心思维护一个 LockMapStripe* 的 vector，难道一个 LockMapStripe 不够吗？</p>
 <p>我是这样猜想的。LockMapStripe 内部就是 hash 映射，那么一旦 key 多起来了，那么就有可能发生 hash 冲突，导致两个不同的 key 映射到了一个 LockInfo 上，很显然是错的。为了减少冲突，RocksDB 采用了多个 LockMapStripe，先把每一个 key 按照自定义的 hash 分到某一个 LockMapStripe 中，然后才在其中 hash 映射到 LockInfo 里，两次不同的 hash，可以大大减少冲突率。</p>
 <p>我为什么会这么猜想，来看看 TryLock 的定义：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">Status PointLockManager::TryLock(PessimisticTransaction* txn,
-                                 ColumnFamilyId column_family_id,
-                                 const std::string&amp; key, Env* env,
-                                 bool exclusive) &#123;
-  &#x2F;&#x2F; Lookup lock map for this column family id
-  std::shared_ptr&lt;LockMap&gt; lock_map_ptr &#x3D; GetLockMap(column_family_id);
-  LockMap* lock_map &#x3D; lock_map_ptr.get();
-  if (lock_map &#x3D;&#x3D; nullptr) &#123;
-    char msg[255];
-    snprintf(msg, sizeof(msg), &quot;Column family id not found: %&quot; PRIu32,
-             column_family_id);
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp">Status <span class="token class-name">PointLockManager</span><span class="token double-colon punctuation">::</span><span class="token function">TryLock</span><span class="token punctuation">(</span>PessimisticTransaction<span class="token operator">*</span> txn<span class="token punctuation">,</span>
+                                 ColumnFamilyId column_family_id<span class="token punctuation">,</span>
+                                 <span class="token keyword">const</span> std<span class="token double-colon punctuation">::</span>string<span class="token operator">&amp;</span> key<span class="token punctuation">,</span> Env<span class="token operator">*</span> env<span class="token punctuation">,</span>
+                                 <span class="token keyword">bool</span> exclusive<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token comment">// Lookup lock map for this column family id</span>
+  std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>LockMap<span class="token operator">></span> lock_map_ptr <span class="token operator">=</span> <span class="token function">GetLockMap</span><span class="token punctuation">(</span>column_family_id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  LockMap<span class="token operator">*</span> lock_map <span class="token operator">=</span> lock_map_ptr<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>lock_map <span class="token operator">==</span> <span class="token keyword">nullptr</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">char</span> msg<span class="token punctuation">[</span><span class="token number">255</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token function">snprintf</span><span class="token punctuation">(</span>msg<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>msg<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"Column family id not found: %"</span> PRIu32<span class="token punctuation">,</span>
+             column_family_id<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-    return Status::InvalidArgument(msg);
-  &#125;
+    <span class="token keyword">return</span> <span class="token class-name">Status</span><span class="token double-colon punctuation">::</span><span class="token function">InvalidArgument</span><span class="token punctuation">(</span>msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
 
-  &#x2F;&#x2F; Need to lock the mutex for the stripe that this key hashes to
-  size_t stripe_num &#x3D; lock_map-&gt;GetStripe(key);
-  assert(lock_map-&gt;lock_map_stripes_.size() &gt; stripe_num);
-  LockMapStripe* stripe &#x3D; lock_map-&gt;lock_map_stripes_.at(stripe_num);
+  <span class="token comment">// Need to lock the mutex for the stripe that this key hashes to</span>
+  size_t stripe_num <span class="token operator">=</span> lock_map<span class="token operator">-></span><span class="token function">GetStripe</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>lock_map<span class="token operator">-></span>lock_map_stripes_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">></span> stripe_num<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  LockMapStripe<span class="token operator">*</span> stripe <span class="token operator">=</span> lock_map<span class="token operator">-></span>lock_map_stripes_<span class="token punctuation">.</span><span class="token function">at</span><span class="token punctuation">(</span>stripe_num<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  LockInfo lock_info(txn-&gt;GetID(), txn-&gt;GetExpirationTime(), exclusive);
-  int64_t timeout &#x3D; txn-&gt;GetLockTimeout();
+  LockInfo <span class="token function">lock_info</span><span class="token punctuation">(</span>txn<span class="token operator">-></span><span class="token function">GetID</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> txn<span class="token operator">-></span><span class="token function">GetExpirationTime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> exclusive<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">int64_t</span> timeout <span class="token operator">=</span> txn<span class="token operator">-></span><span class="token function">GetLockTimeout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  return AcquireWithTimeout(txn, lock_map, stripe, column_family_id, key, env,
-                            timeout, std::move(lock_info));
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  <span class="token keyword">return</span> <span class="token function">AcquireWithTimeout</span><span class="token punctuation">(</span>txn<span class="token punctuation">,</span> lock_map<span class="token punctuation">,</span> stripe<span class="token punctuation">,</span> column_family_id<span class="token punctuation">,</span> key<span class="token punctuation">,</span> env<span class="token punctuation">,</span>
+                            timeout<span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>lock_info<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>主要是三句：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">size_t stripe_num &#x3D; lock_map-&gt;GetStripe(key);
-assert(lock_map-&gt;lock_map_stripes_.size() &gt; stripe_num);
-LockMapStripe* stripe &#x3D; lock_map-&gt;lock_map_stripes_.at(stripe_num);
-LockInfo lock_info(txn-&gt;GetID(), txn-&gt;GetExpirationTime(), exclusive);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp">size_t stripe_num <span class="token operator">=</span> lock_map<span class="token operator">-></span><span class="token function">GetStripe</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">assert</span><span class="token punctuation">(</span>lock_map<span class="token operator">-></span>lock_map_stripes_<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">></span> stripe_num<span class="token punctuation">)</span><span class="token punctuation">;</span>
+LockMapStripe<span class="token operator">*</span> stripe <span class="token operator">=</span> lock_map<span class="token operator">-></span>lock_map_stripes_<span class="token punctuation">.</span><span class="token function">at</span><span class="token punctuation">(</span>stripe_num<span class="token punctuation">)</span><span class="token punctuation">;</span>
+LockInfo <span class="token function">lock_info</span><span class="token punctuation">(</span>txn<span class="token operator">-></span><span class="token function">GetID</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> txn<span class="token operator">-></span><span class="token function">GetExpirationTime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> exclusive<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>然后我们看下 GetStripe() 函数的定义：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">size_t LockMap::GetStripe(const std::string&amp; key) const &#123;
-  assert(num_stripes_ &gt; 0);
-  return FastRange64(GetSliceNPHash64(key), num_stripes_);
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp">size_t <span class="token class-name">LockMap</span><span class="token double-colon punctuation">::</span><span class="token function">GetStripe</span><span class="token punctuation">(</span><span class="token keyword">const</span> std<span class="token double-colon punctuation">::</span>string<span class="token operator">&amp;</span> key<span class="token punctuation">)</span> <span class="token keyword">const</span> <span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>num_stripes_ <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token function">FastRange64</span><span class="token punctuation">(</span><span class="token function">GetSliceNPHash64</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">,</span> num_stripes_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>该函数就是把 key 做了一遍 hash 映射，然后再转换为小于 num_stripes_ 的一个数，也就是致命 key 到底位于哪一个 LockMapStripe 中（实际上是指针，但为了直观就不写 * 了）。</p>
 <p>再来看那三句话，首先通过 GetStripe() 找到 key 所处的 LockMapStripe 在 lock_map_stripes_ 中的下标，然后通过 lock_map_stripes_.at() 取出这个 LockMapStripe。这样一看，猜想应该是合理的。</p>
 <p>明白了三大结构体之后，继续分析 TryLock() 函数，在获取到 LockMapStripe 之后，执行如下代码：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">LockInfo lock_info(txn-&gt;GetID(), txn-&gt;GetExpirationTime(), exclusive);
-int64_t timeout &#x3D; txn-&gt;GetLockTimeout();
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp">LockInfo <span class="token function">lock_info</span><span class="token punctuation">(</span>txn<span class="token operator">-></span><span class="token function">GetID</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> txn<span class="token operator">-></span><span class="token function">GetExpirationTime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> exclusive<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">int64_t</span> timeout <span class="token operator">=</span> txn<span class="token operator">-></span><span class="token function">GetLockTimeout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-return AcquireWithTimeout(txn, lock_map, stripe, column_family_id, key, env,
-                          timeout, std::move(lock_info));<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token keyword">return</span> <span class="token function">AcquireWithTimeout</span><span class="token punctuation">(</span>txn<span class="token punctuation">,</span> lock_map<span class="token punctuation">,</span> stripe<span class="token punctuation">,</span> column_family_id<span class="token punctuation">,</span> key<span class="token punctuation">,</span> env<span class="token punctuation">,</span>
+                          timeout<span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>lock_info<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>它会为当前的事务创建一个 LockInfo，接着进入 AcquireWithTimeout 之中。AcquireWithTimeout 主要是进行 timeout 检查，检查通过之后调用另外的函数进行加锁申请，timeout 检查我们就先跳过。</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; Helper function for TryLock().
-Status PointLockManager::AcquireWithTimeout(
-    PessimisticTransaction* txn, LockMap* lock_map, LockMapStripe* stripe,
-    ColumnFamilyId column_family_id, const std::string&amp; key, Env* env,
-    int64_t timeout, LockInfo&amp;&amp; lock_info) &#123;
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// Helper function for TryLock().</span>
+Status <span class="token class-name">PointLockManager</span><span class="token double-colon punctuation">::</span><span class="token function">AcquireWithTimeout</span><span class="token punctuation">(</span>
+    PessimisticTransaction<span class="token operator">*</span> txn<span class="token punctuation">,</span> LockMap<span class="token operator">*</span> lock_map<span class="token punctuation">,</span> LockMapStripe<span class="token operator">*</span> stripe<span class="token punctuation">,</span>
+    ColumnFamilyId column_family_id<span class="token punctuation">,</span> <span class="token keyword">const</span> std<span class="token double-colon punctuation">::</span>string<span class="token operator">&amp;</span> key<span class="token punctuation">,</span> Env<span class="token operator">*</span> env<span class="token punctuation">,</span>
+    <span class="token keyword">int64_t</span> timeout<span class="token punctuation">,</span> LockInfo<span class="token operator">&amp;&amp;</span> lock_info<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
   
-  &#x2F;&#x2F; ... timeout 检查
-  &#x2F;&#x2F; 申请加锁
-  result &#x3D; AcquireLocked(lock_map, stripe, key, env, std::move(lock_info),
-                         &amp;expire_time_hint, &amp;wait_ids);
-  &#x2F;&#x2F; ... 根据 result 继续操作
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  <span class="token comment">// ... timeout 检查</span>
+  <span class="token comment">// 申请加锁</span>
+  result <span class="token operator">=</span> <span class="token function">AcquireLocked</span><span class="token punctuation">(</span>lock_map<span class="token punctuation">,</span> stripe<span class="token punctuation">,</span> key<span class="token punctuation">,</span> env<span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>lock_info<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                         <span class="token operator">&amp;</span>expire_time_hint<span class="token punctuation">,</span> <span class="token operator">&amp;</span>wait_ids<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment">// ... 根据 result 继续操作</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>AcquireWithTimeout 通过 timeout 检查之后，调用 AcquireLocked 申请加锁。注意一下函数传入的最后一个参数 wait_ids，或者说变量 wait_ids。它用来指明当前事务正在等待哪些事务，可以通过它来表示事务之间的等待顺序，从而检测环路，避免死锁，这个后面会说。</p>
 <p>重点来了，进入 AcquireLocked，看看锁是怎么加的。</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; Try to lock this key after we have acquired the mutex.
-&#x2F;&#x2F; Sets *expire_time to the expiration time in microseconds
-&#x2F;&#x2F;  or 0 if no expiration.
-&#x2F;&#x2F; REQUIRED:  Stripe mutex must be held.
-Status PointLockManager::AcquireLocked(LockMap* lock_map, LockMapStripe* stripe,
-                                       const std::string&amp; key, Env* env,
-                                       LockInfo&amp;&amp; txn_lock_info,
-                                       uint64_t* expire_time,
-                                       autovector&lt;TransactionID&gt;* txn_ids) &#123;
-  assert(txn_lock_info.txn_ids.size() &#x3D;&#x3D; 1);
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// Try to lock this key after we have acquired the mutex.</span>
+<span class="token comment">// Sets *expire_time to the expiration time in microseconds</span>
+<span class="token comment">//  or 0 if no expiration.</span>
+<span class="token comment">// REQUIRED:  Stripe mutex must be held.</span>
+Status <span class="token class-name">PointLockManager</span><span class="token double-colon punctuation">::</span><span class="token function">AcquireLocked</span><span class="token punctuation">(</span>LockMap<span class="token operator">*</span> lock_map<span class="token punctuation">,</span> LockMapStripe<span class="token operator">*</span> stripe<span class="token punctuation">,</span>
+                                       <span class="token keyword">const</span> std<span class="token double-colon punctuation">::</span>string<span class="token operator">&amp;</span> key<span class="token punctuation">,</span> Env<span class="token operator">*</span> env<span class="token punctuation">,</span>
+                                       LockInfo<span class="token operator">&amp;&amp;</span> txn_lock_info<span class="token punctuation">,</span>
+                                       <span class="token keyword">uint64_t</span><span class="token operator">*</span> expire_time<span class="token punctuation">,</span>
+                                       autovector<span class="token operator">&lt;</span>TransactionID<span class="token operator">></span><span class="token operator">*</span> txn_ids<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token function">assert</span><span class="token punctuation">(</span>txn_lock_info<span class="token punctuation">.</span>txn_ids<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-  Status result;
-  &#x2F;&#x2F; Check if this key is already locked
-  auto stripe_iter &#x3D; stripe-&gt;keys.find(key);
-  if (stripe_iter !&#x3D; stripe-&gt;keys.end()) &#123;
-    &#x2F;&#x2F; Lock already held
-    LockInfo&amp; lock_info &#x3D; stripe_iter-&gt;second;
-    assert(lock_info.txn_ids.size() &#x3D;&#x3D; 1 || !lock_info.exclusive);
+  Status result<span class="token punctuation">;</span>
+  <span class="token comment">// Check if this key is already locked</span>
+  <span class="token keyword">auto</span> stripe_iter <span class="token operator">=</span> stripe<span class="token operator">-></span>keys<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>stripe_iter <span class="token operator">!=</span> stripe<span class="token operator">-></span>keys<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">// Lock already held</span>
+    LockInfo<span class="token operator">&amp;</span> lock_info <span class="token operator">=</span> stripe_iter<span class="token operator">-></span>second<span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>lock_info<span class="token punctuation">.</span>txn_ids<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">1</span> <span class="token operator">||</span> <span class="token operator">!</span>lock_info<span class="token punctuation">.</span>exclusive<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-    if (lock_info.exclusive || txn_lock_info.exclusive) &#123;
-      if (lock_info.txn_ids.size() &#x3D;&#x3D; 1 &amp;&amp;
-          lock_info.txn_ids[0] &#x3D;&#x3D; txn_lock_info.txn_ids[0]) &#123;
-        &#x2F;&#x2F; The list contains one txn and we&#39;re it, so just take it.
-        lock_info.exclusive &#x3D; txn_lock_info.exclusive;
-        lock_info.expiration_time &#x3D; txn_lock_info.expiration_time;
-      &#125; else &#123;
-        &#x2F;&#x2F; Check if it&#39;s expired. Skips over txn_lock_info.txn_ids[0] in case
-        &#x2F;&#x2F; it&#39;s there for a shared lock with multiple holders which was not
-        &#x2F;&#x2F; caught in the first case.
-        if (IsLockExpired(txn_lock_info.txn_ids[0], lock_info, env,
-                          expire_time)) &#123;
-          &#x2F;&#x2F; lock is expired, can steal it
-          lock_info.txn_ids &#x3D; txn_lock_info.txn_ids;
-          lock_info.exclusive &#x3D; txn_lock_info.exclusive;
-          lock_info.expiration_time &#x3D; txn_lock_info.expiration_time;
-          &#x2F;&#x2F; lock_cnt does not change
-        &#125; else &#123;
-          result &#x3D; Status::TimedOut(Status::SubCode::kLockTimeout);
-          *txn_ids &#x3D; lock_info.txn_ids;
-        &#125;
-      &#125;
-    &#125; else &#123;
-      &#x2F;&#x2F; We are requesting shared access to a shared lock, so just grant it.
-      lock_info.txn_ids.push_back(txn_lock_info.txn_ids[0]);
-      &#x2F;&#x2F; Using std::max means that expiration time never goes down even when
-      &#x2F;&#x2F; a transaction is removed from the list. The correct solution would be
-      &#x2F;&#x2F; to track expiry for every transaction, but this would also work for
-      &#x2F;&#x2F; now.
-      lock_info.expiration_time &#x3D;
-          std::max(lock_info.expiration_time, txn_lock_info.expiration_time);
-    &#125;
-  &#125; else &#123;  &#x2F;&#x2F; Lock not held.
-    &#x2F;&#x2F; Check lock limit
-    if (max_num_locks_ &gt; 0 &amp;&amp;
-        lock_map-&gt;lock_cnt.load(std::memory_order_acquire) &gt;&#x3D; max_num_locks_) &#123;
-      result &#x3D; Status::Busy(Status::SubCode::kLockLimit);
-    &#125; else &#123;
-      &#x2F;&#x2F; acquire lock
-      stripe-&gt;keys.emplace(key, std::move(txn_lock_info));
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>lock_info<span class="token punctuation">.</span>exclusive <span class="token operator">||</span> txn_lock_info<span class="token punctuation">.</span>exclusive<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>lock_info<span class="token punctuation">.</span>txn_ids<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">1</span> <span class="token operator">&amp;&amp;</span>
+          lock_info<span class="token punctuation">.</span>txn_ids<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">==</span> txn_lock_info<span class="token punctuation">.</span>txn_ids<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// The list contains one txn and we're it, so just take it.</span>
+        lock_info<span class="token punctuation">.</span>exclusive <span class="token operator">=</span> txn_lock_info<span class="token punctuation">.</span>exclusive<span class="token punctuation">;</span>
+        lock_info<span class="token punctuation">.</span>expiration_time <span class="token operator">=</span> txn_lock_info<span class="token punctuation">.</span>expiration_time<span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// Check if it's expired. Skips over txn_lock_info.txn_ids[0] in case</span>
+        <span class="token comment">// it's there for a shared lock with multiple holders which was not</span>
+        <span class="token comment">// caught in the first case.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">IsLockExpired</span><span class="token punctuation">(</span>txn_lock_info<span class="token punctuation">.</span>txn_ids<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> lock_info<span class="token punctuation">,</span> env<span class="token punctuation">,</span>
+                          expire_time<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+          <span class="token comment">// lock is expired, can steal it</span>
+          lock_info<span class="token punctuation">.</span>txn_ids <span class="token operator">=</span> txn_lock_info<span class="token punctuation">.</span>txn_ids<span class="token punctuation">;</span>
+          lock_info<span class="token punctuation">.</span>exclusive <span class="token operator">=</span> txn_lock_info<span class="token punctuation">.</span>exclusive<span class="token punctuation">;</span>
+          lock_info<span class="token punctuation">.</span>expiration_time <span class="token operator">=</span> txn_lock_info<span class="token punctuation">.</span>expiration_time<span class="token punctuation">;</span>
+          <span class="token comment">// lock_cnt does not change</span>
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+          result <span class="token operator">=</span> <span class="token class-name">Status</span><span class="token double-colon punctuation">::</span><span class="token function">TimedOut</span><span class="token punctuation">(</span>Status<span class="token double-colon punctuation">::</span>SubCode<span class="token double-colon punctuation">::</span>kLockTimeout<span class="token punctuation">)</span><span class="token punctuation">;</span>
+          <span class="token operator">*</span>txn_ids <span class="token operator">=</span> lock_info<span class="token punctuation">.</span>txn_ids<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+      <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+      <span class="token comment">// We are requesting shared access to a shared lock, so just grant it.</span>
+      lock_info<span class="token punctuation">.</span>txn_ids<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>txn_lock_info<span class="token punctuation">.</span>txn_ids<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment">// Using std::max means that expiration time never goes down even when</span>
+      <span class="token comment">// a transaction is removed from the list. The correct solution would be</span>
+      <span class="token comment">// to track expiry for every transaction, but this would also work for</span>
+      <span class="token comment">// now.</span>
+      lock_info<span class="token punctuation">.</span>expiration_time <span class="token operator">=</span>
+          std<span class="token double-colon punctuation">::</span><span class="token function">max</span><span class="token punctuation">(</span>lock_info<span class="token punctuation">.</span>expiration_time<span class="token punctuation">,</span> txn_lock_info<span class="token punctuation">.</span>expiration_time<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>  <span class="token comment">// Lock not held.</span>
+    <span class="token comment">// Check lock limit</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>max_num_locks_ <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span>
+        lock_map<span class="token operator">-></span>lock_cnt<span class="token punctuation">.</span><span class="token function">load</span><span class="token punctuation">(</span>std<span class="token double-colon punctuation">::</span>memory_order_acquire<span class="token punctuation">)</span> <span class="token operator">>=</span> max_num_locks_<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      result <span class="token operator">=</span> <span class="token class-name">Status</span><span class="token double-colon punctuation">::</span><span class="token function">Busy</span><span class="token punctuation">(</span>Status<span class="token double-colon punctuation">::</span>SubCode<span class="token double-colon punctuation">::</span>kLockLimit<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+      <span class="token comment">// acquire lock</span>
+      stripe<span class="token operator">-></span>keys<span class="token punctuation">.</span><span class="token function">emplace</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span><span class="token function">move</span><span class="token punctuation">(</span>txn_lock_info<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-      &#x2F;&#x2F; Maintain lock count if there is a limit on the number of locks
-      if (max_num_locks_) &#123;
-        lock_map-&gt;lock_cnt++;
-      &#125;
-    &#125;
-  &#125;
+      <span class="token comment">// Maintain lock count if there is a limit on the number of locks</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>max_num_locks_<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        lock_map<span class="token operator">-></span>lock_cnt<span class="token operator">++</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
 
-  return result;
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <ol>
 <li>通过 LockMapStripe 来判断这个 key 是否已经被加锁了，如果是，进入2，如果否，进入 6。</li>
@@ -1217,30 +1217,30 @@ Status PointLockManager::AcquireLocked(LockMap* lock_map, LockMapStripe* stripe,
 </ol>
 <p>至此，加锁申请完毕，对锁的大致流程也有了一定的了解。</p>
 <p>实际上，上述流程是以 CF 为单位的，一个 CF 拥有一个 LockMap。</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">class PointLockManager : public LockManager &#123;
-  &#x2F;&#x2F; ...
- private:
-  &#x2F;&#x2F; ...
-  &#x2F;&#x2F; Map of ColumnFamilyId to locked key info
-  using LockMaps &#x3D; UnorderedMap&lt;uint32_t, std::shared_ptr&lt;LockMap&gt;&gt;;
-  LockMaps lock_maps_;
-  &#x2F;&#x2F; ...
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">PointLockManager</span> <span class="token operator">:</span> <span class="token base-clause"><span class="token keyword">public</span> <span class="token class-name">LockManager</span></span> <span class="token punctuation">&#123;</span>
+  <span class="token comment">// ...</span>
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token comment">// ...</span>
+  <span class="token comment">// Map of ColumnFamilyId to locked key info</span>
+  <span class="token keyword">using</span> LockMaps <span class="token operator">=</span> UnorderedMap<span class="token operator">&lt;</span><span class="token keyword">uint32_t</span><span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>shared_ptr<span class="token operator">&lt;</span>LockMap<span class="token operator">>></span><span class="token punctuation">;</span>
+  LockMaps lock_maps_<span class="token punctuation">;</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>接下来关注 wait_ids。当 AcquireWithTimeout 调用完 AcquireLocked 之后，在后续执行了如下一段代码：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; We are dependent on a transaction to finish, so perform deadlock
-&#x2F;&#x2F; detection.
-if (wait_ids.size() !&#x3D; 0) &#123;
-    if (txn-&gt;IsDeadlockDetect()) &#123;
-        if (IncrementWaiters(txn, wait_ids, key, column_family_id,
-                             lock_info.exclusive, env)) &#123;
-            result &#x3D; Status::Busy(Status::SubCode::kDeadlock);
-            stripe-&gt;stripe_mutex-&gt;UnLock();
-            return result;
-        &#125;
-    &#125;
-    txn-&gt;SetWaitingTxn(wait_ids, column_family_id, &amp;key);
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// We are dependent on a transaction to finish, so perform deadlock</span>
+<span class="token comment">// detection.</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>wait_ids<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>txn<span class="token operator">-></span><span class="token function">IsDeadlockDetect</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">IncrementWaiters</span><span class="token punctuation">(</span>txn<span class="token punctuation">,</span> wait_ids<span class="token punctuation">,</span> key<span class="token punctuation">,</span> column_family_id<span class="token punctuation">,</span>
+                             lock_info<span class="token punctuation">.</span>exclusive<span class="token punctuation">,</span> env<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            result <span class="token operator">=</span> <span class="token class-name">Status</span><span class="token double-colon punctuation">::</span><span class="token function">Busy</span><span class="token punctuation">(</span>Status<span class="token double-colon punctuation">::</span>SubCode<span class="token double-colon punctuation">::</span>kDeadlock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            stripe<span class="token operator">-></span>stripe_mutex<span class="token operator">-></span><span class="token function">UnLock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    txn<span class="token operator">-></span><span class="token function">SetWaitingTxn</span><span class="token punctuation">(</span>wait_ids<span class="token punctuation">,</span> column_family_id<span class="token punctuation">,</span> <span class="token operator">&amp;</span>key<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>可以看到，函数通过 wait_ids 维护的事务等待队列来进行死锁检测。死锁检测的核心函数即为 IncrementWaiters()，其定义我们暂且先不看，后续会专门总结一篇博客分析 RocksDB 检测死锁的实现。</p>
 
