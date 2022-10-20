@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    6.7k
+                    6.9k
                 </div>
                 
 
@@ -954,13 +954,19 @@ Status OptimisticTransaction::CheckTransactionForConflicts(DB* db) &#123;
 <p>接着，internl_key 会被封装为 memtable_key，与 memtable_value（这个结构我还没找到在哪）一起组成 &lt;key, value&gt; 写进 memtable 中。整个 &lt;key, value&gt; 结构如下：</p>
 <p><img src="https://s1.ax1x.com/2022/10/18/xrMd8x.png" alt="memtable中的&lt;key,value&gt;"></p>
 <p>对于同样的 user_key 记录，在 RocksDB 中可能存在多条，但他们的 sequence number 不同。</p>
+<p>以我的理解，seq 的主要作用如下：</p>
+<ul>
+<li>区分对同一个 key 的所有操作的先后顺序；</li>
+<li>用于快照；</li>
+<li>无需加锁了；</li>
+</ul>
 <h4 id="time-stamp-since-v6-6-4"><a href="#time-stamp-since-v6-6-4" class="headerlink" title="time stamp (since v6.6.4)"></a>time stamp (since v6.6.4)</h4><p>自从 v6.6.4 开始，InternalKey 就加入了 ts 来进行多版本并发控制了。</p>
 <pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">InternalKey(const Slice&amp; _user_key, SequenceNumber s, ValueType t, Slice ts) &#123;
     AppendInternalKeyWithDifferentTimestamp(
         &amp;rep_, ParsedInternalKey(_user_key, s, t), ts);
 &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>但是 ParsedInternalKey 的结构并没有变，只是在转化为 string 时，多整合了一个 ts。</p>
+<p>但是 ParsedInternalKey 的字段并没有变，只是在转化为 string 时，多整合了一个 ts，且是整合进 user_key 中。</p>
 <pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void AppendInternalKeyWithDifferentTimestamp(std::string* result,
                                              const ParsedInternalKey&amp; key,
                                              const Slice&amp; ts) &#123;
@@ -970,12 +976,22 @@ Status OptimisticTransaction::CheckTransactionForConflicts(DB* db) &#123;
   PutFixed64(result, PackSequenceAndType(key.sequence, key.type));
 &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
+<p>注意到，虽然加上了 ts，但 ts 使用的是原来 user_key 的末尾空间，也就是 internal_key 的大小并没有变，只是在 user_key 的末尾部分整合上了 ts。同时，在 ParsedInternalKey 中也加入了新的函数，名为 SetTimestamp() ，其功能就是把 ts 整合进 user_key 的末尾成为新的 user_key。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">struct ParsedInternalKey &#123;
+  &#x2F;&#x2F; ...
+  void SetTimestamp(const Slice&amp; ts) &#123;
+    assert(ts.size() &lt;&#x3D; user_key.size());
+    const char* addr &#x3D; user_key.data() + user_key.size() - ts.size();
+    memcpy(const_cast&lt;char*&gt;(addr), ts.data(), ts.size());
+  &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
 <p>这样一来，InternalKey 的结构就变成了下面这样：</p>
-<img src="https://s1.ax1x.com/2022/10/19/xyPrhF.png" alt="新的InternalKey " style="zoom: 50%;" />
+<img src="https://s1.ax1x.com/2022/10/20/xy7qbj.png" alt="xy7qbj.png" style="zoom: 50%;" />
 
 <p>至于为什么要引入 ts，我现在也没有搞清除。但可以确定的是，它是用来解决并发冲突的，ts 可以充当 version，用来表明每一个记录的产生时间，从而区分出并发事务的先后。可以猜想，seq 做不到的一些并发控制，致使了 ts 的出现。但至于怎么用，这要到后面具体研究读写源码时才能清除，现在我也不知道。</p>
 <p>同样的，既然 InternalKey _key 被加上了 ts，那么 memtale_key 中的 internal_key 也要加上对应的 ts。</p>
-<p><img src="https://s1.ax1x.com/2022/10/19/xyPXHP.png" alt="新的MemtableKey"></p>
+<p><img src="https://s1.ax1x.com/2022/10/20/xyTUtP.png" alt="新的&lt;key, value&gt;"></p>
 <h4 id="snapshot"><a href="#snapshot" class="headerlink" title="snapshot"></a>snapshot</h4><p>snapshot 是 RocksDB 的快照信息，它实际就是对应一个 sequence number 。简单来讲，假设 snapshot 的 sequence number 为 sa，那么对于此 snapshot 来说，只能看到 sequence number &lt;= sa 的记录，其余的均看不见。</p>
 <p>snapshot 没有复杂的类继承关系，主要就一条 Snapshot —&gt; SnapshotImpl。</p>
 <p><img src="https://s1.ax1x.com/2022/10/18/xrQARx.png" alt="snapshot类关系"></p>

@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    3.1k
+                    5.8k
                 </div>
                 
 
@@ -558,8 +558,8 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <p>还没写完。</p>
-<p>RocksDB 的所有对记录 delete 和 update 操作，都不是就地删或者就地更新，而是新增一个记录表示这个操作，而这个记录也是一个 &lt;k, v&gt;，和其他所有的 &lt;k, v&gt; 按照同样的方式存储。看完 <a target="_blank" rel="noopener" href="https://yesiyuan.cn/">RocksDB源码学习(一)</a> 那一章就知道，key 实际上是存在 user_key =&gt; internal_key =&gt; memetable_key 这一个转化过程的，从 internl_key 开始，就可以通过 valueType 部分区分出这个 &lt;k, v&gt; 具体是什么操作类型，是插入、删除、更新还是别的什么。很直观的来看，我们只需要读取插入和更新的 &lt;k, v&gt;，删除的 &lt;k, v&gt; 就不用管了。</p>
+                <p>注：本篇博客所用代码版本均为 <code>v7.7.3</code>。</p>
+<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>RocksDB 的所有对记录 delete 和 update 操作，都不是就地删或者就地更新，而是新增一个记录表示这个操作，而这个记录也是一个 &lt;k, v&gt;，和其他所有的 &lt;k, v&gt; 按照同样的方式存储。看完 <a target="_blank" rel="noopener" href="https://yesiyuan.cn/">RocksDB源码学习(一)</a> 那一章就知道，key 实际上是存在 user_key =&gt; internal_key =&gt; memetable_key 这一个转化过程的，从 internl_key 开始，就可以通过 valueType 部分区分出这个 &lt;k, v&gt; 具体是什么操作类型，是插入、删除、更新还是别的什么。很直观的来看，我们只需要读取插入和更新的 &lt;k, v&gt;，删除的 &lt;k, v&gt; 就不用管了。</p>
 <pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">enum ValueType : unsigned char &#123;
   kTypeDeletion &#x3D; 0x0,
   kTypeValue &#x3D; 0x1,  &#x2F;&#x2F; 这个就是 put，表示插入或更新，即这个值是要读的
@@ -567,25 +567,43 @@
   &#x2F;&#x2F; ...
 &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>同一个 key 通过 sequence num 区分不同记录的时间先后，就像一个时间戳一样。而我们的读操作，实际上就是如何读到一个 key 最新的记录，而且是带数据的记录。RocksDB中，数据是保存在两个地方，一个是 memtable（内存），一个是 sstable（磁盘），因此 RocksDB 读数据也是依次从这两个地方读取.</p>
+<p>同一个 key 通过 sequence num 区分不同记录的时间先后，就像一个时间戳一样。而我们的读操作，实际上就是如何读到一个 key 最新的记录，而且是带数据的记录。RocksDB中，数据是保存在两个地方，一个是 memtable（内存），一个是 sstable（磁盘），RocksDB 读数据也是主要从这两个地方读取。</p>
 <ul>
-<li><strong>memtable</strong>：在 RocksDB 中 memtable 的默认实现是 skiplist，RocksDB 会将用户传入的 user_key 改变为memtable 内部的 key（internal_key_size+internal_key），然后再加上用户传入的 value 之后，作为一个element 加入到 skiplist，而我们读取的时候需要读取到最新的那条数据。</li>
-<li><strong>sstable</strong>：除 L0 层之外，记录在每一层中有序，排序的依据依次是 user_key 升序，sequence num 降序，type 降序。除 L0 层之外，每一层中的各 sstable 所存储的 key 范围不会重叠，但 L0 层可能出现重叠。因此，在 L0 需要读取所有 sstable，在其他层只要读到一个就行。</li>
+<li><p><strong>writebatch</strong>：如果仍有 writebatch 还没有 commit，那么就先在这读，没读到在进入 DB 中读取。</p>
+</li>
+<li><p><strong>memtable</strong>：在 RocksDB 中 memtable 的默认实现是 skiplist，RocksDB 会将用户传入的 user_key 改变为memtable 内部的 key（internal_key_size+internal_key），然后再加上用户传入的 value 之后，作为一个element 加入到 skiplist，而我们读取的时候需要读取到最新的那条数据。</p>
+</li>
+<li><p><strong>sstable</strong>：除 L0 层之外，记录在每一层中有序，排序的依据依次是 user_key 升序，sequence num 降序，type 降序。除 L0 层之外，每一层中的各 sstable 所存储的 key 范围不会重叠，但 L0 层可能出现重叠。因此，在 L0 需要读取所有 sstable，在其他层只要读到一个就行。</p>
+</li>
 </ul>
-<p>本篇博客只讨论在 memtable 中的读取。</p>
+<p>本篇博客分析读操作的框架以及在 memtable 中的读取，着急看结论可以直接跳到最后一张图。</p>
 <hr>
-<p>我们知道，用户显示传入的 key 只是 user_key，它需要先被转换为 internal_key，其格式如下：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">user_key + sequence + type<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h3 id="从-GetImpl-开始分析"><a href="#从-GetImpl-开始分析" class="headerlink" title="从 GetImpl 开始分析"></a>从 GetImpl 开始分析</h3><p>我们知道，用户显示传入的 key 只是 user_key，它需要先被转换为 internal_key，其格式有两种，如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">user_key + sequence + type;
+(user_key + ts) + sequence + type; &#x2F;&#x2F; (since v6.6.4)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <p>转换函数为：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">InternalKey(const Slice&amp; _user_key, SequenceNumber s, ValueType t, Slice ts) &#123;
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">InternalKey(const Slice&amp; _user_key, SequenceNumber s, ValueType t) &#123;
+    AppendInternalKey(&amp;rep_, ParsedInternalKey(_user_key, s, t));
+&#125;
+InternalKey(const Slice&amp; _user_key, SequenceNumber s, ValueType t, Slice ts) &#123;
     AppendInternalKeyWithDifferentTimestamp(
         &amp;rep_, ParsedInternalKey(_user_key, s, t), ts);
 &#125;
+
 void AppendInternalKey(std::string* result, const ParsedInternalKey&amp; key) &#123;
-  result-&gt;append(key.user_key.data(), key.user_key.size());
-  PutFixed64(result, PackSequenceAndType(key.sequence, key.type));
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+    result-&gt;append(key.user_key.data(), key.user_key.size());
+    PutFixed64(result, PackSequenceAndType(key.sequence, key.type));
+&#125;
+
+void AppendInternalKeyWithDifferentTimestamp(std::string* result,
+                                             const ParsedInternalKey&amp; key,
+                                             const Slice&amp; ts) &#123;
+    assert(key.user_key.size() &gt;&#x3D; ts.size());
+    result-&gt;append(key.user_key.data(), key.user_key.size() - ts.size());
+    result-&gt;append(ts.data(), ts.size());
+    PutFixed64(result, PackSequenceAndType(key.sequence, key.type));
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>我们知道，RocksDB 按照 user_key 升序，seq 降序，type 降序，三者优先级依次降低的方式组织 internal_key。因此，只要读取到对应 user_key 的最大 seq，就算读取成功。internal_key 的比较器如下所示，返回 0 表示 a == b，-1 表示 a &lt; b，+1 表示 a &gt; b。</p>
 <pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">int InternalKeyComparator::Compare(const ParsedInternalKey&amp; a,
@@ -609,7 +627,7 @@ void AppendInternalKey(std::string* result, const ParsedInternalKey&amp; key) &#
   return r;
 &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>当用户想要查找 user_key 时，RocksDB 会首先为本次查找构建一个 LookupKey，该类会在 DBImpl::Get() 中用的。LookupKey 和普通的 key 差不多，也是存在 user_key、 internal_key 和 memtable_key 的形式，其源码如下：</p>
+<h4 id="LookupKey"><a href="#LookupKey" class="headerlink" title="LookupKey"></a>LookupKey</h4><p>当用户想要查找 user_key 时，RocksDB 会首先为本次查找构建一个 LookupKey，该类会在 DBImpl::Get() 中用的。LookupKey 和普通的 key 差不多，也是存在 user_key、 internal_key 和 memtable_key 的形式，其源码如下：</p>
 <pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; A helper class useful for DBImpl::Get()
 class LookupKey &#123;
  public:
@@ -776,7 +794,8 @@ class LookupKey &#123;
   &#x2F;&#x2F;...
 &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>在截取的这部分代码中，会首先通过 bloom_filter 进行存在性检查，如果得到了阴性，那么就不会在往下进行读操作了，如果得到了阳性，那么就调用 MemTable::GetFromTable() 来进一步读取。所以，Get() 的核心就是使用 bloom_filter 进行存在性检查，之后的读操作由 GetFromTable() 来完成。函数完整代码如下：</p>
+<p>在截取的这部分代码中，会首先通过 bloom_filter 进行存在性检查，如果得到了阴性，那么就不会在往下进行读操作了，如果得到了阳性，那么就调用 MemTable::GetFromTable() 来进一步读取。所以，Get() 的核心就是使用 bloom_filter 进行存在性检查，之后的读操作由 GetFromTable() 来完成。</p>
+<h4 id="Saver"><a href="#Saver" class="headerlink" title="Saver"></a>Saver</h4><p>GetFromTable() 的完整代码如下：</p>
 <pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void MemTable::GetFromTable(const LookupKey&amp; key,
                             SequenceNumber max_covering_tombstone_seq,
                             bool do_merge, ReadCallback* callback,
@@ -851,7 +870,7 @@ saver.seq &#x3D; kMaxSequenceNumber;
 saver.mem &#x3D; this;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>其中，saver.key 就是传入的 LookupKey，saver.value 就是要保存值的地址，saver.mem 就是当前的 MemTable 类。需要注意的是，saver.seq 被设置为了 kMaxSequenceNumber，即最大的 seq。</p>
-<p>接下来，查看 MemTable::Get()，其完整代码如下：</p>
+<h4 id="MemTableRep"><a href="#MemTableRep" class="headerlink" title="MemTableRep"></a>MemTableRep</h4><p>接下来，查看 MemTable::Get()，其完整代码如下：</p>
 <pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void MemTableRep::Get(const LookupKey&amp; k, void* callback_args,
                       bool (*callback_func)(void* arg, const char* entry)) &#123;
   auto iter &#x3D; GetDynamicPrefixIterator();
@@ -880,8 +899,12 @@ saver.mem &#x3D; this;<span aria-hidden="true" class="line-numbers-rows"><span><
 
 <p>每个派生均有自己的迭代器，而 RocksDB 默认使用 SkipList，即 table_ 实际指向 SkipListRep 对象。</p>
 <p><img src="https://s1.ax1x.com/2022/10/19/xsTi8S.png" alt="迭代器的不同实现"></p>
-<p>迭代器的具体实现这里先不说，后续会专门进行 SkipList 的源码分析，那篇博客里会细说。但是不论怎么实现的， Seek() 和 Next() 的功能都是一致的，只是性能的差异罢了。继续回到 MemTableRep::Get() 中，有两个关键点，一个是 iter —&gt; Seek()，一个是 callback_func()，我们一个一个分析。</p>
-<p>iter —&gt; Seek() 传递了两个参数，internal_key 和 memtable_key，也就是 kstart_ 和 start_。为了搞清楚这两个成员的内容，我们进入 LookupKey 的构造函数中看一看：</p>
+<p>迭代器的具体实现这里先不说，后续会专门进行 SkipList 的源码分析，那篇博客里会细说。但是不论怎么实现的， Seek() 和 Next() 的功能都是一致的，只是性能的差异罢了。继续回到 MemTableRep::Get() 中，有两个关键问题，我们一个一个分析。</p>
+<ul>
+<li>iter —&gt; Seek()</li>
+<li>callback_func()</li>
+</ul>
+<h5 id="iter-gt-Seek"><a href="#iter-gt-Seek" class="headerlink" title="iter -&gt; Seek()"></a>iter -&gt; Seek()</h5><p>iter —&gt; Seek() 传递了两个参数，internal_key 和 memtable_key，也就是 kstart_ 和 start_。为了搞清楚这两个成员的内容，我们进入 LookupKey 的构造函数中看一看：</p>
 <pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">LookupKey::LookupKey(const Slice&amp; _user_key, SequenceNumber s,
                      const Slice* ts) &#123;
   size_t usize &#x3D; _user_key.size();
@@ -908,8 +931,235 @@ saver.mem &#x3D; this;<span aria-hidden="true" class="line-numbers-rows"><span><
   end_ &#x3D; dst;
 &#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
+<p>很明显，internal_key 就是 kstart_ ，memtable_key 就是start_。同样，LookupKey 也会选择是否给 internal_key 加上 ts，注意以下三行：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">if (nullptr !&#x3D; ts) &#123;
+    memcpy(dst, ts-&gt;data(), ts_sz);
+    dst +&#x3D; ts_sz;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
+<p>其中，ts 由 readoptions 决定，为 readoption.timestamp。在 ReadOptions 结构体中，对该字段有如下注释：</p>
+<blockquote>
+<p>Timestamp of operation. Read should return the latest data visible to the specified timestamp. All timestamps of the same database must be of the same length and format. The user is responsible for providing a customized compare function via Comparator to order &lt;key, timestamp&gt; tuples.<br>For iterator, iter_start_ts is the lower bound (older) and timestamp serves as the upper bound. Versions of the same record that fall in the timestamp range will be returned. If iter_start_ts is nullptr, only the most recent version visible to timestamp is returned. The user-specified timestamp feature is still under active development, and the API is subject to change.<br>Default: nullptr</p>
+</blockquote>
+<p>前两句话就解释了它的作用。在读取时，可以提供一个 timestamp，然后读取操作只会返回 key 在该 ts 可见范围内最新的记录，也就是 ts 可见的且 seq 最大的记录。那么问题来了，什么叫 ts 可见？这个我现在还没弄清，猜测是小于等于 ts 的都可见，即在该时间点之前就已经成功提交的记录。</p>
+<p>讨论完 ts，来看一下 type，可以看到其值为 kValueTypeForSeek，官方对它的介绍如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; kValueTypeForSeek defines the ValueType that should be passed when
+&#x2F;&#x2F; constructing a ParsedInternalKey object for seeking to a particular
+&#x2F;&#x2F; sequence number (since we sort sequence numbers in decreasing order
+&#x2F;&#x2F; and the value type is embedded as the low 8 bits in the sequence
+&#x2F;&#x2F; number in internal keys, we need to use the highest-numbered
+&#x2F;&#x2F; ValueType, not the lowest).
+const ValueType kValueTypeForSeek &#x3D; kTypeWideColumnEntity;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
+<p>可以看到，它是所有 type 中最大的一个，值为 0x16。为什么要这么做呢？因为 type 是降序排列的，所以当 user_key、seq 都确定时，只有将 type 设为最大，LookupKey 才能成为最小的 key，然后开始向其他 type 的 key 迭代。</p>
+<img src="https://s1.ax1x.com/2022/10/20/xyquHH.png" alt="简单示例" style="zoom: 67%;" />
+
+<p>接着我们来分析源码，看看 Seek() 函数，位于 <code>memtable/skiplistrep.cc</code>。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; Advance to the first entry with a key &gt;&#x3D; target
+void Seek(const Slice&amp; user_key, const char* memtable_key) override &#123;
+    if (memtable_key !&#x3D; nullptr) &#123;
+        iter_.Seek(memtable_key);
+    &#125; else &#123;
+        iter_.Seek(EncodeKey(&amp;tmp_, user_key));
+    &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>先说明一点，第一个形参虽然叫 user_key，但它实际上是 LookupKey 的 internal_key。但是我们只考虑 memtable_key 不为空的情况下，即一般情况，所以 internal_key 没用了。一直追踪下去，发现它最后会调用 SkipList 的查找函数，名为 InlineSkipList&lt; Comparator &gt;::FindGreaterOrEqual()，从这一步起，开始正式在 MemTable 中查找记录。函数源码如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">InlineSkipList&lt;Comparator&gt;::FindGreaterOrEqual(const char* key) const &#123;
+  &#x2F;&#x2F; Note: It looks like we could reduce duplication by implementing
+  &#x2F;&#x2F; this function as FindLessThan(key)-&gt;Next(0), but we wouldn&#39;t be able
+  &#x2F;&#x2F; to exit early on equality and the result wouldn&#39;t even be correct.
+  &#x2F;&#x2F; A concurrent insert might occur after FindLessThan(key) but before
+  &#x2F;&#x2F; we get a chance to call Next(0).
+  Node* x &#x3D; head_;
+  int level &#x3D; GetMaxHeight() - 1;
+  Node* last_bigger &#x3D; nullptr;
+  const DecodedKey key_decoded &#x3D; compare_.decode_key(key);
+  while (true) &#123;
+    Node* next &#x3D; x-&gt;Next(level);
+    if (next !&#x3D; nullptr) &#123;
+      PREFETCH(next-&gt;Next(level), 0, 1);
+    &#125;
+    &#x2F;&#x2F; Make sure the lists are sorted
+    assert(x &#x3D;&#x3D; head_ || next &#x3D;&#x3D; nullptr || KeyIsAfterNode(next-&gt;Key(), x));
+    &#x2F;&#x2F; Make sure we haven&#39;t overshot during our search
+    assert(x &#x3D;&#x3D; head_ || KeyIsAfterNode(key_decoded, x));
+    int cmp &#x3D; (next &#x3D;&#x3D; nullptr || next &#x3D;&#x3D; last_bigger)
+                  ? 1
+                  : compare_(next-&gt;Key(), key_decoded);
+    if (cmp &#x3D;&#x3D; 0 || (cmp &gt; 0 &amp;&amp; level &#x3D;&#x3D; 0)) &#123;
+      return next;
+    &#125; else if (cmp &lt; 0) &#123;
+      &#x2F;&#x2F; Keep searching in this list
+      x &#x3D; next;
+    &#125; else &#123;
+      &#x2F;&#x2F; Switch to next list, reuse compare_() result
+      last_bigger &#x3D; next;
+      level--;
+    &#125;
+  &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>我们先不具体分析这段源码，但可以看出它的目的。都知道 SkipList 是多层的结构，迭代起点为最高层的最小节点，然后通过二分慢慢往低层行进。在该函数中，一旦找到了相同的 memtable_key，或者在最底层找到了恰好大于该目标的 memtable_key，那么就返回，否则继续找。SkipList 的逻辑可以看这篇文章：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/9d8296562806">SkipList数据结构</a>。该上段代码中，最为核心的就是 Next() 的实现以及 compare_() 的实现，这就涉及到 RocksDB 是如何实现 SkipList 的了，这里我们先不深入分析，后续会有一篇博客单独分析 SkipList 的源码实现：<a href="xxx">待填坑</a>。</p>
+<p>得到查找结果后，我们还有两个问题需要解决：</p>
+<ol>
+<li>由于 memtable_key 是按照 user_key 是升序排列的，所以上述查找得到的 user_key 可能大于我们目标的 user_key，因此需要判断查找结果的 user_key 是否合目标吻合。</li>
+<li>需要根据 type 的类型来判断这条记录是不是用来读值，如果是 delete 那当然不行。</li>
+</ol>
+<h5 id="SaveValue"><a href="#SaveValue" class="headerlink" title="SaveValue()"></a>SaveValue()</h5><p>callback_func() 就是解决这两个问题的，当然，不止解决他们。</p>
+<p>注意在 MemTable::GetFromTable() 调用 MemTable::Get() 时，传递的参数为 (key, &amp;saver, SaveValue)。因此，callback_func() 实际长这样：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">SaveValue(&amp;saver, iter-&gt;key());<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>SaveValue() 函数比较长，但 switch-case 占了大部分，而且实现逻辑也很简单，这里截取重要的部分：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">static bool SaveValue(void* arg, const char* entry) &#123;
+  Saver* s &#x3D; reinterpret_cast&lt;Saver*&gt;(arg);
+    
+  &#x2F;&#x2F; ...
+    
+  const char* key_ptr &#x3D; GetVarint32Ptr(entry, entry + 5, &amp;key_length);
+  Slice user_key_slice &#x3D; Slice(key_ptr, key_length - 8);
+  const Comparator* user_comparator &#x3D;
+      s-&gt;mem-&gt;GetInternalKeyComparator().user_comparator();
+  size_t ts_sz &#x3D; user_comparator-&gt;timestamp_size();
+  if (ts_sz &amp;&amp; s-&gt;timestamp &amp;&amp; max_covering_tombstone_seq &gt; 0) &#123;
+    &#x2F;&#x2F; timestamp should already be set to range tombstone timestamp
+    assert(s-&gt;timestamp-&gt;size() &#x3D;&#x3D; ts_sz);
+  &#125;
+  if (user_comparator-&gt;EqualWithoutTimestamp(user_key_slice,
+                                             s-&gt;key-&gt;user_key()))&#123;
+    &#x2F;&#x2F; Correct user key
+    const uint64_t tag &#x3D; DecodeFixed64(key_ptr + key_length - 8);
+    ValueType type;
+    SequenceNumber seq;
+    UnPackSequenceAndType(tag, &amp;seq, &amp;type);
+    &#x2F;&#x2F; If the value is not in the snapshot, skip it
+    if (!s-&gt;CheckCallback(seq)) &#123;
+      return true;  &#x2F;&#x2F; to continue to the next seq
+    &#125;
+      
+    &#x2F;&#x2F; ...
+      
+    if (ts_sz &gt; 0 &amp;&amp; s-&gt;timestamp !&#x3D; nullptr) &#123;
+      if (!s-&gt;timestamp-&gt;empty()) &#123;
+        assert(ts_sz &#x3D;&#x3D; s-&gt;timestamp-&gt;size());
+      &#125;
+      &#x2F;&#x2F; TODO optimize for smaller size ts
+      const std::string kMaxTs(ts_sz, &#39;\xff&#39;);
+      if (s-&gt;timestamp-&gt;empty() ||
+          user_comparator-&gt;CompareTimestamp(*(s-&gt;timestamp), kMaxTs) &#x3D;&#x3D; 0) &#123;
+        Slice ts &#x3D; ExtractTimestampFromUserKey(user_key_slice, ts_sz);
+        s-&gt;timestamp-&gt;assign(ts.data(), ts_sz);
+      &#125;
+    &#125;
+    
+    &#x2F;&#x2F; ...
+   
+    switch (type) &#123;
+      &#x2F;&#x2F; ... case xxx
+      case kTypeValue: &#123;
+        if (s-&gt;inplace_update_support) &#123;
+          s-&gt;mem-&gt;GetLock(s-&gt;key-&gt;user_key())-&gt;ReadLock();
+        &#125;
+        Slice v &#x3D; GetLengthPrefixedSlice(key_ptr + key_length);
+        *(s-&gt;status) &#x3D; Status::OK();
+        if (*(s-&gt;merge_in_progress)) &#123;
+          if (s-&gt;do_merge) &#123;
+            if (s-&gt;value !&#x3D; nullptr) &#123;
+              *(s-&gt;status) &#x3D; MergeHelper::TimedFullMerge(
+                  merge_operator, s-&gt;key-&gt;user_key(), &amp;v,
+                  merge_context-&gt;GetOperands(), s-&gt;value, s-&gt;logger,
+                  s-&gt;statistics, s-&gt;clock, nullptr &#x2F;* result_operand *&#x2F;, true);
+            &#125;
+          &#125; else &#123;
+            &#x2F;&#x2F; Preserve the value with the goal of returning it as part of
+            &#x2F;&#x2F; raw merge operands to the user
+            merge_context-&gt;PushOperand(
+                v, s-&gt;inplace_update_support &#x3D;&#x3D; false &#x2F;* operand_pinned *&#x2F;);
+          &#125;
+        &#125; else if (!s-&gt;do_merge) &#123;
+          &#x2F;&#x2F; Preserve the value with the goal of returning it as part of
+          &#x2F;&#x2F; raw merge operands to the user
+          merge_context-&gt;PushOperand(
+              v, s-&gt;inplace_update_support &#x3D;&#x3D; false &#x2F;* operand_pinned *&#x2F;);
+        &#125; else if (s-&gt;value) &#123;
+          if (type !&#x3D; kTypeWideColumnEntity) &#123;
+            assert(type &#x3D;&#x3D; kTypeValue || type &#x3D;&#x3D; kTypeBlobIndex);
+            s-&gt;value-&gt;assign(v.data(), v.size());
+          &#125; else &#123;
+            Slice value;
+            *(s-&gt;status) &#x3D;
+                WideColumnSerialization::GetValueOfDefaultColumn(v, value);
+            if (s-&gt;status-&gt;ok()) &#123;
+              s-&gt;value-&gt;assign(value.data(), value.size());
+            &#125;
+          &#125;
+        &#125; else if (s-&gt;columns) &#123;
+          if (type !&#x3D; kTypeWideColumnEntity) &#123;
+            s-&gt;columns-&gt;SetPlainValue(v);
+          &#125; else &#123;
+            *(s-&gt;status) &#x3D; s-&gt;columns-&gt;SetWideColumnValue(v);
+          &#125;
+        &#125;
+
+        if (s-&gt;inplace_update_support) &#123;
+          s-&gt;mem-&gt;GetLock(s-&gt;key-&gt;user_key())-&gt;ReadUnlock();
+        &#125;
+        *(s-&gt;found_final_value) &#x3D; true;
+        if (s-&gt;is_blob_index !&#x3D; nullptr) &#123;
+          *(s-&gt;is_blob_index) &#x3D; (type &#x3D;&#x3D; kTypeBlobIndex);
+        &#125;
+
+        return false;
+      &#125;
+      case kTypeDeletion:
+      case kTypeDeletionWithTimestamp:
+      case kTypeSingleDeletion:
+      case kTypeRangeDeletion: &#123;
+        if (*(s-&gt;merge_in_progress)) &#123;
+          if (s-&gt;value !&#x3D; nullptr) &#123;
+            *(s-&gt;status) &#x3D; MergeHelper::TimedFullMerge(
+                merge_operator, s-&gt;key-&gt;user_key(), nullptr,
+                merge_context-&gt;GetOperands(), s-&gt;value, s-&gt;logger,
+                s-&gt;statistics, s-&gt;clock, nullptr &#x2F;* result_operand *&#x2F;, true);
+          &#125;
+        &#125; else &#123;
+          *(s-&gt;status) &#x3D; Status::NotFound();
+        &#125;
+        *(s-&gt;found_final_value) &#x3D; true;
+        return false;
+      &#125;
+      case kTypeMerge: &#123;
+          &#x2F;&#x2F; ...
+      &#125;
+    &#125;
+  &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>首先，该函数判断找到的 user_key 是否为目标 user_key，使用的函数为 EqualWithoutTimestamp()，即在不考虑 ts 部分的情况下去比较两个 user_key 是否相同。接着，从找到的 user_key 中将其的 ts 提取出来，赋值给 saver 的 timestamp 字段。</p>
+<p>在 switch-case 代码中，要注意，<strong>没有 break</strong>。</p>
+<p>在 switch-case 代码中，我们先看 delete 相关。kTypeDeletion、kTypeDeletionWithTimestamp、kTypeSingleDeletion 都没有加 break，说明它们的操作都一样，交给 kTypeRangeDeletion 来做。简单的来看，当读到 delete 时，会触发一些 merge 操作，促使这个 user_key 被清理掉，或者直接返回 NotFound。</p>
+<p>只有当 type 为 kTypeValue，才说明这条记录是被 Put 的，应该读值，所以我们重点关注它。在代码块中，有一些 merge 操作和 column 操作，我们不过，merge 会在另一篇博客中详细说明：<a href="xxx">待填坑</a>。但是，可以看出的是，这一块主要是把找到的 user_key 的 value 赋值给 saver 中的 value，来作为最终的 Get 结果，然后将 found_final_value 设为 true，代表成功读取到 value。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">else if (s-&gt;value) &#123;
+    if (type !&#x3D; kTypeWideColumnEntity) &#123;
+        assert(type &#x3D;&#x3D; kTypeValue || type &#x3D;&#x3D; kTypeBlobIndex);
+        s-&gt;value-&gt;assign(v.data(), v.size());
+    &#125; else &#123;
+        Slice value;
+        *(s-&gt;status) &#x3D;
+            WideColumnSerialization::GetValueOfDefaultColumn(v, value);
+        if (s-&gt;status-&gt;ok()) &#123;
+            s-&gt;value-&gt;assign(value.data(), value.size());
+        &#125;
+    &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>那现在问题来了，只有当 s-&gt;value != nullptr 的时候，才会进行其中执行赋值，可是 s-&gt;value 本身就是用来保存查询结果的，那么此时它不应该还是空吗？还真不是，它确实没有值，但它不是 nullptr，它明确的指向了一个变量，所以判断能够成立。</p>
+<h3 id="从-Txn-复盘调用链"><a href="#从-Txn-复盘调用链" class="headerlink" title="从 Txn 复盘调用链"></a>从 Txn 复盘调用链</h3><p>接下来我们就追溯这个 saver.value，看看它到底指向谁。这里一直要追溯到最上层的调用者，不管是读是写，调用者均为事务，因此要从 Transaction 开始追溯。RocksDB 提供了一段关于事务的示例代码，位于 <code>examples/transaction_example.cc</code> 中。刚好，借这个机会，我们从头开始捋一遍读取的流程，一直到从 MemTable 中找到 user_key。</p>
+<p>函数链太长了，直接用图来表示，画板地址：<a target="_blank" rel="noopener" href="https://www.yuque.com/u2153859/opg8lz/bq8l1y">读操作函数调用链（上）- memtable</a></p>
+<p><img src="https://s1.ax1x.com/2022/10/20/x6nuSx.png" alt="读操作函数调用链（上）"></p>
+<p>由此就可以回答上一章节遗留的问题了，saver.value 从始至终都指向了一个空值的 string，这个 string 是调用者用来保存读取结果 value 的，所以它并不是 nullptr。故 SaveValue 会在赋值前先判断 saver.value 是否为 nullptr，因为要确保调用者确确实实给它分配了一块空间用来存储，如果 saver.value 为 nullptr，则说明调用者根本没有分配空间来保存结果，当然不会在执行赋值了。</p>
+<hr>
+<p>至此，RocksDB 的读框架以及在 memtable 的读操作就大致理完了，下一篇博客将关注在 sstable 中的读取。</p>
 
                 
             </div>
