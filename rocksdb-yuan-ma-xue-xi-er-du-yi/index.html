@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    5.3k
+                    5.4k
                 </div>
                 
 
@@ -573,7 +573,9 @@
 </li>
 <li><p><strong>memtable</strong>：在 RocksDB 中 memtable 的默认实现是 skiplist，RocksDB 会将用户传入的 user_key 改变为memtable 内部的 key（internal_key_size+internal_key），然后再加上用户传入的 value 之后，作为一个element 加入到 skiplist，而我们读取的时候需要读取到最新的那条数据。</p>
 </li>
-<li><p><strong>sstable</strong>：除 L0 层之外，记录在每一层中有序，排序的依据依次是 user_key 升序，sequence num 降序，type 降序。除 L0 层之外，每一层中的各 sstable 所存储的 key 范围不会重叠，但 L0 层可能出现重叠。因此，在 L0 需要读取所有 sstable，在其他层只要读到一个就行。</p>
+<li><p><strong>immutable memtable</strong>：一旦一个 memtable 被写满，它就会转为 immutable memtable，用来作为向 sstable 过渡的中间态，然后被替换为一个新的 memtable。immutable memtable 和 memtable 的数据结构完全一致，只是前者只能读不能写，且一个 CF 只能有一个 memtable，但可以有多个 immutable memtable。当从 memtable 中没读到时，就会尝试在这些 immutable memtable 中读。</p>
+</li>
+<li><p><strong>sstable</strong>：如果上面三者都没读到，则开始从磁盘中读。除 L0 层之外，记录在每一层中有序，排序的依据依次是 user_key 升序，sequence num 降序，type 降序。除 L0 层之外，每一层中的各 sstable 所存储的 key 范围不会重叠，但 L0 层可能出现重叠。因此，在 L0 需要读取所有 sstable，在其他层只要读到一个就行。</p>
 </li>
 </ul>
 <p>本篇博客分析读操作的框架以及在 memtable 中的读取，着急看结论可以直接跳到最后一张图。</p>
@@ -1159,7 +1161,7 @@ saver<span class="token punctuation">.</span>mem <span class="token operator">=<
 <p><img src="https://s1.ax1x.com/2022/10/20/x6nuSx.png" alt="读操作函数调用链（上）"></p>
 <p>由此就可以回答上一章节遗留的问题了，saver.value 从始至终都指向了一个空值的 string，这个 string 是调用者用来保存读取结果 value 的，所以它并不是 nullptr。故 SaveValue 会在赋值前先判断 saver.value 是否为 nullptr，因为要确保调用者确确实实给它分配了一块空间用来存储，如果 saver.value 为 nullptr，则说明调用者根本没有分配空间来保存结果，当然不会在执行赋值了。</p>
 <hr>
-<p>至此，RocksDB 的读框架以及在 memtable 的读操作就大致理完了，下一篇博客将关注在 sstable 中的读取。</p>
+<p>至此，RocksDB 的读框架以及在 memtable 的读操作就大致理完了，下一篇博客将关注在 immutable memtable 中的读取。</p>
 
                 
             </div>
@@ -1399,18 +1401,17 @@ saver<span class="token punctuation">.</span>mem <span class="token operator">=<
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="far fa-dot-circle"></i>&nbsp;本篇
-            </div>
+                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/rocksdb-yuan-ma-xue-xi-er-du-yi/">
+                <a href="/rocksdb-yuan-ma-xue-xi-san-du-er/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="RocksDB源码学习(二): 读(一)">
+                        <img src="/medias/featureimages/17.jpg" class="responsive-img" alt="RocksDB源码学习(三): 读(二)">
                         
-                        <span class="card-title">RocksDB源码学习(二): 读(一)</span>
+                        <span class="card-title">RocksDB源码学习(三): 读(二)</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -1420,9 +1421,9 @@ saver<span class="token punctuation">.</span>mem <span class="token operator">=<
                         
                     </div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-19
-                            </span>
+                        <span class="publish-date">
+                            <i class="far fa-clock fa-fw icon-date"></i>2022-10-21
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -1435,7 +1436,6 @@ saver<span class="token punctuation">.</span>mem <span class="token operator">=<
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     

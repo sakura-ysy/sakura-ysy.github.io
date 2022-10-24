@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="RocksDB源码系列文章, SrcMiLeの杂货铺">
+    <meta name="keywords" content="RocksDB源码学习(三): 读(二), SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>RocksDB源码系列文章 | SrcMiLeの杂货铺</title>
+    <title>RocksDB源码学习(三): 读(二) | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -379,12 +379,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/14.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/17.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">RocksDB源码系列文章</h1>
+                    <h1 class="description center-align post-title">RocksDB源码学习(三): 读(二)</h1>
                 </div>
             </div>
         </div>
@@ -529,7 +529,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2022-10-18
+                    2022-10-21
                 </div>
                 
 
@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    16
+                    866
                 </div>
                 
 
@@ -558,10 +558,122 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <ul>
-<li><a target="_blank" rel="noopener" href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-yi-shi-wu/">RocksDB源码学习(一): 事务</a></li>
-<li><a target="_blank" rel="noopener" href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-er-du-yi/">RocksDB源码学习(二): 读(一)</a></li>
-</ul>
+                <p>本篇博客关注 RocksDB 从 immutable memtable 中的读取，所有代码版本均为 <code>v7.7.3</code>。</p>
+<p>在 Rocksdb 中，memtable 和 immutable memtable 都位于内存，且它俩是一样的数据结构，唯一的区别是memtable 可读可写，而 immutable memtable 是只读的，不允许写入。写入从 writebatch 提交后，会进入 memtable，一旦一个 memtable 写满了，那么它就会转化成一个 immutable memtable，作为向 sstable 转换的过度态，然后生成一个新的空 memtable。</p>
+<p>Rocksdb 引入了 CF 的概念，在一个 CF 中只有一个 memtable，但允许存在多个 immutable memtable。当从 memtable 中没读到时，就会尝试在这些 immutable memtable 中读。</p>
+<hr>
+<p>从上一篇博客，读操作从 DBImpl::GetImpl() 开始依次从不同的部分读取，所以这里的分析如果依旧是  DBImpl::GetImpl()。截取部分代码，如下：</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp">Status <span class="token class-name">DBImpl</span><span class="token double-colon punctuation">::</span><span class="token function">GetImpl</span><span class="token punctuation">(</span><span class="token keyword">const</span> ReadOptions<span class="token operator">&amp;</span> read_options<span class="token punctuation">,</span> <span class="token keyword">const</span> Slice<span class="token operator">&amp;</span> key<span class="token punctuation">,</span>
+                       GetImplOptions<span class="token operator">&amp;</span> get_impl_options<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token comment">// ....</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>get_impl_options<span class="token punctuation">.</span>get_value<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>sv<span class="token operator">-></span>mem<span class="token operator">-></span><span class="token function">Get</span><span class="token punctuation">(</span>
+              lkey<span class="token punctuation">,</span>
+              get_impl_options<span class="token punctuation">.</span>value <span class="token operator">?</span> get_impl_options<span class="token punctuation">.</span>value<span class="token operator">-></span><span class="token function">GetSelf</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                                     <span class="token operator">:</span> <span class="token keyword">nullptr</span><span class="token punctuation">,</span>
+              get_impl_options<span class="token punctuation">.</span>columns<span class="token punctuation">,</span> timestamp<span class="token punctuation">,</span> <span class="token operator">&amp;</span>s<span class="token punctuation">,</span> <span class="token operator">&amp;</span>merge_context<span class="token punctuation">,</span>
+              <span class="token operator">&amp;</span>max_covering_tombstone_seq<span class="token punctuation">,</span> read_options<span class="token punctuation">,</span>
+              <span class="token boolean">false</span> <span class="token comment">/* immutable_memtable */</span><span class="token punctuation">,</span> get_impl_options<span class="token punctuation">.</span>callback<span class="token punctuation">,</span>
+              get_impl_options<span class="token punctuation">.</span>is_blob_index<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        done <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>get_impl_options<span class="token punctuation">.</span>value<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+          get_impl_options<span class="token punctuation">.</span>value<span class="token operator">-></span><span class="token function">PinSelf</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token function">RecordTick</span><span class="token punctuation">(</span>stats_<span class="token punctuation">,</span> MEMTABLE_HIT<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span><span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">||</span> s<span class="token punctuation">.</span><span class="token function">IsMergeInProgress</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span>
+                 sv<span class="token operator">-></span>imm<span class="token operator">-></span><span class="token function">Get</span><span class="token punctuation">(</span>lkey<span class="token punctuation">,</span>
+                              get_impl_options<span class="token punctuation">.</span>value
+                                  <span class="token operator">?</span> get_impl_options<span class="token punctuation">.</span>value<span class="token operator">-></span><span class="token function">GetSelf</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                                  <span class="token operator">:</span> <span class="token keyword">nullptr</span><span class="token punctuation">,</span>
+                              get_impl_options<span class="token punctuation">.</span>columns<span class="token punctuation">,</span> timestamp<span class="token punctuation">,</span> <span class="token operator">&amp;</span>s<span class="token punctuation">,</span>
+                              <span class="token operator">&amp;</span>merge_context<span class="token punctuation">,</span> <span class="token operator">&amp;</span>max_covering_tombstone_seq<span class="token punctuation">,</span>
+                              read_options<span class="token punctuation">,</span> get_impl_options<span class="token punctuation">.</span>callback<span class="token punctuation">,</span>
+                              get_impl_options<span class="token punctuation">.</span>is_blob_index<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        done <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>get_impl_options<span class="token punctuation">.</span>value<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+          get_impl_options<span class="token punctuation">.</span>value<span class="token operator">-></span><span class="token function">PinSelf</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token function">RecordTick</span><span class="token punctuation">(</span>stats_<span class="token punctuation">,</span> MEMTABLE_HIT<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+ <span class="token comment">// ...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>代码的前半部分就是上一篇博客的入口，即 MemTable::Get()。而如果没有找到，则会调用 sv-&gt;imm-&gt;Get()，开始从 immutable memtable 中读取。实际上，这个 imm 并不是一个 immutable memtable，而是多个 immutable memtable 组成的一个链表，因为 RocksDB 中一个 CF 允许多个 immutable memetable 存在。</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp">MemTableListVersion<span class="token operator">*</span> imm<span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>类结构如下：</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">class</span> <span class="token class-name">MemTableListVersion</span> <span class="token punctuation">&#123;</span>
+ <span class="token comment">// ...</span>
+ <span class="token keyword">private</span><span class="token operator">:</span>
+  <span class="token comment">// Immutable MemTables that have not yet been flushed.</span>
+  std<span class="token double-colon punctuation">::</span>list<span class="token operator">&lt;</span>MemTable<span class="token operator">*</span><span class="token operator">></span> memlist_<span class="token punctuation">;</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>可以看出来，immutable memtable 和 memtable 是一个数据结构，所以 imm 可以被看为一个由只读 memtable 组成的链表。</p>
+<p>sv-&gt;imm-&gt;Get() 实际上调用的是 MemTableListVersion::Get()，其完整代码如下：</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// Search all the memtables starting from the most recent one.</span>
+<span class="token comment">// Return the most recent value found, if any.</span>
+<span class="token comment">// Operands stores the list of merge operations to apply, so far.</span>
+<span class="token keyword">bool</span> <span class="token class-name">MemTableListVersion</span><span class="token double-colon punctuation">::</span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token keyword">const</span> LookupKey<span class="token operator">&amp;</span> key<span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>string<span class="token operator">*</span> value<span class="token punctuation">,</span>
+                              PinnableWideColumns<span class="token operator">*</span> columns<span class="token punctuation">,</span>
+                              std<span class="token double-colon punctuation">::</span>string<span class="token operator">*</span> timestamp<span class="token punctuation">,</span> Status<span class="token operator">*</span> s<span class="token punctuation">,</span>
+                              MergeContext<span class="token operator">*</span> merge_context<span class="token punctuation">,</span>
+                              SequenceNumber<span class="token operator">*</span> max_covering_tombstone_seq<span class="token punctuation">,</span>
+                              SequenceNumber<span class="token operator">*</span> seq<span class="token punctuation">,</span> <span class="token keyword">const</span> ReadOptions<span class="token operator">&amp;</span> read_opts<span class="token punctuation">,</span>
+                              ReadCallback<span class="token operator">*</span> callback<span class="token punctuation">,</span> <span class="token keyword">bool</span><span class="token operator">*</span> is_blob_index<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token keyword">return</span> <span class="token function">GetFromList</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>memlist_<span class="token punctuation">,</span> key<span class="token punctuation">,</span> value<span class="token punctuation">,</span> columns<span class="token punctuation">,</span> timestamp<span class="token punctuation">,</span> s<span class="token punctuation">,</span>
+                     merge_context<span class="token punctuation">,</span> max_covering_tombstone_seq<span class="token punctuation">,</span> seq<span class="token punctuation">,</span> read_opts<span class="token punctuation">,</span>
+                     callback<span class="token punctuation">,</span> is_blob_index<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>GetFromList() 的第一个参数为 memlist_，也就是 immutable memtable 组成的链表。该函数完整源码如下：</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">bool</span> <span class="token class-name">MemTableListVersion</span><span class="token double-colon punctuation">::</span><span class="token function">GetFromList</span><span class="token punctuation">(</span>
+    std<span class="token double-colon punctuation">::</span>list<span class="token operator">&lt;</span>MemTable<span class="token operator">*</span><span class="token operator">></span><span class="token operator">*</span> list<span class="token punctuation">,</span> <span class="token keyword">const</span> LookupKey<span class="token operator">&amp;</span> key<span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>string<span class="token operator">*</span> value<span class="token punctuation">,</span>
+    PinnableWideColumns<span class="token operator">*</span> columns<span class="token punctuation">,</span> std<span class="token double-colon punctuation">::</span>string<span class="token operator">*</span> timestamp<span class="token punctuation">,</span> Status<span class="token operator">*</span> s<span class="token punctuation">,</span>
+    MergeContext<span class="token operator">*</span> merge_context<span class="token punctuation">,</span> SequenceNumber<span class="token operator">*</span> max_covering_tombstone_seq<span class="token punctuation">,</span>
+    SequenceNumber<span class="token operator">*</span> seq<span class="token punctuation">,</span> <span class="token keyword">const</span> ReadOptions<span class="token operator">&amp;</span> read_opts<span class="token punctuation">,</span> ReadCallback<span class="token operator">*</span> callback<span class="token punctuation">,</span>
+    <span class="token keyword">bool</span><span class="token operator">*</span> is_blob_index<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  <span class="token operator">*</span>seq <span class="token operator">=</span> kMaxSequenceNumber<span class="token punctuation">;</span>
+
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">auto</span><span class="token operator">&amp;</span> memtable <span class="token operator">:</span> <span class="token operator">*</span>list<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>memtable<span class="token operator">-></span><span class="token function">IsFragmentedRangeTombstonesConstructed</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    SequenceNumber current_seq <span class="token operator">=</span> kMaxSequenceNumber<span class="token punctuation">;</span>
+
+    <span class="token keyword">bool</span> done <span class="token operator">=</span>
+        memtable<span class="token operator">-></span><span class="token function">Get</span><span class="token punctuation">(</span>key<span class="token punctuation">,</span> value<span class="token punctuation">,</span> columns<span class="token punctuation">,</span> timestamp<span class="token punctuation">,</span> s<span class="token punctuation">,</span> merge_context<span class="token punctuation">,</span>
+                      max_covering_tombstone_seq<span class="token punctuation">,</span> <span class="token operator">&amp;</span>current_seq<span class="token punctuation">,</span> read_opts<span class="token punctuation">,</span>
+                      <span class="token boolean">true</span> <span class="token comment">/* immutable_memtable */</span><span class="token punctuation">,</span> callback<span class="token punctuation">,</span> is_blob_index<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">*</span>seq <span class="token operator">==</span> kMaxSequenceNumber<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      <span class="token comment">// Store the most recent sequence number of any operation on this key.</span>
+      <span class="token comment">// Since we only care about the most recent change, we only need to</span>
+      <span class="token comment">// return the first operation found when searching memtables in</span>
+      <span class="token comment">// reverse-chronological order.</span>
+      <span class="token comment">// current_seq would be equal to kMaxSequenceNumber if the value was to be</span>
+      <span class="token comment">// skipped. This allows seq to be assigned again when the next value is</span>
+      <span class="token comment">// read.</span>
+      <span class="token operator">*</span>seq <span class="token operator">=</span> current_seq<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>done<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">*</span>seq <span class="token operator">!=</span> kMaxSequenceNumber <span class="token operator">||</span> s<span class="token operator">-></span><span class="token function">IsNotFound</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>done <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>s<span class="token operator">-></span><span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>s<span class="token operator">-></span><span class="token function">IsMergeInProgress</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>s<span class="token operator">-></span><span class="token function">IsNotFound</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>可以看到，该函数就是遍历链表，从每一个 immutable memtable 中调用 MemTable::Get()，一旦读取成功就返回。MemTable::Get() 就是上一篇博客分析的从 memtable 中读取，因此从 immutable memtable 中读和从 memtable 中读完全一致。</p>
+<hr>
+<p>至此，在内存中的读取操作已经分析完毕，下一篇博客将分析从磁盘 sstable 中的读取。</p>
 
                 
             </div>
@@ -588,7 +700,7 @@
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://example.com/rocksdb-yuan-ma-xi-lie-wen-zhang/">http://example.com/rocksdb-yuan-ma-xi-lie-wen-zhang/</a>
+                    <a href="http://example.com/rocksdb-yuan-ma-xue-xi-san-du-er/">http://example.com/rocksdb-yuan-ma-xue-xi-san-du-er/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -805,13 +917,13 @@
             <div class="article-badge left-badge text-color">
                 <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/lsm-tree-xi-lie-wen-zhang/">
+                <a href="/rocksdb-yuan-ma-xue-xi-si-du-san/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/6.jpg" class="responsive-img" alt="LSM-Tree系列文章">
+                        <img src="/medias/featureimages/6.jpg" class="responsive-img" alt="RocksDB源码学习(四): 读(三)">
                         
-                        <span class="card-title">LSM-Tree系列文章</span>
+                        <span class="card-title">RocksDB源码学习(四): 读(三)</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -822,7 +934,7 @@
                     </div>
                     <div class="publish-info">
                         <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2022-10-18
+                            <i class="far fa-clock fa-fw icon-date"></i>2022-10-21
                         </span>
                         <span class="publish-author">
                             
@@ -839,12 +951,12 @@
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/LSM-Tree/">
-                        <span class="chip bg-color">LSM-Tree</span>
-                    </a>
-                    
                     <a href="/tags/%E5%AD%98%E5%82%A8/">
                         <span class="chip bg-color">存储</span>
+                    </a>
+                    
+                    <a href="/tags/rocksdb/">
+                        <span class="chip bg-color">rocksdb</span>
                     </a>
                     
                 </div>
@@ -858,13 +970,13 @@
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/rocksdb-yuan-ma-xue-xi-yi-shi-wu/">
+                <a href="/rocksdb-yuan-ma-xue-xi-er-du-yi/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/14.jpg" class="responsive-img" alt="RocksDB源码学习(一): 事务">
+                        <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="RocksDB源码学习(二): 读(一)">
                         
-                        <span class="card-title">RocksDB源码学习(一): 事务</span>
+                        <span class="card-title">RocksDB源码学习(二): 读(一)</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -875,7 +987,7 @@
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-16
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-19
                             </span>
                         <span class="publish-author">
                             
