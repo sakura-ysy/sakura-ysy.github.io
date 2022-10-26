@@ -618,12 +618,11 @@
 </ul>
 <p>第一点由 VersionSet::SetLastSequence() 实现，第二点由 WriteThread::ExitAsBatchGroupLeader() 来实现，这里只关注后者。虽然 WriteThread::CreateMissingNewerLinks() 已经将单向链表变为双向链表，但是在 WriteGroup 写入的过程中，可能有新的 Writer 加入 WriteLink 中，而新的这一段仍然是单向链表，所以 Exit 会重新调用一遍 WriteThread::CreateMissingNewerLinks() 来完善双向链表。接着，设置下一个 WriteGroup 的新Leader（为本组最后一个 Writer 的后置 Writer），并将新 Leader 的前置指针设为 null。</p>
 <p><img src="https://s1.ax1x.com/2022/10/25/xR5zod.png" alt="新的WriteGroup"></p>
-<p>接下来，我们关注 WriteGroup 的写入。</p>
+<p>上述流程的源码分析在下一篇博客会详细说明：<a target="_blank" rel="noopener" href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-liu-xie-er-writegroup/">WriteGroup 源码分析</a>。接下来，我们关注 WriteGroup 的写入。</p>
 <h3 id="WriteGroup-写入"><a href="#WriteGroup-写入" class="headerlink" title="WriteGroup 写入"></a>WriteGroup 写入</h3><p>这里不考虑 pipelined_write，不考虑 2pc。WriteGroup 的写入分为两步，一是写入 WAL，二是写入 memtable。前者由 DBImpl::WriteToWAL() 实现，后者主要由 WriteBatchInternal::InsertInto() 实现。</p>
 <h4 id="WAL"><a href="#WAL" class="headerlink" title="WAL"></a>WAL</h4><p>WAL 主要的功能是当 RocksDB 异常退出后，能够恢复出错前的内存中（memtable）数据,因此 RocksDB 默认是每次用户写都会刷新数据到 WAL。每次当当前 WAL 对应的 memtable 刷新到磁盘之后，都会新建一个WAL，即一个 WAL 对应一个memtable。</p>
 <p>每一个 WAL 最后都会被写入对应的 WAL 文件中，所有的 WAL 文件均保存在 WA L目录（options.wal_dir），为了保证数据的状态，所有的 WAL 文件的名字都是按照顺序的（log_number）。</p>
-<p>写 WAL 可以简单分为三个阶段，第一阶段往 WritableFileWriter 的 buf_ 里面写，第二阶段写到系统缓存，第三阶段是将系统缓存刷盘，也就是写入 WAL 文件。</p>
-<p>WAL 写入的具体流程会在源码分析时详细说明：<a href="">WAL 写源码分析（待填坑</a>。</p>
+<p>写 WAL 可以简单分为三个阶段，第一阶段往 WritableFileWriter 的 buf_ 里面写，第二阶段写到系统缓存，第三阶段是将系统缓存刷盘，也就是让写文件操作落盘。WAL 写入的具体流程会在源码分析时详细说明：<a href="">WAL 写源码分析（待填坑</a>。</p>
 <h4 id="memtable"><a href="#memtable" class="headerlink" title="memtable"></a>memtable</h4><p>在 RocksDB 中，每个 CF 都有自己的 memtable，互不影响。每当 WriteGroup 写完 WAL 之后，就会向 memtable 中去写。具体的写入流程将分为两种情况， !parallel 和 parallel，由 allow_concurrent_memtable_write 来决定。</p>
 <p>在没有并行的情况下，Leader 全权负责整个 WriteGroup 的写入，在并行的情况下，Leader 会唤醒该 WriteGroup 中的所有 Writer，然后各自负责自己的写入，并发执行。不管哪种情况，写memtable的入口函数为WriteBatchInternal::InsertInto()，它会根据传入的是 WriteGroup、Writer 还是 WriteBatch 来进行重载。</p>
 <p>memtable 写入的具体流程会在源码分析时详细说明：</p>

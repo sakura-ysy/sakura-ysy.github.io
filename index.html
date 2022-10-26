@@ -654,6 +654,34 @@ SSTable
     
     <div class="col s12 m6" >
         
+            <div class="post-card" style="background-image: url('/medias/featureimages/13.jpg')">
+            
+            <div class="post-body">
+                <div class="post-categories">
+                    
+                        
+                            <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/" class="category">分布式</a>
+                        
+                    
+                </div>
+                <a href="/tinykv-2022-xiang-mu-zong-jie/">
+                    <h3 class="post-title">TinyKV-2022 项目总结</h3>
+                </a>
+                <p class="post-description">
+                    
+                        前言大三下暑假才开始的实习，也是我的第一次分布式 lab，之前没做过6.824，所以完成的过程中很折磨，bug 飞来飞去。最后用了6个星期多
+                    
+                </p>
+                <a href="/tinykv-2022-xiang-mu-zong-jie/" class="read-more btn waves-effect waves-light" style="background: linear-gradient(to right, #EF4DB6 0%, #C643FC 100%)" target="_blank">
+                    <i class="icon far fa-eye fa-fw"></i>阅读更多
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div class="col s12 m6" data-aos="zoom-in-up">
+        
             <div class="post-card" style="background-image: url('/medias/featureimages/14.jpg')">
             
             <div class="post-body">
@@ -676,35 +704,7 @@ RocksDB源码学习(三): 读(二)
 RocksDB源
                     
                 </p>
-                <a href="/rocksdb-yuan-ma-xi-lie-wen-zhang/" class="read-more btn waves-effect waves-light" style="background: linear-gradient(to right, #EF4DB6 0%, #C643FC 100%)" target="_blank">
-                    <i class="icon far fa-eye fa-fw"></i>阅读更多
-                </a>
-            </div>
-        </div>
-    </div>
-    
-    
-    <div class="col s12 m6" data-aos="zoom-in-up">
-        
-            <div class="post-card" style="background-image: url('/medias/featureimages/13.jpg')">
-            
-            <div class="post-body">
-                <div class="post-categories">
-                    
-                        
-                            <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F/" class="category">分布式</a>
-                        
-                    
-                </div>
-                <a href="/tinykv-2022-xiang-mu-zong-jie/">
-                    <h3 class="post-title">TinyKV-2022 项目总结</h3>
-                </a>
-                <p class="post-description">
-                    
-                        前言大三下暑假才开始的实习，也是我的第一次分布式 lab，之前没做过6.824，所以完成的过程中很折磨，bug 飞来飞去。最后用了6个星期多
-                    
-                </p>
-                <a href="/tinykv-2022-xiang-mu-zong-jie/" class="read-more btn waves-effect waves-light" style="background: linear-gradient(to right, #1AD6FD 0%, #1D62F0 100%)" target="_blank">
+                <a href="/rocksdb-yuan-ma-xi-lie-wen-zhang/" class="read-more btn waves-effect waves-light" style="background: linear-gradient(to right, #1AD6FD 0%, #1D62F0 100%)" target="_blank">
                     <i class="icon far fa-eye fa-fw"></i>阅读更多
                 </a>
             </div>
@@ -760,6 +760,59 @@ k8s源码(二): Pod创建过程中Container的卷挂载
     <!-- 所有文章卡片 -->
     <article id="articles" class="container articles">
         <div class="row article-row">
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/rocksdb-yuan-ma-xue-xi-qi-xie-san-wal/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="RocksDB源码学习(七): 写(三)-WAL">
+                            
+                            <span class="card-title">RocksDB源码学习(七): 写(三)-WAL</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                本篇博客将从源码层面分析 RocksDB 中 WAL 的创建与写入，且不考虑 2pc，所用代码版本为 v7.7.4
+
+WA L主要的功能是当 RocksDB 异常退出后，能够恢复出错前的 memtable 中的数据，因此 RocksDB 默
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-26
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fas fa-bookmark fa-fw icon-category"></i>
+                                
+                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
+                                </a>
+                                
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/%E5%AD%98%E5%82%A8/">
+                            <span class="chip bg-color">存储</span>
+                        </a>
+                        
+                        <a href="/tags/rocksdb/">
+                            <span class="chip bg-color">rocksdb</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
             
             <div class="article col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
@@ -1239,58 +1292,6 @@ RocksDB源码学习(六
                         
                         <a href="/tags/rocksdb/">
                             <span class="chip bg-color">rocksdb</span>
-                        </a>
-                        
-                    </div>
-                    
-                </div>
-            </div>
-            
-            <div class="article col s12 m6 l4" data-aos="zoom-in">
-                <div class="card">
-                    <a href="/sstable-jie-shao/">
-                        <div class="card-image">
-                            
-                            
-                            <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="SSTable 介绍">
-                            
-                            <span class="card-title">SSTable 介绍</span>
-                        </div>
-                    </a>
-
-                    <div class="card-content article-content">
-                        <div class="summary block-with-text">
-                            
-                                SSTable（Sorted String Table）是一个简单，但是非常有用的用来交换大量的、排好序的数据片段的数据结构。其使用场景为：
-
-需要高效地存储大量地 K-V 数据；
-数据是顺序写入的；
-要求高效地顺序读写；
-没有随机读取或者
-                            
-                        </div>
-                        <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-12
-                            </span>
-                            <span class="publish-author">
-                                
-                                <i class="fas fa-bookmark fa-fw icon-category"></i>
-                                
-                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
-                                    存储
-                                </a>
-                                
-                                
-                            </span>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card-action article-tags">
-                        
-                        <a href="/tags/%E5%AD%98%E5%82%A8/">
-                            <span class="chip bg-color">存储</span>
                         </a>
                         
                     </div>
