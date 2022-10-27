@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="Docker基础(二): 基础命令, SrcMiLeの杂货铺">
+    <meta name="keywords" content="RocksDB源码学习(八): 写(四)-Memtable, SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>Docker基础(二): 基础命令 | SrcMiLeの杂货铺</title>
+    <title>RocksDB源码学习(八): 写(四)-Memtable | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -379,12 +379,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/2.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/12.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">Docker基础(二): 基础命令</h1>
+                    <h1 class="description center-align post-title">RocksDB源码学习(八): 写(四)-Memtable</h1>
                 </div>
             </div>
         </div>
@@ -500,16 +500,12 @@
                     
                     <div class="article-tag">
                         
-                            <a href="/tags/Docker/">
-                                <span class="chip bg-color">Docker</span>
+                            <a href="/tags/%E5%AD%98%E5%82%A8/">
+                                <span class="chip bg-color">存储</span>
                             </a>
                         
-                            <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                                <span class="chip bg-color">云计算</span>
-                            </a>
-                        
-                            <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
-                                <span class="chip bg-color">分布式</span>
+                            <a href="/tags/rocksdb/">
+                                <span class="chip bg-color">rocksdb</span>
                             </a>
                         
                     </div>
@@ -520,8 +516,8 @@
                     <div class="post-cate">
                         <i class="fas fa-bookmark fa-fw icon-category"></i>
                         
-                            <a href="/categories/Docker/" class="post-category">
-                                Docker
+                            <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                存储
                             </a>
                         
                     </div>
@@ -533,7 +529,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2022-01-22
+                    2022-10-27
                 </div>
                 
 
@@ -542,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    1.8k
+                    36
                 </div>
                 
 
@@ -562,170 +558,8 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <p>如题，本文将总结常用的Docker基础命令，包括但不限于：<em>帮助启动类命名</em>；<em>镜像命令</em>；<em>容器命令</em>。</p>
-<span id="more"></span>
-
+                <p>本篇博客将从源码层面分析 RocksDB 中 memtable 的创建与写入，且不考虑 pipelined_write，所用代码版本为 <code>v7.7.4</code></p>
 <hr>
-<h2 id="帮助启动类命令"><a href="#帮助启动类命令" class="headerlink" title="帮助启动类命令"></a>帮助启动类命令</h2><p>启动docker：<code>systemctl start docker</code></p>
-<p>停止docker：<code>systemctl stop docker</code></p>
-<p>重启docker：<code>systemctl restart docker</code></p>
-<p>查看docker状态：<code>systemctl enable docker</code></p>
-<p>开即自启：<code>systemctl enable docker</code></p>
-<p>查看docker概要信息：<code>docker info</code></p>
-<p>docker帮助文档：<code>docker --help</code></p>
-<p>docker某一命令帮助文档：<code>docker 命令 --help</code></p>
-<hr>
-<h2 id="镜像命令"><a href="#镜像命令" class="headerlink" title="镜像命令"></a>镜像命令</h2><p><strong>列出本地主机上的镜像：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> images<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<blockquote>
-<p>​    -a：列出本地全部的镜像(all)</p>
-<p>​    -q：只显示镜像ID (quiet，静默模式)</p>
-<p>​    返回结果中，<code>REPOSITORY</code>代表仓库名，即镜像名，<code>TAG</code>指镜像的版本号。</p>
-</blockquote>
-<p><strong>去docker仓库中搜索镜像：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> search 镜像名<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>返回结果有5个参数，分别指：</p>
-<table>
-<thead>
-<tr>
-<th>参数</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>NAME</td>
-<td>镜像名称</td>
-</tr>
-<tr>
-<td>DESCRIPTION</td>
-<td>镜像说明</td>
-</tr>
-<tr>
-<td>STARS</td>
-<td>点赞数量</td>
-</tr>
-<tr>
-<td>OFFICIAL</td>
-<td>是否官方</td>
-</tr>
-<tr>
-<td>AUTOMATED</td>
-<td>是否为自动构建的</td>
-</tr>
-</tbody></table>
-<p><strong>拉取镜像：</strong><code>docker pull 镜像名</code>，完整形式为：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> pull <span class="token punctuation">[</span>OPTIONS<span class="token punctuation">]</span> 镜像名:TAG<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>如果只写了镜像名，则默认TAG为latest，即最新发布版。</p>
-<p><strong>删除指定本地镜像：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> rmi <span class="token punctuation">[</span>OPTIONS<span class="token punctuation">]</span> 镜像名<span class="token punctuation">[</span>:TAG<span class="token punctuation">]</span>/ID<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>如果只写了镜像名，则默认TAG为latest，但如果你的本地没有该镜像的latest版本，就会删除失败。</p>
-<blockquote>
-<p>删除单个：<code>docker rmi 镜像名[:TAG]/ID</code></p>
-<p>删除多个：<code>docker rmi 镜像名1:TAG/ID 镜像名2:TAG/ID</code></p>
-<p>强制删除：-f ，会直接删除镜像的所有容器</p>
-<p>删除全部：<code>docker rmi -f $(docker images -qa)</code>    ==&gt; 小心坐牢</p>
-</blockquote>
-<hr>
-<h2 id="容器命令"><a href="#容器命令" class="headerlink" title="容器命令"></a>容器命令</h2><p><strong>新建+启动容器：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run <span class="token punctuation">[</span>OPTIONS<span class="token punctuation">]</span> 镜像 <span class="token punctuation">[</span>COMMAND<span class="token punctuation">]</span> <span class="token punctuation">[</span>ARG<span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>其中，OPTIONS非常重要，几个最常用的有：</p>
-<blockquote>
-<p>–name=”容器名字”：  为容器起名，不起的化随机</p>
-<p>-i：以交互模式运行容器，通过与-t同时使用</p>
-<p>-t：为容器重新分配一个伪输入终端，通过与-i同时使用</p>
-<p>-it 也即交互式容器（前台有伪终端，等待交互）</p>
-<p>-d：后台运行容器并返回容器ID，也即启动守护式容器（后台运行）</p>
-<p>-p：指定端口映射，小写p，如<code>-p 3306:3306</code>指将主机的3306端口映射到该容器内的3306端口</p>
-<p>-P：随机端口映射，大写P</p>
-<p>-e：创建环境变量</p>
-</blockquote>
-<p>注意，并不是所有的镜像都能够以<code>-d</code>来后台运行，比如ubuntu、centos这些交互式镜像，就需要有一个前台来交互，所以对他们而已，使用<code>-d</code>并不能使其持久化。但是，那些服务类的镜像，比如tomcat、mysql、redis等等，虽然镜像是构建在Linux文件系统上的，但是他们可以通过<code>-d</code>来后台运行。</p>
-<p>另外，有镜像才能创建容器，当运行run时，会首先在本地寻找是否有该镜像，如果没有，就去docker仓库中将该镜像拉取到本地，然后在创建容器。</p>
-<p>可以通过<code>-e</code>来在改容器中创建一个指定值的环境变量，之后每次进入该容器都可以直接使用，如：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> run -d --name<span class="token operator">=</span>r2 -e <span class="token assign-left variable">A</span><span class="token operator">=</span><span class="token number">123</span> redis:6.0.8<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p><img src="https://i.bmp.ovh/imgs/2022/01/c1208f0d47eab09e.png"></p>
-<p><strong>列出当前所有在运行中的容器：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> <span class="token function">ps</span> <span class="token punctuation">[</span>OPTIONS<span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<blockquote>
-<p>-a：列出当前所有正在运行的容器+历史上运行过的容器（如果容器没被删除）</p>
-<p>-l：显示最近创建的容器</p>
-<p>-n：显示最近n个创建的容器</p>
-<p>-q：只显示容器编号</p>
-</blockquote>
-<p><strong>停止容器：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> stop 容器名/ID<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p><strong>启动停止的容器：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> start 容器名/ID<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p><strong>重启容器：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> restart 容器名/ID<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p><strong>从容器中退出：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token number">1</span>. exit：退出容器并使容器停止
-<span class="token number">2</span>. ctrl+p+1：退出容器但容器不会停止<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p><strong>删除容器：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> <span class="token function">rm</span> <span class="token punctuation">[</span>OPTIONS<span class="token punctuation">]</span> 容器名/ID<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<blockquote>
-<p>强制删除：-f，如果不加的化，只能删除停止的容器</p>
-<p>删除全部容器：<code>docker rm -f $(docker ps -a -q)</code>  ==&gt; 小心坐牢</p>
-</blockquote>
-<p><strong>查看容器日志：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> logs 容器名/ID<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p><strong>查看容器内的进程信息：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> <span class="token function">top</span> 容器名/ID<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>注意，top查看的是容器中的进程在<code>宿主机OS</code>中的信息，比如查到的PID是该进程在宿主机上的PID，而不是在容器内部的信息，这就意味着这些信息是可以在宿主机的<code>ps -ef</code>中找到的：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">[</span>root@master test<span class="token punctuation">]</span><span class="token comment"># docker top redis2</span>
-<span class="token environment constant">UID</span>                 PID                 <span class="token environment constant">PPID</span>                C                   STIME               TTY                 TIME                CMD
-polkitd             <span class="token number">18650</span>               <span class="token number">18630</span>               <span class="token number">0</span>                   <span class="token number">15</span>:41               ?                   00:00:00            redis-server *:6379
-<span class="token punctuation">[</span>root@master test<span class="token punctuation">]</span><span class="token comment"># ps -ef | grep 18650</span>
-polkitd   <span class="token number">18650</span>  <span class="token number">18630</span>  <span class="token number">0</span> <span class="token number">15</span>:41 ?        00:00:00 redis-server *:6379
-root      <span class="token number">25347</span>   <span class="token number">7737</span>  <span class="token number">0</span> <span class="token number">15</span>:52 pts/0    00:00:00 <span class="token function">grep</span> --color<span class="token operator">=</span>auto <span class="token number">18650</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>如果要查后者，用命令<code>docker exec 容器名/ID ps -ef</code>，不过前提是容器要安装ps。至于为什么一个进程会有不止一个信息，这就涉及到Container的进程管理机制了，主要为<code>PID namespace</code>，这个以后再说。</p>
-<p><strong>查看容器内部细节：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> inspect 容器名/ID<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p><strong>在容器内部运行指令</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> <span class="token builtin class-name">exec</span> <span class="token punctuation">[</span>OPTIONS<span class="token punctuation">]</span> 容器名/ID COMMAND <span class="token punctuation">[</span>ARG<span class="token punctuation">..</span>.<span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p><code>docker exec</code> 会在容器内部运行COMMAND指令。实际上，容器就是个极小的Linux环境，它包含最必须的文件系统，因此实则时该Linux环境在执行这条命令。每个容器都会有一个默认的工作目录，该目录会在镜像的<code>Dockerfile</code>中指定，如果不另外指定的化，容器将在该目录下执行指令。</p>
-<blockquote>
-<p>COMMAND should be an executable, a chained or a quoted command will not work. Example: <code>docker exec -ti my_container &quot;echo a &amp;&amp; echo b&quot;</code> will not work, but <code>docker exec -ti my_container sh -c &quot;echo a &amp;&amp; echo b&quot;</code> will.</p>
-</blockquote>
-<p>比如，在mysql镜像构建的容器中使用命令date：</p>
-<p><img src="https://i.bmp.ovh/imgs/2022/01/01abdf861dbf6295.png"></p>
-<p>最关键的，之前有提到退出容器，那么退出容器后怎么再次进入呢？答案就是<code>exec</code>。进入容器，实际上就是使用容器的终端，因此首先要让容器打开一个终端，故将COMMAND设为<code>/bin/bash</code>或简写为<code>bash</code>。但是此时我们并不能进入这个终端，因为容器并不是交互时运行的，因此还需要使用OPTIONS<code>-it</code>来指定其为交互式运行，才能进入这个容器内的终端。故命令为：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># docker exec -it 容器名/ID /bin/bash</span>
-<span class="token function">docker</span> <span class="token builtin class-name">exec</span> -it 容器名/ID <span class="token function">bash</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p><img src="https://i.bmp.ovh/imgs/2022/01/dd2d0756e06ff06c.png"></p>
-<p>当然，类似于<code>run</code> ，<code>exec</code>也可以通过<code>-e</code>来在容器中创建一个环境变量。但是不同于前者，<code>exec</code>创建的环境变量只能在本次执行过程中使用，一旦退出容器，下次再进入就没有该变量了。</p>
-<p><img src="https://i.bmp.ovh/imgs/2022/01/0558c72736debfb8.png"></p>
-<p>另一个非常重要的特性是，使用<code>exec -it .. bash</code>进入的容器，在<code>exit</code>退出之后，<strong>不会停止</strong>！与其相对应的，是<code>attach</code>命令，该命令也可也进入容器，但是用<code>exit</code>退出之后会导致容器的停止。</p>
-<p><strong>从容器内拷贝文件到主机上：</strong></p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> <span class="token function">cp</span> 容器名/ID:容器内路径 目的主机路径<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>该命令会将指令的容器内路径中的所有文件，全部拷贝到目的主机，是简单的备份方式。</p>
-<p><strong>导入和导出容器</strong></p>
-<p><code>export</code>可以导出容器的内容留作一个<code>tar</code>归档文件。<code>import</code>可以从<code>tar</code>包中的内容创建一个新的文件系统再导入为镜像，注意，是生成镜像，而不是创建容器。</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> <span class="token builtin class-name">export</span> 容器名/ID <span class="token operator">></span> 文件名.tar
-<span class="token function">cat</span> 文件名.tar <span class="token operator">|</span> <span class="token function">docker</span> <span class="token function">import</span> - <span class="token punctuation">[</span>镜像用户/<span class="token punctuation">]</span>镜像名<span class="token punctuation">[</span>:TAG<span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p><img src="https://i.bmp.ovh/imgs/2022/01/4377aec9248f12ff.png"></p>
-<hr>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><img src="https://i.bmp.ovh/imgs/2022/01/999500d8cc65b5cf.png"></p>
 
                 
             </div>
@@ -752,7 +586,7 @@ root      <span class="token number">25347</span>   <span class="token number">7
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://example.com/docker-ji-chu-er-ji-chu-ming-ling/">http://example.com/docker-ji-chu-er-ji-chu-ming-ling/</a>
+                    <a href="http://example.com/rocksdb-yuan-ma-xue-xi-ba-xie-si-memtable/">http://example.com/rocksdb-yuan-ma-xue-xi-ba-xie-si-memtable/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -790,16 +624,12 @@ root      <span class="token number">25347</span>   <span class="token number">7
                     
                         <div class="article-tag">
                             
-                                <a href="/tags/Docker/">
-                                    <span class="chip bg-color">Docker</span>
+                                <a href="/tags/%E5%AD%98%E5%82%A8/">
+                                    <span class="chip bg-color">存储</span>
                                 </a>
                             
-                                <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                                    <span class="chip bg-color">云计算</span>
-                                </a>
-                            
-                                <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
-                                    <span class="chip bg-color">分布式</span>
+                                <a href="/tags/rocksdb/">
+                                    <span class="chip bg-color">rocksdb</span>
                                 </a>
                             
                         </div>
@@ -1245,54 +1075,52 @@ root      <span class="token number">25347</span>   <span class="token number">7
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
-                <a href="/docker-ji-chu-san-rong-qi-shu-ju-juan/">
+                <a href="/rocksdb-yuan-ma-xue-xi-ba-xie-si-memtable/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="Docker基础(三): 容器数据卷">
+                        <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="RocksDB源码学习(八): 写(四)-Memtable">
                         
-                        <span class="card-title">Docker基础(三): 容器数据卷</span>
+                        <span class="card-title">RocksDB源码学习(八): 写(四)-Memtable</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            想象一下，你的公司使用docker在容器中部署了一个电商项目，数据全部存在容器中。现在，你一不小心把这个容器删了，里面的数据全没了，再也无法恢复。完了，公司的核心资产被你搞没了，猜猜你能在牢里蹲多久？
+                            
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2022-01-23
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-27
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/Docker/" class="post-category">
-                                    Docker
+                            <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
                                 </a>
                             
                             
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/Docker/">
-                        <span class="chip bg-color">Docker</span>
+                    <a href="/tags/%E5%AD%98%E5%82%A8/">
+                        <span class="chip bg-color">存储</span>
                     </a>
                     
-                    <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                        <span class="chip bg-color">云计算</span>
-                    </a>
-                    
-                    <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
-                        <span class="chip bg-color">分布式</span>
+                    <a href="/tags/rocksdb/">
+                        <span class="chip bg-color">rocksdb</span>
                     </a>
                     
                 </div>
@@ -1306,31 +1134,31 @@ root      <span class="token number">25347</span>   <span class="token number">7
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/docker-ji-chu-yi-chu-shi/">
+                <a href="/rocksdb-yuan-ma-xue-xi-qi-xie-san-wal/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/6.jpg" class="responsive-img" alt="Docker基础(一): 初识">
+                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="RocksDB源码学习(七): 写(三)-WAL">
                         
-                        <span class="card-title">Docker基础(一): 初识</span>
+                        <span class="card-title">RocksDB源码学习(七): 写(三)-WAL</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            假设你已经开发了一个Java项目，你所用的开发设备上已经配好了所有的相关环境，比如java8/mysql/redis等等。现在，你需要将你的源码交付给其他开发人员和测试人员或者直接打成jar包部署上线。问题来了，每个人机器上的环境都不一样，
+                            
                         
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-01-21
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-26
                             </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/Docker/" class="post-category">
-                                    Docker
+                            <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
                                 </a>
                             
                             
@@ -1340,16 +1168,12 @@ root      <span class="token number">25347</span>   <span class="token number">7
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/Docker/">
-                        <span class="chip bg-color">Docker</span>
+                    <a href="/tags/%E5%AD%98%E5%82%A8/">
+                        <span class="chip bg-color">存储</span>
                     </a>
                     
-                    <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                        <span class="chip bg-color">云计算</span>
-                    </a>
-                    
-                    <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/">
-                        <span class="chip bg-color">分布式</span>
+                    <a href="/tags/rocksdb/">
+                        <span class="chip bg-color">rocksdb</span>
                     </a>
                     
                 </div>
