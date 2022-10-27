@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    36
+                    492
                 </div>
                 
 
@@ -560,6 +560,81 @@
             <div id="articleContent">
                 <p>本篇博客将从源码层面分析 RocksDB 中 memtable 的创建与写入，且不考虑 pipelined_write，所用代码版本为 <code>v7.7.4</code></p>
 <hr>
+<p>当 WriteGroup 写完 WAL 后，就开始写 memtable，写分为两大类，parallel 和  ! parallel。前者的话，Leader 会唤醒 WriteGroup 中的所有 Writer，一起并行写入，后者的话，Leader 独自负责整个 WriteGroup 的串行写入。二者仅仅是 WriteBatch 的串行写和并行写的区别，而每个 WriteBatch 的写入，实现方式还是一致的。本篇博客以 ! parallel 为例，分析写 memtable 的源码。</p>
+<p>还是在 WriteImpl() ，WAL 写完之后，会做一些 seq 和 callback 的操作，随后进入 memtable 的写流程：</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">// DBImpl::WriteImpl</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>parallel<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">// w.sequence will be set inside InsertInto</span>
+        w<span class="token punctuation">.</span>status <span class="token operator">=</span> <span class="token class-name">WriteBatchInternal</span><span class="token double-colon punctuation">::</span><span class="token function">InsertInto</span><span class="token punctuation">(</span>
+            write_group<span class="token punctuation">,</span> current_sequence<span class="token punctuation">,</span> column_family_memtables_<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token operator">&amp;</span>flush_scheduler_<span class="token punctuation">,</span> <span class="token operator">&amp;</span>trim_history_scheduler_<span class="token punctuation">,</span>
+            write_options<span class="token punctuation">.</span>ignore_missing_column_families<span class="token punctuation">,</span>
+            <span class="token number">0</span> <span class="token comment">/*recovery_log_number*/</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">,</span> parallel<span class="token punctuation">,</span> seq_per_batch_<span class="token punctuation">,</span>
+            batch_per_txn_<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+        write_group<span class="token punctuation">.</span>last_sequence <span class="token operator">=</span> last_sequence<span class="token punctuation">;</span>
+        write_thread_<span class="token punctuation">.</span><span class="token function">LaunchParallelMemTableWriters</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>write_group<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        in_parallel_group <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// Each parallel follower is doing each own writes. The leader should</span>
+        <span class="token comment">// also do its own.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>w<span class="token punctuation">.</span><span class="token function">ShouldWriteToMemtable</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+          ColumnFamilyMemTablesImpl <span class="token function">column_family_memtables</span><span class="token punctuation">(</span>
+              versions_<span class="token operator">-></span><span class="token function">GetColumnFamilySet</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+          <span class="token function">assert</span><span class="token punctuation">(</span>w<span class="token punctuation">.</span>sequence <span class="token operator">==</span> current_sequence<span class="token punctuation">)</span><span class="token punctuation">;</span>
+          w<span class="token punctuation">.</span>status <span class="token operator">=</span> <span class="token class-name">WriteBatchInternal</span><span class="token double-colon punctuation">::</span><span class="token function">InsertInto</span><span class="token punctuation">(</span>
+              <span class="token operator">&amp;</span>w<span class="token punctuation">,</span> w<span class="token punctuation">.</span>sequence<span class="token punctuation">,</span> <span class="token operator">&amp;</span>column_family_memtables<span class="token punctuation">,</span> <span class="token operator">&amp;</span>flush_scheduler_<span class="token punctuation">,</span>
+              <span class="token operator">&amp;</span>trim_history_scheduler_<span class="token punctuation">,</span>
+              write_options<span class="token punctuation">.</span>ignore_missing_column_families<span class="token punctuation">,</span> <span class="token number">0</span> <span class="token comment">/*log_number*/</span><span class="token punctuation">,</span>
+              <span class="token keyword">this</span><span class="token punctuation">,</span> <span class="token boolean">true</span> <span class="token comment">/*concurrent_memtable_writes*/</span><span class="token punctuation">,</span> seq_per_batch_<span class="token punctuation">,</span>
+              w<span class="token punctuation">.</span>batch_cnt<span class="token punctuation">,</span> batch_per_txn_<span class="token punctuation">,</span>
+              write_options<span class="token punctuation">.</span>memtable_insert_hint_per_batch<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+      <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>可以看到，不管是并行还是非并行，都是调用了 WriteBatchInternal::InsertInto()，因为这个函数有三个重载：</p>
+ <pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token keyword">static</span> Status <span class="token function">InsertInto</span><span class="token punctuation">(</span>WriteThread<span class="token double-colon punctuation">::</span>WriteGroup<span class="token operator">&amp;</span> write_group<span class="token punctuation">,</span> xxx<span class="token punctuation">)</span>
+<span class="token keyword">static</span> Status <span class="token function">InsertInto</span><span class="token punctuation">(</span><span class="token keyword">const</span> WriteBatch<span class="token operator">*</span> batch<span class="token punctuation">,</span> xxx<span class="token punctuation">)</span>
+<span class="token keyword">static</span> Status <span class="token function">InsertInto</span><span class="token punctuation">(</span>WriteThread<span class="token double-colon punctuation">::</span>Writer<span class="token operator">*</span> writer<span class="token punctuation">,</span> xxx<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>在非并行的情况下，就是调用的第一个重载，Leader 传入整个 WriteGroup，我们以此作为分析入口。</p>
+<h2 id="InsertInto"><a href="#InsertInto" class="headerlink" title="InsertInto"></a>InsertInto</h2><p>函数完整源码如下：</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp">Status <span class="token class-name">WriteBatchInternal</span><span class="token double-colon punctuation">::</span><span class="token function">InsertInto</span><span class="token punctuation">(</span>
+    WriteThread<span class="token double-colon punctuation">::</span>WriteGroup<span class="token operator">&amp;</span> write_group<span class="token punctuation">,</span> SequenceNumber sequence<span class="token punctuation">,</span>
+    ColumnFamilyMemTables<span class="token operator">*</span> memtables<span class="token punctuation">,</span> FlushScheduler<span class="token operator">*</span> flush_scheduler<span class="token punctuation">,</span>
+    TrimHistoryScheduler<span class="token operator">*</span> trim_history_scheduler<span class="token punctuation">,</span>
+    <span class="token keyword">bool</span> ignore_missing_column_families<span class="token punctuation">,</span> <span class="token keyword">uint64_t</span> recovery_log_number<span class="token punctuation">,</span> DB<span class="token operator">*</span> db<span class="token punctuation">,</span>
+    <span class="token keyword">bool</span> concurrent_memtable_writes<span class="token punctuation">,</span> <span class="token keyword">bool</span> seq_per_batch<span class="token punctuation">,</span> <span class="token keyword">bool</span> batch_per_txn<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  MemTableInserter <span class="token function">inserter</span><span class="token punctuation">(</span>
+      sequence<span class="token punctuation">,</span> memtables<span class="token punctuation">,</span> flush_scheduler<span class="token punctuation">,</span> trim_history_scheduler<span class="token punctuation">,</span>
+      ignore_missing_column_families<span class="token punctuation">,</span> recovery_log_number<span class="token punctuation">,</span> db<span class="token punctuation">,</span>
+      concurrent_memtable_writes<span class="token punctuation">,</span> <span class="token keyword">nullptr</span> <span class="token comment">/* prot_info */</span><span class="token punctuation">,</span>
+      <span class="token keyword">nullptr</span> <span class="token comment">/*has_valid_writes*/</span><span class="token punctuation">,</span> seq_per_batch<span class="token punctuation">,</span> batch_per_txn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">auto</span> w <span class="token operator">:</span> write_group<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>w<span class="token operator">-></span><span class="token function">CallbackFailed</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      <span class="token keyword">continue</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    w<span class="token operator">-></span>sequence <span class="token operator">=</span> inserter<span class="token punctuation">.</span><span class="token function">sequence</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>w<span class="token operator">-></span><span class="token function">ShouldWriteToMemtable</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      <span class="token comment">// In seq_per_batch_ mode this advances the seq by one.</span>
+      inserter<span class="token punctuation">.</span><span class="token function">MaybeAdvanceSeq</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">continue</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token function">SetSequence</span><span class="token punctuation">(</span>w<span class="token operator">-></span>batch<span class="token punctuation">,</span> inserter<span class="token punctuation">.</span><span class="token function">sequence</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    inserter<span class="token punctuation">.</span><span class="token function">set_log_number_ref</span><span class="token punctuation">(</span>w<span class="token operator">-></span>log_ref<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    inserter<span class="token punctuation">.</span><span class="token function">set_prot_info</span><span class="token punctuation">(</span>w<span class="token operator">-></span>batch<span class="token operator">-></span>prot_info_<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    w<span class="token operator">-></span>status <span class="token operator">=</span> w<span class="token operator">-></span>batch<span class="token operator">-></span><span class="token function">Iterate</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inserter<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>w<span class="token operator">-></span>status<span class="token punctuation">.</span><span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      <span class="token keyword">return</span> w<span class="token operator">-></span>status<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span>seq_per_batch <span class="token operator">||</span> w<span class="token operator">-></span>batch_cnt <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span><span class="token operator">!</span>seq_per_batch <span class="token operator">||</span> inserter<span class="token punctuation">.</span><span class="token function">sequence</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> w<span class="token operator">-></span>sequence <span class="token operator">==</span> w<span class="token operator">-></span>batch_cnt<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+  <span class="token keyword">return</span> <span class="token class-name">Status</span><span class="token double-colon punctuation">::</span><span class="token function">OK</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+
 
                 
             </div>

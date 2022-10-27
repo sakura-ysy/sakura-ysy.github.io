@@ -539,7 +539,7 @@
                             
                                 本篇博客将从源码层面分析 RocksDB 中 memtable 的创建与写入，且不考虑 pipelined_write，所用代码版本为 v7.7.4
 
-
+当 WriteGroup 写完 WAL 后，就开始写 memtable，写分为两大类，p
                             
                         </div>
                         <div class="publish-info">
@@ -591,7 +591,7 @@
                             
                                 本篇博客将从源码层面分析 RocksDB 中 WAL 的创建与写入，且不考虑 2pc，所用代码版本为 v7.7.4
 
-WA L主要的功能是当 RocksDB 异常退出后，能够恢复出错前的 memtable 中的数据，因此 RocksDB 默
+WAL 主要的功能是当 RocksDB 异常退出后，能够恢复出错前的 memtable 中的数据，因此 RocksDB 默
                             
                         </div>
                         <div class="publish-info">

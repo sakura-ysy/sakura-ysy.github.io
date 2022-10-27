@@ -560,7 +560,7 @@
             <div id="articleContent">
                 <p>本篇博客将从源码层面分析 RocksDB 中 WAL 的创建与写入，且不考虑 2pc，所用代码版本为 <code>v7.7.4</code></p>
 <hr>
-<p>WA L主要的功能是当 RocksDB 异常退出后，能够恢复出错前的 memtable 中的数据，因此 RocksDB 默认是每次用户写都会刷新数据到 WAL。 每次当当前 WAL 对应的 memtable 刷新到磁盘后，都会新建一个WAL，即一个 memtable 对应一个 WAL。实际上，memtable 刷新为 sstable 是通过 immutable memtable 后台完成的，所以只要 memtable 转换为 immutable memtable，就会新生成一个 memtable 和对应的 WAL。</p>
+<p>WAL 主要的功能是当 RocksDB 异常退出后，能够恢复出错前的 memtable 中的数据，因此 RocksDB 默认是每次用户写都会刷新数据到 WAL。 每次当当前 WAL 对应的 memtable 刷新到磁盘后，都会新建一个WAL，即一个 memtable 对应一个 WAL。实际上，memtable 刷新为 sstable 是通过 immutable memtable 后台完成的，所以只要 memtable 转换为 immutable memtable，就会新生成一个 memtable 和对应的 WAL。</p>
 <p>每个 WAL 最终都会写入对应的 WAL 文件，所有的 WAL 文件都是保存在 options.wal_dir 中，为了保证数据的状态，这些文件的名字都是按照顺序的（log_number）。在 WriteGroup 写入 memtable 之前，它会先写入 WAL，具体写入的实现分为 2pc 和 !2pc，这里我们只考虑 !2pc。</p>
 <h2 id="WAL-结构"><a href="#WAL-结构" class="headerlink" title="WAL 结构"></a>WAL 结构</h2><p>WAL 由一堆变长的 record 组成，而每个 record 是由 kBlockSize(32k) 来分组，比如某一个 record 大于kBlockSize 的话，它就会被切分为多个record（通过type来判断)。</p>
 <pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token comment">/**
