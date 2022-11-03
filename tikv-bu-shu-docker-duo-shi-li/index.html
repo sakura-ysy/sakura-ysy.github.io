@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    1.2k
+                    1.3k
                 </div>
                 
 
@@ -572,6 +572,7 @@
 <tr>
 <th>容器名称</th>
 <th>容器 IP</th>
+<th>端口</th>
 <th>服务</th>
 <th>数据挂载路径</th>
 </tr>
@@ -579,36 +580,42 @@
 <tbody><tr>
 <td>pd1</td>
 <td>172.18.0.11</td>
+<td>12379:2379</td>
 <td>PD1</td>
 <td>~/ysy/tikv/data/pd1</td>
 </tr>
 <tr>
 <td>pd2</td>
 <td>172.18.0.12</td>
+<td>22379:2379</td>
 <td>PD2</td>
 <td>~/ysy/tikv/data/pd2</td>
 </tr>
 <tr>
 <td>pd3</td>
 <td>172.18.0.13</td>
+<td>32379:2379</td>
 <td>PD3</td>
 <td>~/ysy/tikv/data/pd3</td>
 </tr>
 <tr>
 <td>tikv1</td>
 <td>172.18.0.14</td>
+<td>40160:20160</td>
 <td>TiKV1</td>
 <td>~/ysy/tikv/data/tikv1</td>
 </tr>
 <tr>
 <td>tikv2</td>
 <td>172.18.0.15</td>
+<td>50160:20160</td>
 <td>TiKV2</td>
 <td>~/ysy/tikv/data/tikv2</td>
 </tr>
 <tr>
 <td>tikv3</td>
 <td>172.18.0.16</td>
+<td>60160:20160</td>
 <td>TiKV3</td>
 <td>~/ysy/tikv/data/tikv3</td>
 </tr>
