@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    844
+                    974
                 </div>
                 
 
@@ -594,7 +594,7 @@
 <td>192.168.52.153</td>
 </tr>
 </tbody></table>
-<h3 id="部署预准备"><a href="#部署预准备" class="headerlink" title="部署预准备"></a>部署预准备</h3><p>该步将给每一个机器（节点）添加一个用户名为 tikv，并让各节点的 tikv 用户可以免认证进行 ssh 连接。每个节点都要添加该用户，因此预准备步骤所有机器都要执行。</p>
+<h3 id="部署预准备"><a href="#部署预准备" class="headerlink" title="部署预准备"></a>部署预准备</h3><h4 id="连接与权限"><a href="#连接与权限" class="headerlink" title="连接与权限"></a>连接与权限</h4><p>该步将给每一个机器（节点）添加一个用户名为 tikv，并让各节点的 tikv 用户可以免认证进行 ssh 连接。每个节点都要添加该用户，因此预准备步骤所有机器都要执行。</p>
 <p>编辑 /etc/ssh/sshd_config，以下字段设为 yes</p>
 <pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml">PermitRootLogin yes
 PasswordAuthentication yes<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
@@ -620,6 +620,14 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub <span class="token number">192.168</span>.52.15
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">ssh</span> 其他节点IP<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <p><img src="https://s1.ax1x.com/2022/10/31/xTM0v6.png" alt="ssh免密登录"></p>
+<h4 id="盘挂载（可选）"><a href="#盘挂载（可选）" class="headerlink" title="盘挂载（可选）"></a>盘挂载（可选）</h4><p>如果想让某一个节点使用特定的存储设备，比如 ssd，那么就在该机器上使用卷挂载，如果不用就直接跳过。比如，想在一个 tikv 节点上使用 SSD（/dev/sda1），那么就在该节点上执行以下挂载命令：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">fdisk</span> -l
+<span class="token function">sudo</span> <span class="token function">fdisk</span> /dev/sda1
+<span class="token function">sudo</span> mkfs.ext4 /dev/sda1
+<span class="token function">sudo</span> <span class="token function">mount</span> -t ext4 /dev/sda1 /data
+<span class="token function">sudo</span> <span class="token function">chmod</span> -R 0777 /data<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>在之后的部署流程中，让该节点的数据存在 /data 下即可。</p>
 <h3 id="开始部署"><a href="#开始部署" class="headerlink" title="开始部署"></a>开始部署</h3><p>部署操作只需要在 1 个节点上操作，这里我选择 192.168.52.150。部署步骤参考官方文档：<a target="_blank" rel="noopener" href="https://tikv.org/docs/6.1/deploy/install/production/">TiUP 部署</a></p>
 <h4 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h4><p>安装 TiUP：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">curl</span> --proto <span class="token string">'=https'</span> --tlsv1.2 -sSf https://tiup-mirrors.pingcap.com/install.sh <span class="token operator">|</span> <span class="token function">sh</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
