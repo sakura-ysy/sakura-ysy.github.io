@@ -558,7 +558,7 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <p>这两天在复现 P2KV 的测试，其中提到了两个概念：use thread 和 background thread。其中，user thread 是客户端的写线程，从下发写请求开始，一直涵盖写 WAL、Memtable 这些前台任务。background thread 更容易理解，就是后台执行 Flush 和 Compact 的线程。</p>
+                <p>这两天在复现 P2KV 的测试，其中提到了两个概念：user thread 和 background thread。其中，user thread 是客户端的写线程，从下发写请求开始，一直涵盖写 WAL、Memtable 这些前台任务。background thread 更容易理解，就是后台执行 Flush 和 Compact 的线程。</p>
 <p>理解了之后，具体该怎么针对的测不同类线程占用的 CPU 呢，这就要改 RocksDB 的源码了。核心思想有两个：</p>
 <ul>
 <li>获取线程 ID</li>
@@ -569,7 +569,7 @@
 <p>mpstat：</p>
 <p><img src="https://s1.ax1x.com/2022/11/22/z3SaWT.png" alt="mpstat"></p>
 <p>htop：</p>
-<p><img src="https://s1.ax1x.com/2022/11/22/z3SfSO.png" alt="z3SfSO.png"></p>
+<p><img src="https://s1.ax1x.com/2022/11/22/z3SfSO.png" alt="htop"></p>
 <h2 id="User-Thread"><a href="#User-Thread" class="headerlink" title="User Thread"></a>User Thread</h2><p>采用 db_bench 进行压测，一个 user thread 就是一个写线程，比如下面这条命令就是 8 个 user thread：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">./db_bench --benchmarks<span class="token operator">=</span><span class="token string">"fillrandom,stats,levelstats"</span> --threads<span class="token operator">=</span><span class="token number">8</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
@@ -638,6 +638,7 @@ thread<span class="token operator">-></span>stats<span class="token punctuation"
 <p>注意，用的是 syscall(SYS_gettid)，获取的是 lwp，也就是 htop 种最左边一列的 PID。和 Windows 不同，Linux 严格来讲并没有线程的概念，所谓的 “线程” 都是通过一个名为<strong>轻量级进程</strong>的东西模拟的，也就是 lwp。参考：<a target="_blank" rel="noopener" href="https://blog.csdn.net/mm_hh/article/details/72587207">LWP与线程</a></p>
 <p>重新编译安装，运行 db_bench，即可看到 8 个 user thread 的 id。</p>
 <p><img src="https://s1.ax1x.com/2022/11/22/z3iWsU.png" alt="8个user thread"></p>
+<p>刚好对应 db_bench 在 htop 中的前 8 个线程。</p>
 <h2 id="Background-Thread"><a href="#Background-Thread" class="headerlink" title="Background Thread"></a>Background Thread</h2><p>RocksDB 采用的是线程池，Flush / Compaction 任务会交给线程池中的 background thread（BGThread）。在 RocksDB 的线程池中，所有的 BGThread 都是通过 StartBGThreads() 来创建，然后通过 RegisterThread() 来注册进线程池。整个函数调用链如下：</p>
 <p><code>ThreadPoolImpl::Impl::StartBGThreads--&gt;BGThreadWrapper--&gt;ThreadStatusUtil::RegisterThread</code></p>
 <p>StartBGThreads() 函数定义如下：</p>
