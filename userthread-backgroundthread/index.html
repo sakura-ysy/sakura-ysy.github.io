@@ -675,6 +675,7 @@ thread<span class="token operator">-></span>stats<span class="token punctuation"
 <p>然后重新编译安装。运行 db_bench，可以看到在 RocksDB 刚启动的时候就创建了很多 BGThread 进入线程池备用，而不是等到 Flush / Compaction 任务来的时候在创建。</p>
 <img src="https://s1.ax1x.com/2022/11/22/z3i7J1.png" alt="z3i7J1.png" style="zoom: 67%;" />
 
+<p>上述 BGThread 一共有 33 个。这个值和 db_bench 中的配置有关，max_background_compactions 决定最多的后台 Compaction 线程数，max_background_flushes 决定最多的后台 Flush 线程数，两者共同组成 BGThread。本此示例中，max_background_compactions = 32，max_background_flushes = 1。</p>
 <p>上面的这些 BGThread，刚好对应了 db_bench 在 htop 中除了 8 个 user thread 之外的绝大部分线程（注意，不是全部）。说明客户端的 user thread 和 后台的 background thread 占了 RocksDB 线程池中的绝大部分。</p>
 <p><img src="https://s1.ax1x.com/2022/11/22/z3i1VH.png" alt="htop"></p>
 <p>之后，就可以根据 background thread 的 id 去看 background thread 的 CPU、Mem 占用率了。</p>
