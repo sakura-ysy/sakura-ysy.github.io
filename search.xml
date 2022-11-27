@@ -4,6 +4,46 @@
   
     
     <entry>
+      <title>db_bench笔记</title>
+      <link href="/db-bench-bi-ji/"/>
+      <url>/db-bench-bi-ji/</url>
+      
+        <content type="html"><![CDATA[<blockquote><p>–threads 指什么</p></blockquote><p>这里只看写。thread 就是执行写的客户端线程，但是这个线程不仅仅是提交一个写请求，而是直接走完 RocksDB 的写流程，包括 WAL 和 Memtable 这些前台写入。深入 db-bench 代码可以看到，一个 thread 就是一个 ThreadBody()，而每一个用于写的 ThreadBody 最后都会执行 batch.Put(），这个就是 RocksDB 的写入口，随后继续执行所有的前台写工作。</p><blockquote><p> –num 和 –threads</p></blockquote><p>当指定 –num = 1000 -threads = 4 时，不是指开四个线程合作些 1000 条，而是指每一条都写 1000，一共写 4000 条，这个可以在 ThreadBody() 中打日志看出来。所以如果想要确保总 num 一定，就要进行一次除，–num=25 – threads=4 这样。</p><blockquote><p>多线程的 key 分布问题</p></blockquote><p>当采取上述方法后，就面临了一个新的问题。每一个线程都会自己随机 key，这就导致了线程之间会有一定概率的 key 重合，而线程越多，重合的 key 也就越多。因此测试可以发现，当总 num 统一时，threads 越大，LSM-Tree 中除了 L0 以外的 SST 就更少，同时 Compact 的写入大小也就越小，占用带宽也会相应变低。</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 存储 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 存储 </tag>
+            
+            <tag> rocksdb </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title></title>
+      <link href="/db-bench-bi-ji/"/>
+      <url>/db-bench-bi-ji/</url>
+      
+        <content type="html"><![CDATA[<blockquote><p>–threads 指什么</p></blockquote><p>这里只看写。thread 就是执行写的客户端线程，但是这个线程不仅仅是提交一个写请求，而是直接走完 RocksDB 的写流程，包括 WAL 和 Memtable 这些前台写入。深入 db-bench 代码可以看到，一个 thread 就是一个 ThreadBody()，而每一个用于写的 ThreadBody 最后都会执行 batch.Put(），这个就是 RocksDB 的写入口，随后继续执行所有的前台写工作。</p><blockquote><p> –num 和 –threads</p></blockquote><p>当指定 –num = 1000 -threads = 4 时，不是指开四个线程合作些 1000 条，而是指每一条都写 1000，一共写 4000 条，这个可以在 ThreadBody() 中打日志看出来。所以如果想要确保总 num 一定，就要进行一次除，–num=25 – threads=4 这样。</p><blockquote><p>多线程的 key 分布问题</p></blockquote><p>当采取上述方法后，就面临了一个新的问题。每一个线程都会自己随机 key，这就导致了线程之间会有一定概率的 key 重合，而线程越多，重合的 key 也就越多。因此测试可以发现，当总 num 统一时，threads 越大，LSM-Tree 中除了 L0 以外的 SST 就更少，同时 Compact 的写入大小也就越小，占用带宽也会相应变低。</p>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>UserThread &amp; BackgroundThread</title>
       <link href="/userthread-backgroundthread/"/>
       <url>/userthread-backgroundthread/</url>
