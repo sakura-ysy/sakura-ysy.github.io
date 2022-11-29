@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    493
+                    495
                 </div>
                 
 
@@ -569,7 +569,7 @@
 <blockquote>
 <p>多线程的 key 分布问题</p>
 </blockquote>
-<p>当采取上述方法后，就面临了一个新的问题。每一个线程都会自己随机 key，这就导致了线程之间会有一定概率的 key 重合，而线程越多，重合的 key 也就越多。– num=1000 –threads=1 和 –num=250 –threads=4 虽然生成的总 kv 数一致，但是前者是在 1<del>1000 之间随机生成 key，后者是在 1</del>250 之间随机生成 key，且 4 线程并发生成。后者的随机范围小，所以重合的概率就高很多。</p>
+<p>当采取上述方法后，就面临了一个新的问题。每一个线程都会自己随机 key，这就导致了线程之间会有一定概率的 key 重合，而线程越多，重合的 key 也就越多。– num=1000 –threads=1 和 –num=250 –threads=4 虽然生成的总 kv 数一致，但是前者是在 [0,1000) 之间随机生成 key，后者是在 [0,250) 之间随机生成 key，且 4 线程并发生成。后者的随机范围小，所以重合的概率就高很多。</p>
 <blockquote>
 <p>用 –writes 解决上述问题</p>
 </blockquote>
