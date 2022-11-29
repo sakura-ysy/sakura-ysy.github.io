@@ -763,6 +763,56 @@ k8s源码(二): Pod创建过程中Container的卷挂载
             
             <div class="article col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
+                    <a href="/db-bench-yuan-ma-yi-random-xia-dan-ge-thread-de-key-sheng-cheng-fang-shi-yu-xie-ru/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/2.jpg" class="responsive-img" alt="db_bench源码(一)：random下单个thread的key生成方式与写入">
+                            
+                            <span class="card-title">db_bench源码(一)：random下单个thread的key生成方式与写入</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                先说结论：
+
+-num 指每个线程生成 key 的范围，-writes 指实际写入 kv 的数量，默认情况下 -writes=-1，指 writes==num。生成一条 kv 就写入一条 kv，所以实际上只生成了 writes 个 kv。
+
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-11-29
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fas fa-user fa-fw"></i>
+                                SrcMiLe
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/%E5%AD%98%E5%82%A8/">
+                            <span class="chip bg-color">存储</span>
+                        </a>
+                        
+                        <a href="/tags/rocksdb/">
+                            <span class="chip bg-color">rocksdb</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
                     <a href="/db-bench-bi-ji/">
                         <div class="card-image">
                             
@@ -1211,60 +1261,6 @@ WAL 主要的功能是当 RocksDB 异常退出后，能够恢复出错前
                         <div class="publish-info">
                             <span class="publish-date">
                                 <i class="far fa-clock fa-fw icon-date"></i>2022-10-25
-                            </span>
-                            <span class="publish-author">
-                                
-                                <i class="fas fa-bookmark fa-fw icon-category"></i>
-                                
-                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
-                                    存储
-                                </a>
-                                
-                                
-                            </span>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card-action article-tags">
-                        
-                        <a href="/tags/%E5%AD%98%E5%82%A8/">
-                            <span class="chip bg-color">存储</span>
-                        </a>
-                        
-                        <a href="/tags/rocksdb/">
-                            <span class="chip bg-color">rocksdb</span>
-                        </a>
-                        
-                    </div>
-                    
-                </div>
-            </div>
-            
-            <div class="article col s12 m6 l4" data-aos="zoom-in">
-                <div class="card">
-                    <a href="/rocksdb-yuan-ma-xue-xi-si-du-san/">
-                        <div class="card-image">
-                            
-                            
-                            <img src="/medias/featureimages/6.jpg" class="responsive-img" alt="RocksDB源码学习(四): 读(三)">
-                            
-                            <span class="card-title">RocksDB源码学习(四): 读(三)</span>
-                        </div>
-                    </a>
-
-                    <div class="card-content article-content">
-                        <div class="summary block-with-text">
-                            
-                                注：本篇博客涉及的代码版本均为v7.7.4。
-上两篇博客中我们分析了 RocksDB 如何在内存中查找对应的数据，这一篇我们将会详细分析当内存中未找到记录时，RocksDB 如何在磁盘上查找对应的数据。
-
-依旧是从 DBImpl::GetI
-                            
-                        </div>
-                        <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-21
                             </span>
                             <span class="publish-author">
                                 
