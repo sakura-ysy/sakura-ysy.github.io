@@ -4,6 +4,33 @@
   
     
     <entry>
+      <title>RocksDB: Version &amp; VersionSet</title>
+      <link href="/rocksdb-version-versionset/"/>
+      <url>/rocksdb-version-versionset/</url>
+      
+        <content type="html"><![CDATA[<p>由于 SST 是生成后就不可变的，所以 LSM-Tree 的合并就是生成 Compact 后的新 SST 并删除旧的 SST，{17，40} {12，19} {22，45} =&gt; {12，45} 这个样子。可问题来了，因为 RocksDB 支持多客户端线程，所以如果在执行 Compact 时，{17 40} {12 19} {22 45} 正在被某个客户端读时，怎么办？</p><p>很显然，此时不能删除。RocksDB 在删除 SST 时，需要等到它/它们的引用 ref == 0 时才可以删除，即其上没有任何读操作了。</p><p>所以实际上，刚刚 Compact 完的结构是这样的：{17，40} {12，19} {22，45} =&gt; {17 ，40} {12，19} {22，45} {12，45}，也就是新旧暂时都存在 LSM-Tree 中。</p><p><img src="https://s1.ax1x.com/2022/11/30/zwXUO0.png" alt="新旧SST共存"></p><p>这样就又有问题了。此时如果有新的范围在 12~45 间的读取，到底是去旧的 SST 读还是去新的 SST 读，当然是要去新的 SST 中读。那么就需要一个办法，来区分出旧的 SST 和新的 SST，Version 就是干这个的。</p><ul><li>旧有的 SST 组成一个 Version。</li><li>Compact 操作称为 VersionEdit，一个 VersionEdit 就是一次 Compact。</li><li>Compact 后不着急删除旧有的 Version，而是让生成一个新的 Version，包括新的 SST 和未被 Compact 的 SST，新旧 Version 是共存的。</li><li>假设 Version1 在生成 Version2 的时候，Version1 正在服务很多读请求，那 Version1 自然不能丢。<ul><li>当 Version2 生成好了之后，Version2 也开始服务很多读请求。</li><li>Version2 到达某一时刻，也会开始进行 Compact，生成Version3。此时若 Version2 也在服务读请求，那自然也不能丢。</li><li>整体形成 {Version1、Version2、Version3} 的局面。</li></ul></li></ul><p>当前 DB 的所有 Version 集合，就是 VersionSet。</p><p><img src="https://s1.ax1x.com/2022/11/30/zwXIte.jpg" alt="VersionSet"></p><p>因为新来的读请求都是交给最新的 Version 去读的，所以旧的 Version 终会有一刻不再被读，此时该 Version 就会被清理掉，其中老旧的 SST 即会被删除。</p><p>万一旧的 Version 正在被写，怎么办呢？开玩笑，SST 一旦生成，只能读和删，是不可能再去写入的。</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 存储 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 存储 </tag>
+            
+            <tag> rocksdb </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>db_bench源码(一)：random下单个thread的key生成方式与写入</title>
       <link href="/db-bench-yuan-ma-yi-random-xia-dan-ge-thread-de-key-sheng-cheng-fang-shi-yu-xie-ru/"/>
       <url>/db-bench-yuan-ma-yi-random-xia-dan-ge-thread-de-key-sheng-cheng-fang-shi-yu-xie-ru/</url>
@@ -401,7 +428,7 @@
       <link href="/rocksdb-xi-lie-wen-zhang/"/>
       <url>/rocksdb-xi-lie-wen-zhang/</url>
       
-        <content type="html"><![CDATA[<ul><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-yi-shi-wu/">RocksDB源码学习(一): 事务</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-er-du-yi/">RocksDB源码学习(二): 读(一)</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-san-du-er/">RocksDB源码学习(三): 读(二)</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-si-du-san/">RocksDB源码学习(四): 读(三)</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-wu-xie-yi-kuang-jia/">RocksDB源码学习(五): 写(一)-框架</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-liu-xie-er-writegroup/">RocksDB源码学习(六): 写(二)-WriteGroup</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-qi-xie-san-wal/">RocksDB源码学习(七): 写(三)-WAL</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-ba-xie-si-memtable/">RocksDB源码学习(八): 写(四)-Memtable</a></li><li><a href="https://yesiyuan.cn/userthread-backgroundthread/">RocksDB：UserThread &amp; BackgroundThread</a></li><li><a href="https://yesiyuan.cn/db-bench-bi-ji/">db_bench使用笔记</a></li><li><a href="https://yesiyuan.cn/db-bench-yuan-ma-yi-random-xia-dan-ge-thread-de-key-sheng-cheng-fang-shi-yu-xie-ru/">db_bench源码(一)：random下单个thread的key生成方式与写入</a></li></ul>]]></content>
+        <content type="html"><![CDATA[<ul><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-yi-shi-wu/">RocksDB源码学习(一): 事务</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-er-du-yi/">RocksDB源码学习(二): 读(一)</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-san-du-er/">RocksDB源码学习(三): 读(二)</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-si-du-san/">RocksDB源码学习(四): 读(三)</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-wu-xie-yi-kuang-jia/">RocksDB源码学习(五): 写(一)-框架</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-liu-xie-er-writegroup/">RocksDB源码学习(六): 写(二)-WriteGroup</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-qi-xie-san-wal/">RocksDB源码学习(七): 写(三)-WAL</a></li><li><a href="https://yesiyuan.cn/rocksdb-yuan-ma-xue-xi-ba-xie-si-memtable/">RocksDB源码学习(八): 写(四)-Memtable</a></li><li><a href="https://yesiyuan.cn/rocksdb-userthread-backgroundthread/">RocksDB: UserThread &amp; BackgroundThread</a></li><li><a href="https://yesiyuan.cn/rocksdb-version-versionset/">RocksDB: Version &amp; VersionSet</a></li><li><a href="https://yesiyuan.cn/db-bench-bi-ji/">db_bench使用笔记</a></li><li><a href="https://yesiyuan.cn/db-bench-yuan-ma-yi-random-xia-dan-ge-thread-de-key-sheng-cheng-fang-shi-yu-xie-ru/">db_bench源码(一)：random下单个thread的key生成方式与写入</a></li></ul>]]></content>
       
       
       <categories>
