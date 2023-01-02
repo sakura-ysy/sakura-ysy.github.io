@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    2.3k
+                    2.2k
                 </div>
                 
 
@@ -603,7 +603,7 @@
 <p>因此，虽然它叫作 <em>突增</em> 积分，但文件系统较小时，由于基线速率太小了，所以基本都在用突增积分，变成一种常态。那问题来了，为什么用了突增积分，吞吐量还是这么少。因为该模式下的吞吐量会被 PermittedThroughput 限制住，只要它不提高，那么吞吐量就一直上不去，IOPS 也就上不去。</p>
 <p>PermittedThroughput 的值由文件系统大小决定，其计算方法如下：</p>
 <p><img src="https://s1.ax1x.com/2022/12/07/zgJWjI.png" alt="PermittedThroughput与基线速率的计算方法"></p>
-<p>其中，红框内的前者就是 PermittedThroughput ，后者就是前文提到的基线速率。实际上，最低的 PermittedThroughput 为 105MiB，在 CloudWatch 中可以监控到，如下：</p>
+<p>其中，红框内的前者就是 PermittedThroughput ，后者就是前文提到的基线速率。最低的 PermittedThroughput 为 105MB（1MiB = 1.048 MB），在 CloudWatch 中可以监控到，如下：</p>
 <img src="https://s1.ax1x.com/2022/12/07/zgYSET.png" alt="zgYSET.png" style="zoom: 67%;" />
 
 <p>总而言之，如果不提高 PermittedThroughput，那么该模式下 EFS 的吞吐量就上不去。而提高它的唯一办法就是提高文件系统存储量，且要 TB 级的提高才能看到明显的效果，可以说是纯商业级使用了，全是钱。而像官网描述的最高 GiB/s 级的吞吐量，要 10+ TB 才能达到，这在商业使用中很容易做到，但实验中就很难。</p>
@@ -630,16 +630,14 @@
 </ul>
 <p>默认 6TB 的 io2 一年成本为：</p>
 <ul>
-<li>6000 * 12 * 0.1278（存储） + 3000 * 12 * 0.067（预置IOPS） = 11613.6 USD。</li>
+<li>6000 * 12 * 0.1278（存储） + 3000 * 12 * 0.067（预置IOPS） = 11613.6USD。</li>
 </ul>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>如果想要该模式下的 EFS 性能赶上 io2，那么必须要 TB 级别的存储量才行。由于高存储大小下，突增积分的积攒速是比较快的（比如 3TB 下的增速是 150 MiB/s），且大部分应用场景下的大压力都是波动而非持久的，因此可以凭借场景1来预测成本。可以看到，如果存储量为 3TB，在 One Zone 情况下，EFS 的成本是低于 io2 的，且最高吞吐量能达到 300MiB/s，并不弱于 io2。不过由于 EFS 的存储单价是贵于 io2 的，因此如果不给 io2 配置更高的预置 IOPS，随着存储量的增加，成本会逐渐高于 io2。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>如果想要该模式下的 EFS 性能赶上 io2，那么必须要 TB 级别的存储量才行。由于高存储大小下，突增积分的积攒速是比较快的（比如 3TB 下的增速是 150 MiB/s），且大部分应用场景下的大压力都是波动而非持久的，因此可以凭借场景1来预测成本。可以看到，如果存储量为 3TB，One Zone EFS成本是低于io2的。</p>
 <p>实际上，AWS 推出 EFS 旨在提供<strong>PiB级</strong>的共享文件系统，达到这个存储量级之后，EFS 最大写吞吐量能达到 3 GiB/s，每个客户端的写能达到 500 MiB/s，性能是要由于 io2 的。最重要的，io2 的最大容量只有 64TiB，所以 PiB 的文件存储只能用 EFS。</p>
 <ul>
-<li>总体来讲，EFS 的成本是高于 io2 的。</li>
-<li>EFS 适用于 TiB 级甚至 PiB 级的存储，能提供很优秀的性能，但成本不低。</li>
+<li>EFS 适用于 TiB 级甚至 PiB 级的<strong>共享</strong>存储，但性能不如io2。</li>
 <li>如果要做到 PiB 级的存储，只能用 EFS。</li>
 </ul>
-<p>不过关键还是，贵。</p>
 <h2 id="弹性模式"><a href="#弹性模式" class="headerlink" title="弹性模式"></a>弹性模式</h2><p>对于使用弹性吞吐量的文件系统，EFS 会自动向上或向下扩展吞吐量性能以满足工作负载的需求。弹性吞吐量是最佳吞吐量模式，适用于具有难以预测的性能要求的尖峰或不可预测的工作负载，或者驱动吞吐量平均为峰值吞吐量的 5% 或更低（平均峰值比）的应用程序。</p>
 <p>由于具有弹性吞吐量的文件系统的吞吐量性能会自动扩展，因此无需指定或配置吞吐量容量来满足应用程序需求。但是需为读取或写入的数据量付费，并且在弹性吞吐量模式下不会累积或消耗突发信用。在所有 AWS 区域中，弹性吞吐量可为每个文件系统驱动高达 3 GiBps 的读取操作和 1 GiBps 的写入操作。</p>
 <p>但是我不清楚这个弹性是怎么弹的，测出来的性能依然很弱，可能还是和文件系统的存储大小有关吧，和上一节的 突发吞吐量模式性能差不多。</p>
@@ -1169,18 +1167,17 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="far fa-dot-circle"></i>&nbsp;本篇
-            </div>
+                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/efs-ce-shi-bi-ji/">
+                <a href="/rocksmash/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/8.jpg" class="responsive-img" alt="EFS测试笔记">
+                        <img src="/medias/featureimages/17.jpg" class="responsive-img" alt="RocksMash">
                         
-                        <span class="card-title">EFS测试笔记</span>
+                        <span class="card-title">RocksMash</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -1190,33 +1187,16 @@
                         
                     </div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-12-07
-                            </span>
+                        <span class="publish-date">
+                            <i class="far fa-clock fa-fw icon-date"></i>2023-01-02
+                        </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-bookmark fa-fw icon-category"></i>
-                            
-                            <a href="/categories/AWS/" class="post-category">
-                                    AWS
-                                </a>
-                            
+                            <i class="fas fa-user fa-fw"></i>
+                            SrcMiLe
                             
                         </span>
                     </div>
-                </div>
-
-                
-                <div class="card-action article-tags">
-                    
-                    <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/">
-                        <span class="chip bg-color">云计算</span>
-                    </a>
-                    
-                    <a href="/tags/AWS/">
-                        <span class="chip bg-color">AWS</span>
-                    </a>
-                    
                 </div>
                 
             </div>
@@ -1391,7 +1371,7 @@
         <div class="col s12 m8 l8 copy-right">
             Copyright&nbsp;&copy;
             
-                <span id="year">2022</span>
+                <span id="year">2022-2023</span>
             
             <span id="year">2022</span>
             <a href="/about" target="_blank">SrcMiLe</a>
