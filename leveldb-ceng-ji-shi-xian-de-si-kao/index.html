@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="LevelDB单元测试, SrcMiLeの杂货铺">
+    <meta name="keywords" content="LevelDB层级实现的思考, SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>LevelDB单元测试 | SrcMiLeの杂货铺</title>
+    <title>LevelDB层级实现的思考 | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -379,12 +379,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/6.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/9.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">LevelDB单元测试</h1>
+                    <h1 class="description center-align post-title">LevelDB层级实现的思考</h1>
                 </div>
             </div>
         </div>
@@ -529,7 +529,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2023-02-04
+                    2023-02-19
                 </div>
                 
 
@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    977
+                    728
                 </div>
                 
 
@@ -558,91 +558,90 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <p>在学习 leveldb 源码的过程中，肯定少不了对特定函数或结构的测试。LevelDB几乎给每个关键的数据结构都写好了测试代码，我们可以直接使用，或者根据他的框架自己编写新的测试体，很方便。</p>
-<p>但是，我不会用。。。</p>
-<p>我看的源码是截止写这篇博客时的最新版，commit：aa5479bbf47e9df86e0afbb89e6246085f22cdd4。当我深究 filter_block 时，需要用到它的单元测试，测试代码位于 filter_block_test.cc 中，测试函数体如下：</p>
-<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token function">TEST_F</span><span class="token punctuation">(</span>FilterBlockTest<span class="token punctuation">,</span> SingleChunk<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-  FilterBlockBuilder <span class="token function">builder</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>policy_<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">StartBlock</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">AddKey</span><span class="token punctuation">(</span><span class="token string">"foo"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">AddKey</span><span class="token punctuation">(</span><span class="token string">"bar"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">AddKey</span><span class="token punctuation">(</span><span class="token string">"box"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">StartBlock</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">AddKey</span><span class="token punctuation">(</span><span class="token string">"box"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">StartBlock</span><span class="token punctuation">(</span><span class="token number">300</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">AddKey</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  Slice block <span class="token operator">=</span> builder<span class="token punctuation">.</span><span class="token function">Finish</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  FilterBlockReader <span class="token function">reader</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>policy_<span class="token punctuation">,</span> block<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"foo"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"bar"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"box"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"foo"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span><span class="token operator">!</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"missing"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span><span class="token operator">!</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"other"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+                <p>解答一个问题：</p>
+<p>SST 落盘后是固定的，在磁盘中是没有所谓层级结构的，那么 LSM-Tree 是怎么记录每一层有哪些 SST 的呢？</p>
+<p>首先，肯定不能仅仅靠内存来记录，因为是不持久的。</p>
+<p>那么，接下来就会想到文件指针，LSM-Tree 的每一个 SST 会不会都是一个文件指针呢？</p>
+<p>显然也不是，因为指针是内存中的概念，断电后就消失了，重启程序地址就会变。</p>
+<p>那到底通过什么方式记录下SST在哪一层呢？</p>
+<p>=&gt; <strong>文件编号</strong></p>
+<p>因为编号是整合入文件名中的，所以该<code>索引</code>是持久化的。</p>
+<p>那么具体怎么操作呢？</p>
+<p>=&gt; <strong>VersionEdit -&gt; Version -&gt; Manifest</strong></p>
+<p>首先，在每次Compaction过后，新/旧SST的编号都会记录在VersionEdit中</p>
+<p>之后就可以通过 builder.Apply() 和 builder.SaveTo() 将 Edit 重放入 Version 了</p>
+<p>Version 怎么实现呢？</p>
+<p>简单的来说，就是个数据结构记录每层有哪些SST编号，可以理解为编号数组。</p>
+<p>那断电后怎么恢复呢？</p>
+<p>这就是 Manifest 了，因为 Manifest 中记录的正是 VersionEdit。</p>
+<p>所以可以通过 Recover() 重放其中的 VersionEdit 以达到恢复的目的。</p>
+<p>总结一下：</p>
+<p>层级结构实际就是 Version 中记录了每层有哪些文件<code>编号</code>。</p>
+<p>而编号是整合进文件名中的，是持久化的。</p>
+<p>当崩溃重启后，通过重放Manifest中的VersionEdit即可恢复了。</p>
+<hr>
+<p>上述思考，可以在 Flush 操作中得到验证：</p>
+<pre><code class="cpp">// 将im memtable（以下统称im）给Flush
+// 流程如下：
+// 1.通过BuildTable()来生成SST
+// 2.通过PickLevelForMemTableOutput()来选出存放该SST的Level
+// 3.通过edit-&gt;AddFile()将新的SST加入VersionEdit中
+Status DBImpl::WriteLevel0Table(MemTable* mem, VersionEdit* edit,
+                                Version* base) &#123;
+  mutex_.AssertHeld();
+  const uint64_t start_micros = env_-&gt;NowMicros();
+  FileMetaData meta;
+  meta.number = versions_-&gt;NewFileNumber();
+  // 加入待生成SST列表
+  pending_outputs_.insert(meta.number);
+  Iterator* iter = mem-&gt;NewIterator();
+  Log(options_.info_log, &quot;Level-0 table #%llu: started&quot;,
+      (unsigned long long)meta.number);
 
-<p>函数体很容易理解，但问题来了，我不知道怎么运行它。TEST_F 是 google 下的一个单元测试框架<code>gtest</code>，我从来没用过甚至也没听说过，对它的使用很懵逼，连这个函数的声明方式都看不懂。并且，这个 filter_block_test.cc 文件没有 main 函数，说明我连编译都进行不了。另外，即使可以编译也不能只编译这一个文件，因为它链接了整个 leveldb 中的很多库。也就是说：</p>
-<ol>
-<li>gtest 是一点都没用过，TEST_F 是啥？</li>
-<li>没 main 函数我怎么进去？</li>
-<li>咋编译？</li>
-</ol>
-<p>带着这三个问题我去搜了很多资料，直到碰见了这一篇：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/71722510">测试代码编译</a>。让我有方向的这篇文章的最后一部分：</p>
-<p><img src="https://s1.ax1x.com/2023/02/04/pSyRSC8.png"></p>
-<p>这两段话解答了我的第3个问题，如何编译。也就是说，要么先编译整个 leveldb 生成 libleveldb.a 然后再编译单元测试，要么直接将测试随着整个 leveldb 一同编译了。如果经常更改单元测试，肯定是前者要好很多，但这里我只是用一下，所以干脆直接选后者了。</p>
-<p>问题来了，我查找 CMakeLists.txt 中的相关代码，发现了如下内容：</p>
-<p><img src="https://s1.ax1x.com/2023/02/04/pSyRn8U.png" alt="CMakeLists.txt"></p>
-<p>这段注释发布于13个月前，核心为：</p>
-<blockquote>
-<p>Remove main() from most tests.</p>
-<p>This gives some flexibility to embedders.</p>
-<p>Currently, embedders have to build a binary for each test file.</p>
-</blockquote>
-<p>这样就解答第2个问题了，main 函数在哪。从注释中可以看到，在该版本中，main() 被剥离了，因为想让测试变的更容易扩展，但这样就需要使用者自己去构建。被剥离了，说明之前存在过，于是我 pull 了之前的版本（v1.23），重新查看  filter_block_test.cc ，部分内容如下：</p>
-<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token function">TEST_F</span><span class="token punctuation">(</span>FilterBlockTest<span class="token punctuation">,</span> SingleChunk<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-  FilterBlockBuilder <span class="token function">builder</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>policy_<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">StartBlock</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">AddKey</span><span class="token punctuation">(</span><span class="token string">"foo"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">AddKey</span><span class="token punctuation">(</span><span class="token string">"bar"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">AddKey</span><span class="token punctuation">(</span><span class="token string">"box"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">StartBlock</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">AddKey</span><span class="token punctuation">(</span><span class="token string">"box"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">StartBlock</span><span class="token punctuation">(</span><span class="token number">300</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  builder<span class="token punctuation">.</span><span class="token function">AddKey</span><span class="token punctuation">(</span><span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  Slice block <span class="token operator">=</span> builder<span class="token punctuation">.</span><span class="token function">Finish</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  FilterBlockReader <span class="token function">reader</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>policy_<span class="token punctuation">,</span> block<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"foo"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"bar"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"box"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"hello"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"foo"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span><span class="token operator">!</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"missing"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token function">ASSERT_TRUE</span><span class="token punctuation">(</span><span class="token operator">!</span>reader<span class="token punctuation">.</span><span class="token function">KeyMayMatch</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token string">"other"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">&#125;</span>
+  Status s;
 
+  // 根据im的iter生成SST
+  &#123;
+    mutex_.Unlock();
+    // 注意，BuildTable是包含落盘的
+    // SST中的一些信息（最大最小key、文件大小）等会记录在meta中
+    s = BuildTable(dbname_, env_, options_, table_cache_, iter, &amp;meta);
+    // 至此，SST已经在磁盘中了
+    mutex_.Lock();
+  &#125;
 
-<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span><span class="token operator">*</span><span class="token operator">*</span> argv<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-  testing<span class="token double-colon punctuation">::</span><span class="token function">InitGoogleTest</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>argc<span class="token punctuation">,</span> argv<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token keyword">return</span> <span class="token function">RUN_ALL_TESTS</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+  Log(options_.info_log, &quot;Level-0 table #%llu: %lld bytes %s&quot;,
+      (unsigned long long)meta.number, (unsigned long long)meta.file_size,
+      s.ToString().c_str());
+  // 释放iter
+  delete iter;
+  // 从待生成列表中删除
+  pending_outputs_.erase(meta.number);
 
-<p>重点来了，这个版本的 xxx_test.cc 是有 main 入口的，说明可以直接编译生成可执行文件来使用。具体的流程为 RUN_ALL_TESTS() 会执行上面的所有 TEST_F，代码都在项目中写有，这里就不展示了。</p>
-<p>CMakeLists.txt，不同于最新的版本，该版本把每一个 xxx_test.cc 的编译都考虑进去了，如下图所示：</p>
-<img src="https://s1.ax1x.com/2023/02/04/pSyRbGT.png" alt="CMakeLists.txt" style="zoom:50%;" />
+  // Note that if file_size is zero, the file has been deleted and
+  // should not be added to the manifest.
+  int level = 0;
+  if (s.ok() &amp;&amp; meta.file_size &gt; 0) &#123;
+    const Slice min_user_key = meta.smallest.user_key();
+    const Slice max_user_key = meta.largest.user_key();
+    if (base != nullptr) &#123;
+      // 从当前Version中选出存放该SST的Level
+      // 一般来说是0，当然也可能不是
+      level = base-&gt;PickLevelForMemTableOutput(min_user_key, max_user_key);
+    &#125;
+    // 新的SST加入new_files_中
+    // 实际上是编号（meta.number）加入
+    edit-&gt;AddFile(level, meta.number, meta.file_size, meta.smallest,
+                  meta.largest);
+  &#125;
 
-<p>此时，只需要按照正常流程编译 leveldb，这些测试文件即可一同被编译：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> -p build <span class="token operator">&amp;&amp;</span> <span class="token builtin class-name">cd</span> build
-cmake -DCMAKE_BUILD_TYPE<span class="token operator">=</span>Release <span class="token punctuation">..</span> <span class="token operator">&amp;&amp;</span> cmake --build <span class="token builtin class-name">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p>生成的可执行文件位于 bulid/ 目录下：</p>
-<img src="https://s1.ax1x.com/2023/02/04/pSyWSd1.png" alt="build目录" style="zoom:50%;" />
-
-<p>只需运行即可：</p>
-<img src="https://s1.ax1x.com/2023/02/04/pSyWPJK.png" alt="运行单元测试" style="zoom:67%;" />
-
-<p>至此，leveldb 如何进行单元测试的问题就解决了。</p>
-<p>开发者将 main 函数从 xxx_test.cc 中移出，固然有它的道理，但由于我对 gtest 并不了解，所以还是习惯于使用旧版的测试。</p>
+  CompactionStats stats;
+  stats.micros = env_-&gt;NowMicros() - start_micros;
+  stats.bytes_written = meta.file_size;
+  stats_[level].Add(stats);
+  return s;
+&#125;
+</code></pre>
 
                 
             </div>
@@ -669,7 +668,7 @@ cmake -DCMAKE_BUILD_TYPE<span class="token operator">=</span>Release <span class
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://example.com/leveldb-dan-yuan-ce-shi/">http://example.com/leveldb-dan-yuan-ce-shi/</a>
+                    <a href="http://example.com/leveldb-ceng-ji-shi-xian-de-si-kao/">http://example.com/leveldb-ceng-ji-shi-xian-de-si-kao/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -1158,9 +1157,10 @@ cmake -DCMAKE_BUILD_TYPE<span class="token operator">=</span>Release <span class
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
                 <a href="/leveldb-ceng-ji-shi-xian-de-si-kao/">
                     <div class="card-image">
@@ -1178,9 +1178,63 @@ cmake -DCMAKE_BUILD_TYPE<span class="token operator">=</span>Release <span class
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2023-02-19
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-02-19
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
+                                </a>
+                            
+                            
                         </span>
+                    </div>
+                </div>
+
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E5%AD%98%E5%82%A8/">
+                        <span class="chip bg-color">存储</span>
+                    </a>
+                    
+                    <a href="/tags/leveldb/">
+                        <span class="chip bg-color">leveldb</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/leveldb-dan-yuan-ce-shi/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/6.jpg" class="responsive-img" alt="LevelDB单元测试">
+                        
+                        <span class="card-title">LevelDB单元测试</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-02-04
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -1204,43 +1258,6 @@ cmake -DCMAKE_BUILD_TYPE<span class="token operator">=</span>Release <span class
                         <span class="chip bg-color">leveldb</span>
                     </a>
                     
-                </div>
-                
-            </div>
-        </div>
-        
-        
-        <div class="article col s12 m6" data-aos="fade-up">
-            <div class="article-badge right-badge text-color">
-                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="card">
-                <a href="/rocksmash/">
-                    <div class="card-image">
-                        
-                        
-                        <img src="/medias/featureimages/17.jpg" class="responsive-img" alt="RocksMash">
-                        
-                        <span class="card-title">RocksMash</span>
-                    </div>
-                </a>
-                <div class="card-content article-content">
-                    <div class="summary block-with-text">
-                        
-                            
-                        
-                    </div>
-                    <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2023-01-02
-                            </span>
-                        <span class="publish-author">
-                            
-                            <i class="fas fa-user fa-fw"></i>
-                            SrcMiLe
-                            
-                        </span>
-                    </div>
                 </div>
                 
             </div>

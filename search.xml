@@ -4,6 +4,33 @@
   
     
     <entry>
+      <title>LevelDB层级实现的思考</title>
+      <link href="/leveldb-ceng-ji-shi-xian-de-si-kao/"/>
+      <url>/leveldb-ceng-ji-shi-xian-de-si-kao/</url>
+      
+        <content type="html"><![CDATA[<p>解答一个问题：</p><p>SST 落盘后是固定的，在磁盘中是没有所谓层级结构的，那么 LSM-Tree 是怎么记录每一层有哪些 SST 的呢？</p><p>首先，肯定不能仅仅靠内存来记录，因为是不持久的。</p><p>那么，接下来就会想到文件指针，LSM-Tree 的每一个 SST 会不会都是一个文件指针呢？</p><p>显然也不是，因为指针是内存中的概念，断电后就消失了，重启程序地址就会变。</p><p>那到底通过什么方式记录下SST在哪一层呢？</p><p>=&gt; <strong>文件编号</strong></p><p>因为编号是整合入文件名中的，所以该<code>索引</code>是持久化的。</p><p>那么具体怎么操作呢？</p><p>=&gt; <strong>VersionEdit -&gt; Version -&gt; Manifest</strong></p><p>首先，在每次Compaction过后，新/旧SST的编号都会记录在VersionEdit中</p><p>之后就可以通过 builder.Apply() 和 builder.SaveTo() 将 Edit 重放入 Version 了</p><p>Version 怎么实现呢？</p><p>简单的来说，就是个数据结构记录每层有哪些SST编号，可以理解为编号数组。</p><p>那断电后怎么恢复呢？</p><p>这就是 Manifest 了，因为 Manifest 中记录的正是 VersionEdit。</p><p>所以可以通过 Recover() 重放其中的 VersionEdit 以达到恢复的目的。</p><p>总结一下：</p><p>层级结构实际就是 Version 中记录了每层有哪些文件<code>编号</code>。</p><p>而编号是整合进文件名中的，是持久化的。</p><p>当崩溃重启后，通过重放Manifest中的VersionEdit即可恢复了。</p><hr><p>上述思考，可以在 Flush 操作中得到验证：</p><pre><code class="cpp">// 将im memtable（以下统称im）给Flush// 流程如下：// 1.通过BuildTable()来生成SST// 2.通过PickLevelForMemTableOutput()来选出存放该SST的Level// 3.通过edit-&gt;AddFile()将新的SST加入VersionEdit中Status DBImpl::WriteLevel0Table(MemTable* mem, VersionEdit* edit,                                Version* base) &#123;  mutex_.AssertHeld();  const uint64_t start_micros = env_-&gt;NowMicros();  FileMetaData meta;  meta.number = versions_-&gt;NewFileNumber();  // 加入待生成SST列表  pending_outputs_.insert(meta.number);  Iterator* iter = mem-&gt;NewIterator();  Log(options_.info_log, &quot;Level-0 table #%llu: started&quot;,      (unsigned long long)meta.number);  Status s;  // 根据im的iter生成SST  &#123;    mutex_.Unlock();    // 注意，BuildTable是包含落盘的    // SST中的一些信息（最大最小key、文件大小）等会记录在meta中    s = BuildTable(dbname_, env_, options_, table_cache_, iter, &amp;meta);    // 至此，SST已经在磁盘中了    mutex_.Lock();  &#125;  Log(options_.info_log, &quot;Level-0 table #%llu: %lld bytes %s&quot;,      (unsigned long long)meta.number, (unsigned long long)meta.file_size,      s.ToString().c_str());  // 释放iter  delete iter;  // 从待生成列表中删除  pending_outputs_.erase(meta.number);  // Note that if file_size is zero, the file has been deleted and  // should not be added to the manifest.  int level = 0;  if (s.ok() &amp;&amp; meta.file_size &gt; 0) &#123;    const Slice min_user_key = meta.smallest.user_key();    const Slice max_user_key = meta.largest.user_key();    if (base != nullptr) &#123;      // 从当前Version中选出存放该SST的Level      // 一般来说是0，当然也可能不是      level = base-&gt;PickLevelForMemTableOutput(min_user_key, max_user_key);    &#125;    // 新的SST加入new_files_中    // 实际上是编号（meta.number）加入    edit-&gt;AddFile(level, meta.number, meta.file_size, meta.smallest,                  meta.largest);  &#125;  CompactionStats stats;  stats.micros = env_-&gt;NowMicros() - start_micros;  stats.bytes_written = meta.file_size;  stats_[level].Add(stats);  return s;&#125;</code></pre>]]></content>
+      
+      
+      <categories>
+          
+          <category> 存储 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 存储 </tag>
+            
+            <tag> leveldb </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>LevelDB单元测试</title>
       <link href="/leveldb-dan-yuan-ce-shi/"/>
       <url>/leveldb-dan-yuan-ce-shi/</url>

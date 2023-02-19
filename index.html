@@ -763,6 +763,60 @@ k8s源码(二): Pod创建过程中Container的卷挂载
             
             <div class="article col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
+                    <a href="/leveldb-ceng-ji-shi-xian-de-si-kao/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/9.jpg" class="responsive-img" alt="LevelDB层级实现的思考">
+                            
+                            <span class="card-title">LevelDB层级实现的思考</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                解答一个问题：
+SST 落盘后是固定的，在磁盘中是没有所谓层级结构的，那么 LSM-Tree 是怎么记录每一层有哪些 SST 的呢？
+首先，肯定不能仅仅靠内存来记录，因为是不持久的。
+那么，接下来就会想到文件指针，LSM-Tree 的每一个
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-02-19
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fas fa-bookmark fa-fw icon-category"></i>
+                                
+                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
+                                </a>
+                                
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/%E5%AD%98%E5%82%A8/">
+                            <span class="chip bg-color">存储</span>
+                        </a>
+                        
+                        <a href="/tags/leveldb/">
+                            <span class="chip bg-color">leveldb</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
                     <a href="/leveldb-dan-yuan-ce-shi/">
                         <div class="card-image">
                             
@@ -1190,56 +1244,6 @@ k8s源码(二): Pod创建过程中Container的卷挂载
                         
                         <a href="/tags/TiKV/">
                             <span class="chip bg-color">TiKV</span>
-                        </a>
-                        
-                    </div>
-                    
-                </div>
-            </div>
-            
-            <div class="article col s12 m6 l4" data-aos="zoom-in">
-                <div class="card">
-                    <a href="/wu-suo-dui-lie-yu-cas/">
-                        <div class="card-image">
-                            
-                            
-                            <img src="/medias/featureimages/0.jpg" class="responsive-img" alt="无锁队列与CAS">
-                            
-                            <span class="card-title">无锁队列与CAS</span>
-                        </div>
-                    </a>
-
-                    <div class="card-content article-content">
-                        <div class="summary block-with-text">
-                            
-                                
-注：本文是 cv 的，原文链接：https://coolshell.cn/articles/8239.html
-
-关于无锁队列的实现，网上有很多文章，虽然本文可能和那些文章有所重复，但是我还是想以我自己的方式把这些文章中的重要的知识点串起
-                            
-                        </div>
-                        <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-11-02
-                            </span>
-                            <span class="publish-author">
-                                
-                                <i class="fas fa-user fa-fw"></i>
-                                SrcMiLe
-                                
-                            </span>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card-action article-tags">
-                        
-                        <a href="/tags/CAS/">
-                            <span class="chip bg-color">CAS</span>
-                        </a>
-                        
-                        <a href="/tags/%E5%B9%B6%E5%8F%91/">
-                            <span class="chip bg-color">并发</span>
                         </a>
                         
                     </div>
