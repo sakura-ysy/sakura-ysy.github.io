@@ -458,11 +458,11 @@
                 </a>
                 
                 
-                <a href="/categories/%E5%AD%98%E5%82%A8/" title="存储: 22">
+                <a href="/categories/%E5%AD%98%E5%82%A8/" title="存储: 23">
                     <span class="chip center-align waves-effect waves-light
                              chip-active "
                             style="background-color: #E8F8F5;">存储
-                        <span class="tag-length">22</span>
+                        <span class="tag-length">23</span>
                     </span>
                 </a>
                 
@@ -534,6 +534,60 @@
             
             <div class="article tag-post col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
+                    <a href="/leveldb-yuan-ma-flush-de-liu-cheng/">
+                        <div class="card-image tag-image">
+                            
+                            
+                            <img src="/medias/featureimages/19.jpg" class="responsive-img" alt="LevelDB源码: Flush的流程">
+                            
+                            <span class="card-title">LevelDB源码: Flush的流程</span>
+                        </div>
+                    </a>
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                
+本文将从源码方面分析 Flush 的流程
+
+博客只能分析部分，完整分析见代码注释：LevelDB-annotated
+一般而言，分析一个流程要从入口点还是逐层向下分析，但这样带来的后果是主次的详略不当。通常，一种操作的核心函数只有一两个，
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-02-23
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fas fa-bookmark fa-fw icon-category"></i>
+                                
+                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
+                                </a>
+                                
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/%E5%AD%98%E5%82%A8/">
+                            <span class="chip bg-color">存储</span>
+                        </a>
+                        
+                        <a href="/tags/leveldbb/">
+                            <span class="chip bg-color">leveldbb</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article tag-post col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
                     <a href="/leveldb-xi-lie-wen-zhang/">
                         <div class="card-image tag-image">
                             
@@ -549,7 +603,7 @@
                                 
 LevelDB源码注释仓库：https://github.com/sakura-ysy/LevelDB-annotated
 LevelDB单元测试
-LevelDB层级实现的思考
+LevelDB源码：层级实现的思考
 
 
                             
@@ -1004,58 +1058,6 @@ TiKV
                         
                         <a href="/tags/TiKV/">
                             <span class="chip bg-color">TiKV</span>
-                        </a>
-                        
-                    </div>
-                    
-                </div>
-            </div>
-            
-            <div class="article tag-post col s12 m6 l4" data-aos="zoom-in">
-                <div class="card">
-                    <a href="/rocksdb-yuan-ma-xue-xi-ba-xie-si-memtable/">
-                        <div class="card-image tag-image">
-                            
-                            
-                            <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="RocksDB源码学习(八): 写(四)-Memtable">
-                            
-                            <span class="card-title">RocksDB源码学习(八): 写(四)-Memtable</span>
-                        </div>
-                    </a>
-                    <div class="card-content article-content">
-                        <div class="summary block-with-text">
-                            
-                                本篇博客将从源码层面分析 RocksDB 中 memtable 的创建与写入，且不考虑 pipelined_write，所用代码版本为 v7.7.4
-
-当 WriteGroup 写完 WAL 后，就开始写 memtable，写分为两大类，p
-                            
-                        </div>
-                        <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-27
-                            </span>
-                            <span class="publish-author">
-                                
-                                <i class="fas fa-bookmark fa-fw icon-category"></i>
-                                
-                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
-                                    存储
-                                </a>
-                                
-                                
-                            </span>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card-action article-tags">
-                        
-                        <a href="/tags/%E5%AD%98%E5%82%A8/">
-                            <span class="chip bg-color">存储</span>
-                        </a>
-                        
-                        <a href="/tags/rocksdb/">
-                            <span class="chip bg-color">rocksdb</span>
                         </a>
                         
                     </div>
