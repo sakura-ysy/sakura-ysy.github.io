@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    530
+                    550
                 </div>
                 
 
@@ -558,7 +558,8 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <p>由于 SST 是生成后就不可变的，所以 LSM-Tree 的合并就是生成 Compact 后的新 SST 并删除旧的 SST，{17，40} {12，19} {22，45} =&gt; {12，45} 这个样子。可问题来了，因为 RocksDB 支持多客户端线程，所以如果在执行 Compact 时，{17 40} {12 19} {22 45} 正在被某个客户端读时，怎么办？</p>
+                <p>这一部分和 LevelDB 几乎完全一致，可以按照 LevelDB 来理解。</p>
+<p>由于 SST 是生成后就不可变的，所以 LSM-Tree 的合并就是生成 Compact 后的新 SST 并删除旧的 SST，{17，40} {12，19} {22，45} =&gt; {12，45} 这个样子。可问题来了，因为 RocksDB 支持多客户端线程，所以如果在执行 Compact 时，{17 40} {12 19} {22 45} 正在被某个客户端读时，怎么办？</p>
 <p>很显然，此时不能删除。RocksDB 在删除 SST 时，需要等到它/它们的引用 ref == 0 时才可以删除，即其上没有任何读操作了。</p>
 <p>所以实际上，刚刚 Compact 完的结构是这样的：{17，40} {12，19} {22，45} =&gt; {17 ，40} {12，19} {22，45} {12，45}，也就是新旧暂时都存在 LSM-Tree 中。</p>
 <p><img src="https://s1.ax1x.com/2022/11/30/zwXUO0.png" alt="新旧SST共存"></p>

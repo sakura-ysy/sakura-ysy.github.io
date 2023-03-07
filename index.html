@@ -757,6 +757,111 @@ k8s源码(二): Pod创建过程中Container的卷挂载
             
             <div class="article col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
+                    <a href="/rocksdb-sst-de-shan-chu/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/18.jpg" class="responsive-img" alt="RocksDB: SST的删除">
+                            
+                            <span class="card-title">RocksDB: SST的删除</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                在看本篇博客之前，请先明白 Version 的概念：RocksDB: Version&amp;VersionSet
+上篇博客讲到，Compaction 之后的旧 SST 并不会被立刻删除，因为可能仍有旧 Version 在使用它，以处理正在
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-03-07
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fas fa-bookmark fa-fw icon-category"></i>
+                                
+                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
+                                </a>
+                                
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/%E5%AD%98%E5%82%A8/">
+                            <span class="chip bg-color">存储</span>
+                        </a>
+                        
+                        <a href="/tags/rocksdb/">
+                            <span class="chip bg-color">rocksdb</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/leveldb-yuan-ma-compaction-de-liu-cheng-yi/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="LevelDB源码: Compaction的流程(一)">
+                            
+                            <span class="card-title">LevelDB源码: Compaction的流程(一)</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                博客只能分析部分，完整分析见代码注释：LevelDB-annotated
+上一篇博客分析了 Flush 流程，本篇开始分析 Compaction 流程，后者相对于前者要复杂一些，主要体现在 Compaction SST 的选择。
+Flush
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-02-24
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fas fa-bookmark fa-fw icon-category"></i>
+                                
+                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
+                                </a>
+                                
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/%E5%AD%98%E5%82%A8/">
+                            <span class="chip bg-color">存储</span>
+                        </a>
+                        
+                        <a href="/tags/rocksdb/">
+                            <span class="chip bg-color">rocksdb</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
                     <a href="/leveldb-yuan-ma-flush-de-liu-cheng/">
                         <div class="card-image">
                             
@@ -828,7 +933,7 @@ k8s源码(二): Pod创建过程中Container的卷挂载
                                 
 LevelDB源码注释仓库：https://github.com/sakura-ysy/LevelDB-annotated
 LevelDB单元测试
-LevelDB源码：层级实现的思考
+LevelDB源码: 层级实现的思考
 LevelDB源码: Flush的流程
 
 
@@ -1111,120 +1216,13 @@ SST 落盘后是固定的，在磁盘中是没有所谓层级结构的，那么 
                     <div class="card-content article-content">
                         <div class="summary block-with-text">
                             
-                                由于 SST 是生成后就不可变的，所以 LSM-Tree 的合并就是生成 Compact 后的新 SST 并删除旧的 SST，{17，40} {12，19} {22，45} =&gt; {12，45} 这个样子。可问题来了，因为 Rocks
+                                这一部分和 LevelDB 几乎完全一致，可以按照 LevelDB 来理解。
+由于 SST 是生成后就不可变的，所以 LSM-Tree 的合并就是生成 Compact 后的新 SST 并删除旧的 SST，{17，40} {12，19} {2
                             
                         </div>
                         <div class="publish-info">
                             <span class="publish-date">
                                 <i class="far fa-clock fa-fw icon-date"></i>2022-11-30
-                            </span>
-                            <span class="publish-author">
-                                
-                                <i class="fas fa-bookmark fa-fw icon-category"></i>
-                                
-                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
-                                    存储
-                                </a>
-                                
-                                
-                            </span>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card-action article-tags">
-                        
-                        <a href="/tags/%E5%AD%98%E5%82%A8/">
-                            <span class="chip bg-color">存储</span>
-                        </a>
-                        
-                        <a href="/tags/rocksdb/">
-                            <span class="chip bg-color">rocksdb</span>
-                        </a>
-                        
-                    </div>
-                    
-                </div>
-            </div>
-            
-            <div class="article col s12 m6 l4" data-aos="zoom-in">
-                <div class="card">
-                    <a href="/db-bench-yuan-ma-yi-random-xia-dan-ge-thread-de-key-sheng-cheng-fang-shi-yu-xie-ru/">
-                        <div class="card-image">
-                            
-                            
-                            <img src="/medias/featureimages/2.jpg" class="responsive-img" alt="db_bench源码(一)：random下单个thread的key生成方式与写入">
-                            
-                            <span class="card-title">db_bench源码(一)：random下单个thread的key生成方式与写入</span>
-                        </div>
-                    </a>
-
-                    <div class="card-content article-content">
-                        <div class="summary block-with-text">
-                            
-                                先说结论：
-
--num 指每个线程生成 key 的范围，-writes 指实际写入 kv 的数量，默认情况下 -writes=-1，指 writes==num。生成一条 kv 就写入一条 kv，所以实际上只生成了 writes 个 kv。
-
-                            
-                        </div>
-                        <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-11-29
-                            </span>
-                            <span class="publish-author">
-                                
-                                <i class="fas fa-bookmark fa-fw icon-category"></i>
-                                
-                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
-                                    存储
-                                </a>
-                                
-                                
-                            </span>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card-action article-tags">
-                        
-                        <a href="/tags/%E5%AD%98%E5%82%A8/">
-                            <span class="chip bg-color">存储</span>
-                        </a>
-                        
-                        <a href="/tags/rocksdb/">
-                            <span class="chip bg-color">rocksdb</span>
-                        </a>
-                        
-                    </div>
-                    
-                </div>
-            </div>
-            
-            <div class="article col s12 m6 l4" data-aos="zoom-in">
-                <div class="card">
-                    <a href="/db-bench-bi-ji/">
-                        <div class="card-image">
-                            
-                            
-                            <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="db_bench笔记">
-                            
-                            <span class="card-title">db_bench笔记</span>
-                        </div>
-                    </a>
-
-                    <div class="card-content article-content">
-                        <div class="summary block-with-text">
-                            
-                                
-–threads 指什么
-
-这里只看写。thread 就是执行写的客户端线程，但是这个线程不仅仅是提交一个写请求，而是直接走完 RocksDB 的写流程，包括 WAL 和 Memtable 这些前台写入。深入 db-bench 代码可以看
-                            
-                        </div>
-                        <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-11-27
                             </span>
                             <span class="publish-author">
                                 

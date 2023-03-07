@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="LevelDB系列文章, SrcMiLeの杂货铺">
+    <meta name="keywords" content="RocksDB: SST的删除, SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>LevelDB系列文章 | SrcMiLeの杂货铺</title>
+    <title>RocksDB: SST的删除 | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -379,12 +379,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/9.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/18.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">LevelDB系列文章</h1>
+                    <h1 class="description center-align post-title">RocksDB: SST的删除</h1>
                 </div>
             </div>
         </div>
@@ -529,7 +529,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2023-02-19
+                    2023-03-07
                 </div>
                 
 
@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    36
+                    519
                 </div>
                 
 
@@ -558,12 +558,19 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <ul>
-<li>LevelDB源码注释仓库：<a target="_blank" rel="noopener" href="https://github.com/sakura-ysy/LevelDB-annotated">https://github.com/sakura-ysy/LevelDB-annotated</a></li>
-<li><a target="_blank" rel="noopener" href="https://yesiyuan.cn/leveldb-dan-yuan-ce-shi/">LevelDB单元测试</a></li>
-<li><a target="_blank" rel="noopener" href="https://yesiyuan.cn/leveldb-ceng-ji-shi-xian-de-si-kao/">LevelDB源码: 层级实现的思考</a></li>
-<li><a target="_blank" rel="noopener" href="https://yesiyuan.cn/leveldb-yuan-ma-flush-de-liu-cheng/">LevelDB源码: Flush的流程</a></li>
-</ul>
+                <p>在看本篇博客之前，请先明白 Version 的概念：<a target="_blank" rel="noopener" href="https://yesiyuan.cn/rocksdb-version-versionset/">RocksDB: Version&amp;VersionSet</a></p>
+<p>上篇博客讲到，Compaction 之后的旧 SST 并不会被立刻删除，因为可能仍有旧 Version 在使用它，以处理正在执行的读请求。RocksDB 对其的处理几乎和 LevelDB 一致，都是当旧 SST 不再被引用时才将其删除。</p>
+<p>首先要明白，所谓的 LSM-Tree 只是内存中的结构，而 SST 排列在磁盘上和普通文件并无二异，LSM-Tree 只是最新的 Version 去记录每个 Level 有哪些 SST <strong>文件编号</strong> 而已。具体的实习可以参考 LevelDB：<a target="_blank" rel="noopener" href="https://yesiyuan.cn/leveldb-ceng-ji-shi-xian-de-si-kao/">层级实现</a></p>
+<p>本篇具体来讲，SST 什么时候会被删除。</p>
+<hr>
+<p>RocksDB 的 Wiki 很好地解释了这个问题：<a target="_blank" rel="noopener" href="https://github.com/facebook/rocksdb/wiki/Delete-Stale-Files">Delete Stale Files</a>，本篇只是对 Wiki 的总结。</p>
+<p>旧有的 SST 之所以不被删除，是因为仍然有旧的 Version 在使用它，当没有任何 Version 使用它时，SST 就会被删除。每一个 SST 都有一个引用计数，当 Version 使用它时，引用加一，当该 Version 消失后，引用减一。当 SST 的引用计数归零时，就会被删除。Version 也会维持一个引用计数，这个引用指该 Version 为 Current Version 时其上的操作数，当引用计数归零后，说明没有遗留的操作了，Version 就会被删除，同时 SST 的引用计数减一。可以维持 Version 引用计数的操作有如下三个：</p>
+<ol>
+<li><strong>Live iterators</strong>. Iterators pin the version of LSM-tree while they are created. All SST files from this version are prevented from being deleted. This is because an iterator reads data from a virtual snapshot, all SST files at the moment the iterator are preserved for data from the virtual snapshot to be available.</li>
+<li><strong>Ongoing compaction</strong>. Even if other compactions aren’t compacting those SST files, the whole version of the LSM-tree is pinned.</li>
+<li><strong>Short window during Get().</strong> In the short time a Get() is executed, the LSM-tree version is pinned to make sure it can read all the immutable SST files. When no operation pins an old LSM-tree version containing an SST file anymore, the file is qualified to be deleted.</li>
+</ol>
+<p> 到此就可以理清 SST 删除的逻辑了，具体的细节去看 Wiki 就可。</p>
 
                 
             </div>
@@ -590,7 +597,7 @@
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://example.com/leveldb-xi-lie-wen-zhang/">http://example.com/leveldb-xi-lie-wen-zhang/</a>
+                    <a href="http://example.com/rocksdb-sst-de-shan-chu/">http://example.com/rocksdb-sst-de-shan-chu/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -1079,17 +1086,18 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
-                <a href="/leveldb-yuan-ma-flush-de-liu-cheng/">
+                <a href="/rocksdb-sst-de-shan-chu/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/19.jpg" class="responsive-img" alt="LevelDB源码: Flush的流程">
+                        <img src="/medias/featureimages/18.jpg" class="responsive-img" alt="RocksDB: SST的删除">
                         
-                        <span class="card-title">LevelDB源码: Flush的流程</span>
+                        <span class="card-title">RocksDB: SST的删除</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -1099,9 +1107,9 @@
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2023-02-23
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-03-07
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -1114,6 +1122,7 @@
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
@@ -1121,8 +1130,8 @@
                         <span class="chip bg-color">存储</span>
                     </a>
                     
-                    <a href="/tags/leveldbb/">
-                        <span class="chip bg-color">leveldbb</span>
+                    <a href="/tags/rocksdb/">
+                        <span class="chip bg-color">rocksdb</span>
                     </a>
                     
                 </div>
@@ -1136,13 +1145,13 @@
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/leveldb-ceng-ji-shi-xian-de-si-kao/">
+                <a href="/leveldb-yuan-ma-compaction-de-liu-cheng-yi/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/9.jpg" class="responsive-img" alt="LevelDB层级实现的思考">
+                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="LevelDB源码: Compaction的流程(一)">
                         
-                        <span class="card-title">LevelDB层级实现的思考</span>
+                        <span class="card-title">LevelDB源码: Compaction的流程(一)</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -1153,7 +1162,7 @@
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2023-02-19
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-02-24
                             </span>
                         <span class="publish-author">
                             
@@ -1174,8 +1183,8 @@
                         <span class="chip bg-color">存储</span>
                     </a>
                     
-                    <a href="/tags/leveldb/">
-                        <span class="chip bg-color">leveldb</span>
+                    <a href="/tags/rocksdb/">
+                        <span class="chip bg-color">rocksdb</span>
                     </a>
                     
                 </div>
