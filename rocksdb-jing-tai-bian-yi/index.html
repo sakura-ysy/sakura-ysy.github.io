@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="RocksDB: SST的删除, SrcMiLeの杂货铺">
+    <meta name="keywords" content="RocksDB静态编译, SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>RocksDB: SST的删除 | SrcMiLeの杂货铺</title>
+    <title>RocksDB静态编译 | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -379,12 +379,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/18.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/1.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">RocksDB: SST的删除</h1>
+                    <h1 class="description center-align post-title">RocksDB静态编译</h1>
                 </div>
             </div>
         </div>
@@ -529,7 +529,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2023-03-07
+                    2023-03-10
                 </div>
                 
 
@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    519
+                    932
                 </div>
                 
 
@@ -558,19 +558,122 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <p>在看本篇博客之前，请先明白 Version 的概念：<a target="_blank" rel="noopener" href="https://yesiyuan.cn/rocksdb-version-versionset/">RocksDB: Version&amp;VersionSet</a></p>
-<p>上篇博客讲到，Compaction 之后的旧 SST 并不会被立刻删除，因为可能仍有旧 Version 在使用它，以处理正在执行的读请求。RocksDB 对其的处理几乎和 LevelDB 一致，都是当旧 SST 不再被引用时才将其删除。</p>
-<p>首先要明白，所谓的 LSM-Tree 只是内存中的结构，而 SST 排列在磁盘上和普通文件并无二异，LSM-Tree 只是最新的 Version 去记录每个 Level 有哪些 SST <strong>文件编号</strong> 而已。具体的实习可以参考 LevelDB：<a target="_blank" rel="noopener" href="https://yesiyuan.cn/leveldb-ceng-ji-shi-xian-de-si-kao/">层级实现</a></p>
-<p>本篇具体来讲，SST 什么时候会被删除。</p>
-<hr>
-<p>RocksDB 的 Wiki 很好地解释了这个问题：<a target="_blank" rel="noopener" href="https://github.com/facebook/rocksdb/wiki/Delete-Stale-Files">Delete Stale Files</a>，本篇只是对 Wiki 的总结。</p>
-<p>旧有的 SST 之所以不被删除，是因为仍然有旧的 Version 在使用它，当没有任何 Version 使用它时，SST 就会被删除。每一个 SST 都有一个引用计数，当 Version 使用它时，引用加一，当该 Version 消失后，引用减一。当 SST 的引用计数归零时，就会被删除。Version 也会维持一个引用计数，这个引用指该 Version 为 Current Version 时其上的操作数，当引用计数归零后，说明没有遗留的操作了，Version 就会被删除，同时 SST 的引用计数减一。可以维持 Version 引用计数的操作有如下三个：</p>
-<ol>
-<li><strong>Live iterators</strong>. Iterators pin the version of LSM-tree while they are created. All SST files from this version are prevented from being deleted. This is because an iterator reads data from a virtual snapshot, all SST files at the moment the iterator are preserved for data from the virtual snapshot to be available.</li>
-<li><strong>Ongoing compaction</strong>. Even if other compactions aren’t compacting those SST files, the whole version of the LSM-tree is pinned.</li>
-<li><strong>Short window during Get().</strong> In the short time a Get() is executed, the LSM-tree version is pinned to make sure it can read all the immutable SST files. When no operation pins an old LSM-tree version containing an SST file anymore, the file is qualified to be deleted.</li>
-</ol>
-<p> 到此就可以理清 SST 删除的逻辑了，具体的细节去看 Wiki 就可。</p>
+                <blockquote>
+<p>引流：<a target="_blank" rel="noopener" href="https://yesiyuan.cn/">个人博客</a></p>
+</blockquote>
+<p>RocksDB 的编译分为<code>静态</code>编译和<code>动态</code>编译，其中，静态编译会在工程目录下生成<code>librocksdb.a</code>静态链接库，动态编译则会在工程目录下生成<code>librocksdb.so.$&#123;version&#125;</code>动态链接库。不管是哪种方式，编译完成后只需要按照 g++ 的链接方式使用对应的库即可。</p>
+<p>这里演示 RocksDB 的静态编译和使用过程，并将踩的坑记录下来。</p>
+<h3 id="依赖"><a href="#依赖" class="headerlink" title="依赖"></a>依赖</h3><p>RocksDB 默认使用了很多依赖，包括用于统计、压缩等等的库。</p>
+<p>安装 gcc、g++ 以及 make：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> build-essential<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>安装 gflags：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> libgflags-dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>安装 snappy：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> libsnappy-dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>安装 zlib：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> zlib1g-dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>安装 bzip2：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> libbz2-dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>安装 lz4：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> liblz4-dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>安装 zstandard：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt-get</span> <span class="token function">install</span> libzstd-dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>安装 cmake：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">略了，网上找教程<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<h3 id="静态编译"><a href="#静态编译" class="headerlink" title="静态编译"></a>静态编译</h3><p>官方是这么说的：</p>
+<blockquote>
+<ul>
+<li>[recommended] <code>make static_lib</code> will compile librocksdb.a, RocksDB static library. Compiles static library in release mode.</li>
+</ul>
+</blockquote>
+<p>按照官方来就行了，编译失败的话多半是依赖没装好，按照报错提示一个一个装就行。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token builtin class-name">cd</span> rocksdb
+<span class="token function">sudo</span> <span class="token function">make</span> static_lib -j <span class="token number">8</span> <span class="token comment">#8线程编译</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>成功后，就会在当前目录下生成<code>librocksdb.a</code>：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">zyh@zyh ~/ysy/rocksdb  <span class="token punctuation">(</span>main<span class="token punctuation">)</span>$ <span class="token function">ls</span> <span class="token operator">|</span> <span class="token function">grep</span> librocksdb.a
+librocksdb.a
+zyh@zyh ~/ysy/rocksdb  <span class="token punctuation">(</span>main<span class="token punctuation">)</span>$ <span class="token builtin class-name">pwd</span>
+/home/zyh/ysy/rocksdb<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>接下来就是使用它了，这里按照最返璞归真的 g++ 命令行来演示。</p>
+<h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><p>第一，当前最新的 RocksDB 需要 C++17，因此：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">g++ -std<span class="token operator">=</span>c++17<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>第二，需要链接 librocksdb.a 静态库。注意，不同于动态库的链接需要 <code>-L</code> 指定，静态库直接作为 flag，不用且不能使用 -L 来指定，直接在命令行上写上 .a 文件路径即可。</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">g++ xxx /home/zyh/ysy/rocksdb/librocksdb.a xxx<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>第三（可选），指定头文件。RocksDB 的头文件为 include/，g++ 指定头文件的方式为 <code>-I</code> 后跟头文件的路径，因此：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">g++ xxx -I -I /home/zyh/ysy/rocksdb/include xxx<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>第四，链接上各种依赖：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">-lpthread -luring -ldl -lrt -lsnappy -lgflags -lz -lbz2 -llz4 -lzstd<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>四步结合起来，程序使用 RocksDB 的编译命令为：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">g++ -std<span class="token operator">=</span>c++17 demo.cpp -o demo /home/zyh/ysy/rocksdb/librocksdb.a -I /home/zyh/ysy/rocksdb/include -lpthread -luring -ldl -lrt -lsnappy -lgflags -lz -lbz2 -llz4 -lzstd<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>写一个测试 demo.cpp：</p>
+<pre class="line-numbers language-cpp" data-language="cpp"><code class="language-cpp"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;cstdio></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;string></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;iostream></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"rocksdb/db.h"</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"rocksdb/slice.h"</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"rocksdb/options.h"</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"rocksdb/iostats_context.h"</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"rocksdb/perf_context.h"</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;pthread.h></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+
+
+<span class="token keyword">using</span> <span class="token keyword">namespace</span> std<span class="token punctuation">;</span>
+<span class="token keyword">using</span> <span class="token keyword">namespace</span> rocksdb<span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> std<span class="token double-colon punctuation">::</span>string PATH <span class="token operator">=</span> <span class="token string">"/tmp/rocksdb_tmp"</span><span class="token punctuation">;</span>
+
+DB<span class="token operator">*</span> db<span class="token punctuation">;</span>
+Options options<span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    options<span class="token punctuation">.</span>create_if_missing <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+    Status s <span class="token operator">=</span> <span class="token class-name">DB</span><span class="token double-colon punctuation">::</span><span class="token function">Open</span><span class="token punctuation">(</span>options<span class="token punctuation">,</span> PATH<span class="token punctuation">,</span> <span class="token operator">&amp;</span>db<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span><span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    s <span class="token operator">=</span> db<span class="token operator">-></span><span class="token function">Put</span><span class="token punctuation">(</span><span class="token function">WriteOptions</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span><span class="token string">"key01"</span><span class="token punctuation">,</span><span class="token string">"value"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span><span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    std<span class="token double-colon punctuation">::</span>string value<span class="token punctuation">;</span>
+    s <span class="token operator">=</span> db<span class="token operator">-></span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token function">ReadOptions</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span><span class="token string">"key01"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    cout <span class="token operator">&lt;&lt;</span> value <span class="token operator">&lt;&lt;</span> endl<span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>编译并运行：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token comment"># 编译</span>
+zyh@zyh ~/ysy $ g++ -std<span class="token operator">=</span>c++17 demo.cpp -o demo /home/zyh/ysy/rocksdb/librocksdb.a -I /home/zyh/ysy/rocksdb/include -lpthread -luring -ldl -lrt -lsnappy -lgflags -lz -lbz2 -llz4 -lzstd
+<span class="token comment"># 运行</span>
+zyh@zyh ~/ysy $ ./demo
+value<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="踩坑记录"><a href="#踩坑记录" class="headerlink" title="踩坑记录"></a>踩坑记录</h3><p><strong>flag 没加全</strong></p>
+<p>flag 一定要加全，不然客户端编译的时候就会报错 <code>undefined reference to &#39;xxx&#39; </code>，比如我刚开始没有加 <code>-luring</code>，编译的时候就出错了：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token punctuation">..</span>.
+/home/zyh/ysy/rocksdb/librocksdb.a<span class="token punctuation">(</span>io_posix.o<span class="token punctuation">)</span>: In <span class="token keyword">function</span> <span class="token variable"><span class="token variable">`</span>rocksdb::CreateIOUring<span class="token punctuation">(</span><span class="token punctuation">)</span>':
+/home/zyh/ysy/rocksdb/./env/io_posix.h:272: undefined reference to <span class="token variable">`</span></span>io_uring_queue_init
+<span class="token punctuation">..</span>.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>那怎么知道需要链接什么库，用 Linux 的 <code>man</code> 就可以了，只要查到函数所在的头文件，flag 一般就能确定了，比如 <code>man io_uring_queue_init</code>显示该函数的手册，其中就有其所在的头文件名：</p>
+<p><img src="https://s1.ax1x.com/2023/03/10/ppuYKaR.png" alt="io_uring_queue_init 手册"></p>
+<p>可以看到，lib 库名为 liburing。一般而已，lib 库链接时 flag 的形式均为 <code>-l$&#123;name&#125;</code>，因此可以推断出 flag 为 <code>-luring</code>，当然，上网查也行。</p>
+<p>依赖的 flag 加全了，lib 库的路径写对了，c++ 版本用对了，基本不会编译失败的。</p>
 
                 
             </div>
@@ -597,7 +700,7 @@
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://example.com/rocksdb-sst-de-shan-chu/">http://example.com/rocksdb-sst-de-shan-chu/</a>
+                    <a href="http://example.com/rocksdb-jing-tai-bian-yi/">http://example.com/rocksdb-jing-tai-bian-yi/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -1086,9 +1189,10 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
                 <a href="/rocksdb-jing-tai-bian-yi/">
                     <div class="card-image">
@@ -1106,9 +1210,9 @@
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2023-03-10
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-03-10
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -1121,6 +1225,7 @@
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
@@ -1143,13 +1248,13 @@
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/leveldb-yuan-ma-compaction-de-liu-cheng-yi/">
+                <a href="/rocksdb-sst-de-shan-chu/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="LevelDB源码: Compaction的流程(一)">
+                        <img src="/medias/featureimages/18.jpg" class="responsive-img" alt="RocksDB: SST的删除">
                         
-                        <span class="card-title">LevelDB源码: Compaction的流程(一)</span>
+                        <span class="card-title">RocksDB: SST的删除</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -1160,7 +1265,7 @@
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2023-02-24
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-03-07
                             </span>
                         <span class="publish-author">
                             
