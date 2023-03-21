@@ -559,9 +559,9 @@
         <div class="card-content article-card-content">
             <div id="articleContent">
                 <p>本篇博客将以 Flush 为切入口探究 RocksDB 中 SST 的写入流程，函数调用链要一直深入到 pwrite。参考资料较少，几乎纯看源码独自分析，如有错误，希望能私聊我或在评论区指正，一起学习共同进步，谢谢~</p>
-<p>带着三个问题进行分析：</p>
+<p>带着四个问题进行分析：</p>
 <ol>
-<li>把找到，从 <code>FlushJob::Run()</code> 开始，到 <code>pwrite()</code> 结束；</li>
+<li>把调用链找到，从 <code>FlushJob::Run()</code> 开始，到 <code>pwrite()</code> 结束；</li>
 <li>每次调用 <code>pwrite()</code> ，写入的大小有什么区别，取决于什么；</li>
 <li>每次构建 SST，会调用多少次 <code>pwrite()</code> ，取决于什么；</li>
 <li>Flush 和 Compaction 的写入 SST 过程，是否不一样；</li>
