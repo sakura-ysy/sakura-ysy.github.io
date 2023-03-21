@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="RocksDB源码学习(九): SST写入流程-深入到pwrite, SrcMiLeの杂货铺">
+    <meta name="keywords" content="RocksDB源码学习(九): Flush中SST写入流程-深入到pwrite, SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>RocksDB源码学习(九): SST写入流程-深入到pwrite | SrcMiLeの杂货铺</title>
+    <title>RocksDB源码学习(九): Flush中SST写入流程-深入到pwrite | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -379,12 +379,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/19.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/12.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">RocksDB源码学习(九): SST写入流程-深入到pwrite</h1>
+                    <h1 class="description center-align post-title">RocksDB源码学习(九): Flush中SST写入流程-深入到pwrite</h1>
                 </div>
             </div>
         </div>
@@ -538,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    4.4k
+                    4.5k
                 </div>
                 
 
@@ -669,8 +669,8 @@
 <p>接下来，通过 <code>NewMergingIterator()</code> 将这些迭代器合并成一个大的迭代器 iter，该迭代器将涵盖本次 Flush 要负责的所有 k-v。</p>
 <p>重点来了，调用 <code>BuildTable()</code> 来构建 SST。可以看到，传入的参数很多，但最重要的是第 7 个参数 <code>iter.get()</code>，即上述生成的大迭代器，SST 输入的所有 k-v 均来源于此。</p>
 <h3 id="BuildTable"><a href="#BuildTable" class="headerlink" title="BuildTable()"></a>BuildTable()</h3><p>该函数位于 <code>builder.cc</code> 中，不属于任何类，所有 rocksdb 命名空间中均可使用它。</p>
-<p><code>BuildTable()</code> 是写入 SST 的统一入口，不管上层是 Flush 还是 Compaction，均调用该函数，因此从这一步开始，不再区分 Flush 还是 Compaction，统一叫作 Compaction。Flush 和 Compaction 的唯一区别，就是上一步生成并传入的 iter 内容不一样罢了。</p>
-<p>只关注函数的核心部分，其主要工作如下：</p>
+<p><code>BuildTable()</code> 是 Flush 写入 SST 的入口。需要注意的是，BuildTable() 只有 Flush 会调用，Compaction 走的是另外一条线。因为 BuildTable() 是单线程作业，但 Compaction 可能被分为多个 SubCompaction 来多线程作业，所以不能调用线性的 BuildTable()。每一个 SubCompaction 写 SST 的入口函数名为 <code>ProcessKeyValueCompaction()</code>，这里不去分析它，因为到 <code>BlockBasedTableBuilder::Add()</code> 的那一步还是会进入相同的调用链。</p>
+<p>只关注 BuildTable() 函数的核心部分，其主要工作如下：</p>
 <ol>
 <li>创建 SST 文件，通过 OS；</li>
 <li>构建 SST 的 TableBuilder，名为 builder；</li>
@@ -1157,7 +1157,7 @@ IOStatus <span class="token class-name">WritableFileWriter</span><span class="to
 <p>答：传递的参数由 rate_limiter 决定，这个值是不固定的，不管是否开启 direct_io 均是不固定的，可以通过在 pwrite 之前打日志看到。</p>
 <img src="https://s1.ax1x.com/2023/03/21/ppU2a1e.png" alt="pwrite的size" style="zoom:67%;" />
 
-<p>具体的分配我还没有弄清，与 rate_limiter 的策略有关，可能也与盘的性能有关，这点我后续会继续分析，将在下一篇博客中记录分析以及实验结果。</p>
+<p>具体的分配我还没有弄清，与 rate_limiter 的策略有关，要看 RequestToken() 是怎么实现的，这点我后续会分析，将在下一篇博客中记录分析以及实验结果。</p>
 <blockquote>
 <ol start="3">
 <li>每次构建 SST，会调用多少次 <code>pwrite()</code> ，取决于什么</li>
@@ -1169,10 +1169,10 @@ IOStatus <span class="token class-name">WritableFileWriter</span><span class="to
 <li>Flush 和 Compaction 的写入 SST 过程，是否不一样；</li>
 </ol>
 </blockquote>
-<p>答：单论 <code>写入</code> 的话，完全没区别，因为从 BuildTable() 开始就是统一的调用链。唯一算的上区别的为：</p>
+<p>答：不一样。</p>
 <ol>
-<li>就是传进去的 iter 不一样，这点是因为 Flush 和 Compaction 的读不同。</li>
-<li>rate_limiter 给分配的 size 可能不同，但这点我还没进行分析与验证。</li>
+<li>入口不一样。Flush 的入口为 BuildTable() ，而 Compaction 的入口为 ProcessKeyValueCompaction()。因为 Compaction 可能被分为多个 SubCompaction，所以不能调用线性的 BuildTable()，要处理的事情多了很多。但是，二者会在 BlockBasedTableBuilder::Add() 处交汇，即向 SST 中插入 k-v 对的方式还是一样的。从 Add() 开始，两者使用相同的调用链。</li>
+<li>pwrite 的 size 不一样。每次 pwrite 的 size 由 rate_limiter 分配（RequestToken），rate_limiter 是用来区分优先级的，因此其会按照不同的优先级去给 Flush 或者 Compaction 分配不同的 size。</li>
 </ol>
 
                 
@@ -1698,9 +1698,9 @@ IOStatus <span class="token class-name">WritableFileWriter</span><span class="to
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/19.jpg" class="responsive-img" alt="RocksDB源码学习(九): SST写入流程-深入到pwrite">
+                        <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="RocksDB源码学习(九): Flush中SST写入流程-深入到pwrite">
                         
-                        <span class="card-title">RocksDB源码学习(九): SST写入流程-深入到pwrite</span>
+                        <span class="card-title">RocksDB源码学习(九): Flush中SST写入流程-深入到pwrite</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
