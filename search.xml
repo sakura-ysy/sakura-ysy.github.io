@@ -4,6 +4,33 @@
   
     
     <entry>
+      <title>RocksDB: TrivialMove 与 db_bench 的 fillseq</title>
+      <link href="/rocksdb-trivialmove-yu-db-bench-de-fillseq/"/>
+      <url>/rocksdb-trivialmove-yu-db-bench-de-fillseq/</url>
+      
+        <content type="html"><![CDATA[<p>写这篇文章的起因是我用一晚上 debug 了一个“假想”错误，最后发现我是个憨批，然后因此认识了 RocksDB 的 TrivialMove 机制，并重新认识了 fillseq。</p><p>事情开始于我用 db_bench 去 load 数据，给的分布为 fillseq。在代码跑了一段时间之后，去看 /data，结果发现 SST 巨多，更要命的是，SST 从来都没有删除过。并且，每个 SST 都是同样的大小，8Mb，这是我设置的 target_file_size_base。也就是说，从结果上来看 Compaction 根本就没有执行过</p><p>为了验证这一想法，我在 Compaction 的调用链上逐步输出日志（这个调用链是真的复杂，每次看都头大），最后证明了 CompactionJob::Run 根本就没有执行。于是我开始怀疑是写的代码出问题了（我们对 RocksDB 进行了改动，不是怀疑 RocksDB 本身有错）。可问题是，NeedCompaction 确实执行了，PickCompaction 也能成功 Pick，并且最关键的，在内存中的 file_[level] 确确实实是分层了的，这就奇怪了。</p><p>也就是说，内存中是更改索引了，但磁盘没变。</p><p>于是我就开始追踪 Compaction 操作，最终在 BackgroundCompaction() 中的一个分支中找到了答案。</p><p>当 BackgroundCompaction 调用 PickCompaction 获取到 Compaction 任务 c 后，会根据 c 的状态进入不同的分支，一共有 5 个。而正常的生成 CompactionJob 是在第 5 个分支，而我则始终进入了第 3 个分支。第 3 个分支的实现体先不看，去看分支条件：</p><pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">else if (!trivial_move_disallowed &amp;&amp; c-&gt;IsTrivialMove()) &#123;  &#x2F;&#x2F; ...&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre><p>c-&gt;IsTrivialMove() 是什么？</p><p>通过名字猜一下，就是琐碎的移动。先不看 IsTrivialMove 的实现，去看分支体的代码，一句注释直接阐明答案：</p><blockquote><p>Move files to next level</p></blockquote><p>soga ! 这个分支体的工作和平常 CompactionJob 不一样，它不会删除 SST 然后合并成新的 SST，而是直接把 SST 给 “平移” 到下一层，目的很简单，减少 IO。而这个所谓的 “平移”，其实是内存中索引的移动，而不是磁盘中 SST 的移动，所以就产生了磁盘中 SST 不变但内存索引发生了变化这个现像，并且所有 SST 文件都是刚开始的 target_file_size_base。</p><p>然后去看 IsTrivialMove ，来看看如何判断是否能直接 “平移”。</p><pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">bool Compaction::IsTrivialMove() const &#123;  &#x2F;&#x2F; Avoid a move if there is lots of overlapping grandparent data.  &#x2F;&#x2F; Otherwise, the move could create a parent file that will require  &#x2F;&#x2F; a very expensive merge later on.  &#x2F;&#x2F; If start_level_&#x3D;&#x3D; output_level_, the purpose is to force compaction  &#x2F;&#x2F; filter to be applied to that level, and thus cannot be a trivial move.  &#x2F;&#x2F; Check if start level have files with overlapping ranges  if (start_level_ &#x3D;&#x3D; 0 &amp;&amp; input_vstorage_-&gt;level0_non_overlapping() &#x3D;&#x3D; false) &#123;    &#x2F;&#x2F; We cannot move files from L0 to L1 if the files are overlapping    return false;  &#125;  if (is_manual_compaction_ &amp;&amp;      (immutable_cf_options_.compaction_filter !&#x3D; nullptr ||       immutable_cf_options_.compaction_filter_factory !&#x3D; nullptr)) &#123;    &#x2F;&#x2F; This is a manual compaction and we have a compaction filter that should    &#x2F;&#x2F; be executed, we cannot do a trivial move    return false;  &#125;  &#x2F;&#x2F; Used in universal compaction, where trivial move can be done if the  &#x2F;&#x2F; input files are non overlapping  if ((mutable_cf_options_.compaction_options_universal.allow_trivial_move) &amp;&amp;      (output_level_ !&#x3D; 0)) &#123;    return is_trivial_move_;  &#125;  if (!(start_level_ !&#x3D; output_level_ &amp;&amp; num_input_levels() &#x3D;&#x3D; 1 &amp;&amp;          input(0, 0)-&gt;fd.GetPathId() &#x3D;&#x3D; output_path_id() &amp;&amp;          InputCompressionMatchesOutput())) &#123;    return false;  &#125;  &#x2F;&#x2F; assert inputs_.size() &#x3D;&#x3D; 1  for (const auto&amp; file : inputs_.front().files) &#123;    std::vector&lt;FileMetaData*&gt; file_grand_parents;    if (output_level_ + 1 &gt;&#x3D; number_levels_) &#123;      continue;    &#125;    input_vstorage_-&gt;GetOverlappingInputs(output_level_ + 1, &amp;file-&gt;smallest,                                          &amp;file-&gt;largest, &amp;file_grand_parents);    const auto compaction_size &#x3D;        file-&gt;fd.GetFileSize() + TotalFileSize(file_grand_parents);    if (compaction_size &gt; max_compaction_bytes_) &#123;      return false;    &#125;  &#125;  return true;&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre><p>当然，这个分支也很多，但是简单的归纳一下，可以解释为：当 SST 之间完全没有任何重叠时，可以直接平移。这是很合理的，因为没有重叠，就没必要在删除和重组文件来占用 IO 了。</p><p>再回过头来看 db_bench。我用的是 fillseq，我知道它是顺序写入，但没想过它是严格顺序，以至于所有的 SST 都不曾重叠，才导致了 Compaction 一直都是 TrivialMove。如果换成 fillrandom，那就全部都正常了。</p><p>所以这不是个 bug，而是一个优化机制。</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 存储 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 存储 </tag>
+            
+            <tag> rocksdb </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>RocksDB源码学习(九): Flush中SST写入流程-深入到pwrite</title>
       <link href="/rocksdb-yuan-ma-xue-xi-jiu-sst-xie-ru-liu-cheng-shen-ru-dao-pwrite/"/>
       <url>/rocksdb-yuan-ma-xue-xi-jiu-sst-xie-ru-liu-cheng-shen-ru-dao-pwrite/</url>
