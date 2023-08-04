@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="Steam游戏库, SrcMiLeの杂货铺">
+    <meta name="keywords" content="db_bench源码(二)：mixgraph负载的源码解读, SrcMiLeの杂货铺">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>Steam游戏库 | SrcMiLeの杂货铺</title>
+    <title>db_bench源码(二)：mixgraph负载的源码解读 | SrcMiLeの杂货铺</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -379,12 +379,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/20.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/8.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">Steam游戏库</h1>
+                    <h1 class="description center-align post-title">db_bench源码(二)：mixgraph负载的源码解读</h1>
                 </div>
             </div>
         </div>
@@ -498,12 +498,29 @@
             <div class="row tag-cate">
                 <div class="col s7">
                     
-                          <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
-                          </div>
+                    <div class="article-tag">
+                        
+                            <a href="/tags/%E5%AD%98%E5%82%A8/">
+                                <span class="chip bg-color">存储</span>
+                            </a>
+                        
+                            <a href="/tags/rocksdb/">
+                                <span class="chip bg-color">rocksdb</span>
+                            </a>
+                        
+                    </div>
                     
                 </div>
                 <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                存储
+                            </a>
+                        
+                    </div>
                     
                 </div>
             </div>
@@ -521,7 +538,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    1.2k
+                    3.3k
                 </div>
                 
 
@@ -541,858 +558,293 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <blockquote>
-    <p>这可是第九艺术啊</p>
+                <p>最近在用 mixgraph 负载对 RocksDB 进行测试，其是 facebook 提供的一种基于 db_bench 输入的负载，整合在了 RocksDB 的源码中，同 fillrandom、fillseq 等等一样的调用流程。</p>
+<p>苦于 mixgraph 的文档内容是在太少了，有些概念也不确定，于是去翻阅源码来学习，收获还是很大的，理解了其对 key 的幂分布、对 keyrange 双指数分布（two-term-exponential distribution）、对 QPS 进行 sine 分布 这三大要素。先总结一下文档的内容，如下：</p>
+<ol>
+<li>key 按照 f(x) = ax^b 来分布，参数为 <code>-key_dist_a=&lt;&gt; -key_dist_b=&lt;&gt;</code></li>
+<li>keyrange 按照 f(x) = aexp(bx) + cexp(dx) 来分布，参数为 <code>-keyrange_dist_a=&lt;&gt; -keyrange_dist_b=&lt;&gt; -keyrange_dist_c=&lt;&gt; -keyrange_dist_d=&lt;&gt; -keyrange_num=&lt;&gt;</code></li>
+<li>QPS 按照 f(x) = asine(bx+c) +d 来分布，参数为 <code>-sine_a=&lt;&gt; -sine_b=&lt;&gt; -sine_c=&lt;&gt; -sine_d=&lt;&gt; -sine_mix_rate_interval_milliseconds=&lt;&gt;</code>。</li>
+</ol>
+<p>本篇博客将详细介绍这三个分布到底是什么意思，以及具体是怎么实现的。db_bench 的调用链就不赘述了，整个大流程在上一篇博客（<a target="_blank" rel="noopener" href="https://yesiyuan.cn/db-bench-yuan-ma-yi-random-xia-dan-ge-thread-de-key-sheng-cheng-fang-shi-yu-xie-ru/">db_bench源码(一)：random模式的写入</a>）中介绍的很详细，这里直接从负载入口函数 <code>MixGraph</code> 讲起，依次解释三个概念。</p>
+<p>假设我们给的参数为：</p>
+<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell">-num<span class="token operator">=</span><span class="token number">10000</span> <span class="token punctuation">\</span> <span class="token comment"># 1w条key</span>
+-key_dist_a<span class="token operator">=</span><span class="token number">0.002312</span> <span class="token punctuation">\</span>
+-key_dist_b<span class="token operator">=</span><span class="token number">0.3467</span> <span class="token punctuation">\</span>
+-keyrange_dist_a<span class="token operator">=</span><span class="token number">5.18</span> <span class="token punctuation">\</span>
+-keyrange_dist_b<span class="token operator">=</span>-2.917 <span class="token punctuation">\</span>
+-keyrange_dist_c<span class="token operator">=</span><span class="token number">0.0164</span> <span class="token punctuation">\</span>
+-keyrange_dist_d<span class="token operator">=</span>-0.08082 <span class="token punctuation">\</span>
+-keyrange_num<span class="token operator">=</span><span class="token number">30</span> <span class="token punctuation">\</span>
+-sine_a<span class="token operator">=</span><span class="token number">12000</span> <span class="token punctuation">\</span>
+-sine_b<span class="token operator">=</span><span class="token number">0.035</span> <span class="token punctuation">\</span>
+-sine_c<span class="token operator">=</span><span class="token number">4.17</span> <span class="token punctuation">\</span>
+-sine_d<span class="token operator">=</span><span class="token number">32000</span> <span class="token punctuation">\</span>
+-sine_mix_rate_interval_milliseconds<span class="token operator">=</span><span class="token number">50</span> <span class="token punctuation">\</span>
+-sine_mix_rate<span class="token operator">=</span>true <span class="token punctuation">\</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="key-的分布"><a href="#key-的分布" class="headerlink" title="key 的分布"></a>key 的分布</h3><p>先说结论，f(x) = ax^b 中，x 就是 key 本身（db_bench 生成 key 是通过 uint64_t 转成 char* 的），而 f(x) 就是这个 key 出现的概率，当然，如果用 key 本身去算，f(x) 是 &gt; 1 的，所以这里的 f(x) 并不是归一化的概率，因此只反应概率分布，也就是 key 越大概率越大，符合 ax^b 曲线。</p>
+<p>代码是如何这个分布的，这就很有意思了。把 MixGraph 中相关的代码提取出来，如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void MixGraph(ThreadState* thread) &#123;
+  &#x2F;&#x2F; ...
+  ini_rand &#x3D; GetRandomKey(&amp;thread-&gt;rand);
+  rand_v &#x3D; ini_rand % FLAGS_num;
+  double u &#x3D; static_cast&lt;double&gt;(rand_v) &#x2F; FLAGS_num;
+  key_seed &#x3D; PowerCdfInversion(u, FLAGS_key_dist_a, FLAGS_key_dist_b);
+  Random64 rand(key_seed);
+  key_rand &#x3D; static_cast&lt;int64_t&gt;(rand.Next()) % FLAGS_num;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>可以看到，它先生成了一个初始随机 key，随机方式和 random 负载一样，是平等随机。接下来，它将这个 key 缩成一个小数 rand_v （归一化），然后调用 PowerCdfInversion 进行一次映射，最后把映射结果当作 seed 重新进行随机，得到 key。即，把平等随机生成的 key 做了一次映射，那么关键就在这次映射，其代码如下。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; inversion of y&#x3D;ax^b
+int64_t PowerCdfInversion(double u, double a, double b) &#123;
+  double ret;
+  ret &#x3D; std::pow((u &#x2F; a), (1 &#x2F; b));
+  return static_cast&lt;int64_t&gt;(ceil(ret));
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>代码很简单，就是进行关于 ax^b 的逆进行映射。为什么进行逆映射就能保证最终的 key 分布是符合 ax^b 的，画一张图就明白了，如下：</p>
+<img src="db-bench源码-二-：mixgraph负载的源码解读/key分布.jpg" alt="key分布" style="zoom: 50%;" />
+
+<p>在 x 轴上是平等随机分布的，假设 [a1, b1] 与 [c1, d1] 长度一样，那么他们对应的概率也就一样，故 key 的数量也基本一样。对应映射之后的结果，[a2, b2] 与 [c2, d2] 的 key 数量基本一样。然后，[c2, d2] 的长度明显窄于 [a2, d2] 的，故在整个 y 轴上，[c2, d2] 的密度是大于的 [a2，b2] 的，因此 [c2, d2] 之间某个点被选中的概率就更大。</p>
+<p>这样一来，将映射后的 key 作为输入，就满足 f(x) = ax^b 的概率分布了。</p>
+<h3 id="key-range-的分布"><a href="#key-range-的分布" class="headerlink" title="key_range 的分布"></a>key_range 的分布</h3><p>上一节讲了对 key 总体的分布，是不区分 range 的，也就是从 startkey ~ endkey 均是这个分布。而 mixgraph 表示，真实情况下对 key 的访问频率是带有一定的 range 的，且这些 range 的概率符合双指数分布：</p>
+<blockquote>
+<p>From our observations, the prefix hotness (key-range hotness) follows the two-term-exponential distribution: f(x) = a<em>exp(b</em>x) + c<em>exp(d</em>x). However, we cannot directly use the inverse function to decide a key-range from a random distribution. To achieve it, we create a list of KeyrangeUnit, each KeyrangeUnit occupies a range of integers whose size is decided based on the hotness of the key-range. When a random value is generated based on uniform distribution, we map it to the KeyrangeUnit Vec and one KeyrangeUnit is selected. The probability of a  KeyrangeUnit being selected is the same as the hotness of this KeyrangeUnit. After that, the key can be randomly allocated to the key-range of this KeyrangeUnit, or we can based on the power distribution (y=ax^b) to generate the offset of the key in the selected key-range. In this way, we generate the keyID based on the hotness of the prefix and also the key hotness distribution.</p>
 </blockquote>
-<a href="https://steamcommunity.com/profiles/76561198997580810/" target="_blank"><img src="https://i.bmp.ovh/imgs/2022/03/42556b6c9243db47.jpg"></a>
-<style>
-    #steam-item1 a,
-#steam-item1 a:hover {
-  text-decoration: none;
-}
+<p>mixgraph 会把 key 分成同样大小的多个 range，数量由 keyrange_num 决定，比如这个示例中就是 30。而 f(x) = a<em>exp(b</em>x) + c<em>exp(d</em>x) 不再指 key 的概率，而是 range 的概率，换句话说就是 prefix。也就是，30 个 range，每一个都会被算一次 f(x) ，表示 key 会出现在其中的概率。</p>
+<p>来看代码：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void MixGraph(ThreadState* thread) &#123;
+  &#x2F;&#x2F; ...
+  GenerateTwoTermExpKeys gen_exp; 
+  &#x2F;&#x2F; Decide if user wants to use prefix based key generation
+  if (FLAGS_keyrange_dist_a !&#x3D; 0.0 || FLAGS_keyrange_dist_b !&#x3D; 0.0 ||
+      FLAGS_keyrange_dist_c !&#x3D; 0.0 || FLAGS_keyrange_dist_d !&#x3D; 0.0) &#123;
+    use_prefix_modeling &#x3D; true;
+    gen_exp.InitiateExpDistribution(
+        FLAGS_num, FLAGS_keyrange_dist_a, FLAGS_keyrange_dist_b,
+        FLAGS_keyrange_dist_c, FLAGS_keyrange_dist_d);
+  &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这里先构造了个 GenerateTwoTermExpKeys，用于后续生成 key，来看一下函数 InitiateExpDistribution，它将决定每个 range 的概率。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">Status InitiateExpDistribution(int64_t total_keys, double prefix_a,
+                                double prefix_b, double prefix_c,
+                                double prefix_d) &#123;
+  int64_t amplify &#x3D; 0;
+  int64_t keyrange_start &#x3D; 0;
+  if (FLAGS_keyrange_num &lt;&#x3D; 0) &#123;
+    keyrange_num_ &#x3D; 1;
+  &#125; else &#123;
+    keyrange_num_ &#x3D; FLAGS_keyrange_num;
+  &#125;
+  keyrange_size_ &#x3D; total_keys &#x2F; keyrange_num_;
+
+  &#x2F;&#x2F; Calculate the key-range shares size based on the input parameters
+  for (int64_t pfx &#x3D; keyrange_num_; pfx &gt;&#x3D; 1; pfx--) &#123;
+    &#x2F;&#x2F; Step 1. Calculate the probability that this key range will be
+    &#x2F;&#x2F; accessed in a query. It is based on the two-term expoential
+    &#x2F;&#x2F; distribution
+    double keyrange_p &#x3D; prefix_a * std::exp(prefix_b * pfx) +
+                        prefix_c * std::exp(prefix_d * pfx);
+    if (keyrange_p &lt; std::pow(10.0, -16.0)) &#123;
+      keyrange_p &#x3D; 0.0;
+    &#125;
+    &#x2F;&#x2F; Step 2. Calculate the amplify
+    &#x2F;&#x2F; In order to allocate a query to a key-range based on the random
+    &#x2F;&#x2F; number generated for this query, we need to extend the probability
+    &#x2F;&#x2F; of each key range from [0,1] to [0, amplify]. Amplify is calculated
+    &#x2F;&#x2F; by 1&#x2F;(smallest key-range probability). In this way, we ensure that
+    &#x2F;&#x2F; all key-ranges are assigned with an Integer that  &gt;&#x3D;0
+    if (amplify &#x3D;&#x3D; 0 &amp;&amp; keyrange_p &gt; 0) &#123;
+      amplify &#x3D; static_cast&lt;int64_t&gt;(std::floor(1 &#x2F; keyrange_p)) + 1;
+    &#125;
+
+    &#x2F;&#x2F; Step 3. For each key-range, we calculate its position in the
+    &#x2F;&#x2F; [0, amplify] range, including the start, the size (keyrange_access)
+    KeyrangeUnit p_unit;
+    p_unit.keyrange_start &#x3D; keyrange_start;
+    if (0.0 &gt;&#x3D; keyrange_p) &#123;
+      p_unit.keyrange_access &#x3D; 0;
+    &#125; else &#123;
+      p_unit.keyrange_access &#x3D;
+          static_cast&lt;int64_t&gt;(std::floor(amplify * keyrange_p));
+    &#125;
+    p_unit.keyrange_keys &#x3D; keyrange_size_;
+    keyrange_set_.push_back(p_unit);
+    keyrange_start +&#x3D; p_unit.keyrange_access;
+  &#125;
+  keyrange_rand_max_ &#x3D; keyrange_start;
+
+  &#x2F;&#x2F; Step 4. Shuffle the key-ranges randomly
+  &#x2F;&#x2F; Since the access probability is calculated from small to large,
+  &#x2F;&#x2F; If we do not re-allocate them, hot key-ranges are always at the end
+  &#x2F;&#x2F; and cold key-ranges are at the begin of the key space. Therefore, the
+  &#x2F;&#x2F; key-ranges are shuffled and the rand seed is only decide by the
+  &#x2F;&#x2F; key-range hotness distribution. With the same distribution parameters
+  &#x2F;&#x2F; the shuffle results are the same.
+  Random64 rand_loca(keyrange_rand_max_);
+  for (int64_t i &#x3D; 0; i &lt; FLAGS_keyrange_num; i++) &#123;
+    int64_t pos &#x3D; rand_loca.Next() % FLAGS_keyrange_num;
+    assert(i &gt;&#x3D; 0 &amp;&amp; i &lt; static_cast&lt;int64_t&gt;(keyrange_set_.size()) &amp;&amp;
+            pos &gt;&#x3D; 0 &amp;&amp; pos &lt; static_cast&lt;int64_t&gt;(keyrange_set_.size()));
+    std::swap(keyrange_set_[i], keyrange_set_[pos]);
+  &#125;
+
+  &#x2F;&#x2F; Step 5. Recalculate the prefix start postion after shuffling
+  int64_t offset &#x3D; 0;
+  for (auto&amp; p_unit : keyrange_set_) &#123;
+    p_unit.keyrange_start &#x3D; offset;
+    offset +&#x3D; p_unit.keyrange_access;
+  &#125;
+
+  return Status::OK();
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>首先，从尾向头遍历，对所有 range 计算概率（keyrange_p），通过公式 a<em>exp(b</em>x) + c<em>exp(d</em>x)， x 就是这个 range 的编号。接下来，对概率进行一定程度的放大，接着根据这个概率计算出 keyrange_access。这里解释一下 keyrange_start 和 keyrange_access，前者就是这个 range 代表开始 key，而后者代表这个 range 的范围（1 + keyrange_p），以此来表示这个 range 出现的概率。比如说，rangeA、rangeB 和 rangeC，A 的概率为 0.5，B 的为 0.3，C 的为 0.2，那么三者的 key 范围依次为 [0, 1.5)，[1.5, 2.8)，[2.8, 4.1)。简而言之，通过控制 range 的范围来控制概率，但这个范围不是最终插入的 key 范围，而是映射的范围。</p>
+<p>由于 f(x) 的递减的，所以从尾遍历的 range 一定是有序排列的。如 Step4 中所述，mixgraph 会打乱这种排序，但是每一个 range 的 keyrange_access 还是原来，即概率不变。</p>
+<p>至此，每一个 range 的范围确定了，接下来 MixGraph 函数会通过这些 range 来生成 key，方式依然是先平等随机生成，然后映射。</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void MixGraph(ThreadState* thread) &#123;
+  &#x2F;&#x2F; ...
+  &#125; else if (use_prefix_modeling) &#123;
+    key_rand &#x3D;
+        gen_exp.DistGetKeyID(ini_rand, FLAGS_key_dist_a, FLAGS_key_dist_b);
+  &#125; else &#123;
+    key_seed &#x3D; PowerCdfInversion(u, FLAGS_key_dist_a, FLAGS_key_dist_b);
+    Random64 rand(key_seed);
+    key_rand &#x3D; static_cast&lt;int64_t&gt;(rand.Next()) % FLAGS_num;
+  &#125;
+  &#x2F;&#x2F; ...
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>其中，ini_rand 就是随机的初始 key，下面那个分支就是第一节讲的 key 分布，这里要走上面那个分支了。可以看到，如果启用了 key_range，那么就不再使用第一节的 key 分布方式。实际上，不是不用了，而是不再整个 key 范围上用了，改为了在每个 range 上用，所以还是要传入 key_dist_a 和 key_dist_b。来看代码：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; Generate the Key ID according to the input ini_rand and key distribution
+int64_t DistGetKeyID(int64_t ini_rand, double key_dist_a,
+                      double key_dist_b) &#123;
+  int64_t keyrange_rand &#x3D; ini_rand % keyrange_rand_max_;
+
+  &#x2F;&#x2F; Calculate and select one key-range that contains the new key
+  int64_t start &#x3D; 0, end &#x3D; static_cast&lt;int64_t&gt;(keyrange_set_.size());
+  while (start + 1 &lt; end) &#123;
+    int64_t mid &#x3D; start + (end - start) &#x2F; 2;
+    assert(mid &gt;&#x3D; 0 &amp;&amp; mid &lt; static_cast&lt;int64_t&gt;(keyrange_set_.size()));
+    if (keyrange_rand &lt; keyrange_set_[mid].keyrange_start) &#123;
+      end &#x3D; mid;
+    &#125; else &#123;
+      start &#x3D; mid;
+    &#125;
+  &#125;
+  int64_t keyrange_id &#x3D; start;
+
+  &#x2F;&#x2F; Select one key in the key-range and compose the keyID
+  int64_t key_offset &#x3D; 0, key_seed;
+  if (key_dist_a &#x3D;&#x3D; 0.0 || key_dist_b &#x3D;&#x3D; 0.0) &#123;
+    key_offset &#x3D; ini_rand % keyrange_size_;
+  &#125; else &#123;
+    double u &#x3D;
+        static_cast&lt;double&gt;(ini_rand % keyrange_size_) &#x2F; keyrange_size_;
+    key_seed &#x3D; static_cast&lt;int64_t&gt;(
+        ceil(std::pow((u &#x2F; key_dist_a), (1 &#x2F; key_dist_b))));
+    Random64 rand_key(key_seed);
+    key_offset &#x3D; rand_key.Next() % keyrange_size_;
+  &#125;
+  return keyrange_size_ * keyrange_id + key_offset;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>函数分为两个部分。</p>
+<ul>
+<li>首先，通过二分找到初始 key 处于哪一个 range。</li>
+<li>然后，在该 range 中运行第一节的 key 分布映射，并根据 range id 和 size 组装为最后的 key 返回。</li>
+</ul>
+<p>至此，key 的分布就完成了。总结一下，key 的分布是按 range 的，range 之间的概率分布符合 aexp(bx) + cexp(dx)，而 range 内部的 key 概率分布符合 ax^b。二者实现控制概率的方式都是对平等随机的初始 key 进行不平等映射。</p>
+<h3 id="QPS-的分布"><a href="#QPS-的分布" class="headerlink" title="QPS 的分布"></a>QPS 的分布</h3><p>QPS 就很好理解了，常常与 IOPS 对应，后者一般指底层每秒实际执行成功的 IO 次数，前者则指上层每秒下发的 IO 数，虽然叫作 query，但读和写都包括。mixgraph 的 QPS 符合 asine(bx+c) +d 分布，这里的 x 是时间，单位为 sine_mix_rate_interval_milliseconds（ms），即每过这么多时间重新计算一下 QPS，来调整下发速率。</p>
+<p>在 MixGraph 中，每执行完一次 op，都会判断时间是否超过 interval，如果是，则更改 QPS，如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void MixGraph(ThreadState* thread) &#123;
+  &#x2F;&#x2F; ...
+  Duration duration(FLAGS_duration, reads_);
+  uint64_t last_record_time &#x3D; FLAGS_env-&gt;NowMicros();
+  while (!duration.Done(1)) &#123;
+    &#x2F;&#x2F; 按第一、二节的方式生成 key
+    &#x2F;&#x2F; ...
+    &#x2F;&#x2F; change the qps
+    if (FLAGS_sine_mix_rate &amp;&amp;
+          usecs_since_last &gt; (FLAGS_sine_mix_rate_interval_milliseconds *
+                              uint64_t&#123;1000&#125;) ||
+      !set_rate) &#123;
+    set_rate &#x3D; true;
+    double usecs_since_start &#x3D;
+        static_cast&lt;double&gt;(now - thread-&gt;stats.GetStart());
+    thread-&gt;stats.ResetSineInterval();
+    double mix_rate_with_noise &#x3D; AddNoise(
+        SineRate(usecs_since_start &#x2F; 1000000.0), FLAGS_sine_mix_rate_noise);
+    read_rate &#x3D; mix_rate_with_noise * (query.ratio_[0] + query.ratio_[2]);
+    write_rate &#x3D; mix_rate_with_noise * query.ratio_[1];
+
+    if (read_rate &gt; 0) &#123;
+      thread-&gt;shared-&gt;read_rate_limiter-&gt;SetBytesPerSecond(
+          static_cast&lt;int64_t&gt;(read_rate));
+    &#125;
+    if (write_rate &gt; 0) &#123;
+      thread-&gt;shared-&gt;write_rate_limiter-&gt;SetBytesPerSecond(
+          static_cast&lt;int64_t&gt;(write_rate));
+    &#125;
+  &#125;
+  &#x2F;&#x2F; 开始读写
+  &#x2F;&#x2F; ...
+  &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>上述代码中，核心是 SineRate，其会通过时间计算 QPS，如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">double SineRate(double x) &#123;
+  return FLAGS_sine_a * sin((FLAGS_sine_b * x) + FLAGS_sine_c) + FLAGS_sine_d;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>计算完成后，对其进行加噪，然后就按照指定的 read、write 、seek 比率把 QPS 分配出去，这里省去解释如何加噪。而 QPS 具体是怎么限制 op 的下发速度的，就是 rate_limiter 的活了。可以看到，当分配完 read_rate 和 write_rate后，会调用 rate_limiter 的 SetBytesPerSecond。实际上，就是赋个值：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void GenericRateLimiter::SetBytesPerSecond(int64_t bytes_per_second) &#123;
+  &#x2F;&#x2F; assert(bytes_per_second &gt; 0);
+  rate_bytes_per_sec_ &#x3D; bytes_per_second;
+  refill_bytes_per_period_.store(
+      CalculateRefillBytesPerPeriod(bytes_per_second),
+      std::memory_order_relaxed);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>rate_bytes_per_sec_ 实际上就是一个存量，指接下来一秒内最多能下发的 bytes 数，注意，是 bytes 数而不是 op 数。</p>
+<p>回到 MixGraph，当设置了 rate_limiter 之后，开始去执行读操作了，执行完毕后，发现其调用了 rate_limiter 的 Request，如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void MixGraph(ThreadState* thread) &#123;
+  &#x2F;&#x2F; ...
+  Duration duration(FLAGS_duration, reads_);
+  uint64_t last_record_time &#x3D; FLAGS_env-&gt;NowMicros();
+  while (!duration.Done(1)) &#123;
+    &#x2F;&#x2F; 按第一、二节的方式生成 key
+    &#x2F;&#x2F; ...
+    &#x2F;&#x2F; change the qps
+    if (FLAGS_sine_mix_rate &amp;&amp;
+          usecs_since_last &gt; (FLAGS_sine_mix_rate_interval_milliseconds *
+                              uint64_t&#123;1000&#125;) ||
+      !set_rate) &#123;
+      &#x2F;&#x2F; 设置 rate_limiter
+    &#125;
+  &#x2F;&#x2F; 开始读写
+  if (query_type &#x3D;&#x3D; 0) &#123;
+    &#x2F;&#x2F; 读
+    thread-&gt;shared-&gt;read_rate_limiter-&gt;Request(1, Env::IO_HIGH,
+                                                   nullptr &#x2F;*stats*&#x2F;);
+  &#125; else if (query_type &#x3D;&#x3D; 1)&#123;
+    &#x2F;&#x2F; 写
+    thread-&gt;shared-&gt;write_rate_limiter-&gt;Request(1, Env::IO_HIGH,
+                                                    nullptr &#x2F;*stats*&#x2F;);
+  &#125; else if (query_type &#x3D;&#x3D; 2)&#123;
+    &#x2F;&#x2F; seek
+    thread-&gt;shared-&gt;read_rate_limiter-&gt;Request(1, Env::IO_HIGH,
+                                                   nullptr &#x2F;*stats*&#x2F;);
+  &#125;
+  &#x2F;&#x2F; ...
+  &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>可以看到，任何一个操作执行完毕后都会调用 Request，去申请 1 个 byte。Request 的代码量有点大，逻辑也有点复杂，因为 rocksdb 在里面实现了 IO Priority。但是大致控制 QPS 的逻辑是：它是一个阻塞函数，当 bytes 还有冗余时，就放行，同时 bytes - n。</p>
+<p>因此，当 read 的 QPS 设为 1000 的话，那么 rate_limiter 中就有 1000 个 bytes 存量，每一个 read 操作消耗一个，故前 1000 个 read 顺利执行，后续则会被阻塞。当时间超过 interval 后，重新计算 QPS，然后赋予 rate_limter 新的 bytes 存量，这样之前的 read 就会被放行，以此重复。</p>
+<p>至此，MixGraph 的 QPS 分布梳理完毕。</p>
 
-.steam-game-tabs {
-  margin-bottom: 15px;
-  margin-top: 15px;
-}
-
-.steam-game-tab {
-  padding: 5px;
-}
-
-.steam-game-active {
-  background: #657b83;
-  color: #fff;
-}
-
-.steam-game-item {
-  position: relative;
-  clear: both;
-  min-height: 100px;
-  border-bottom: 1px #ddd solid;
-}
-
-@media screen and (max-width: 600px) {
-  .steam-game-item {
-    width: 100%;
-  }
-}
-
-.steam-game-picture {
-  left: 0;
-  top: 0px;
-  width: 188px;
-  height: 80px;
-}
-
-.steam-game-info {
-  height: 80px;
-  padding-left: 30%;
-}
-
-.steam-game-meta {
-  font-size: 12px;
-  padding-right: 10px;
-}
-
-.steam-game-pagination {
-  margin-top: 15px;
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-.steam-game-button {
-  padding: 5px;
-  display: inline-block;
-}
-
-.steam-game-button:hover {
-  background: #657b83;
-  color: #fff;
-}
-
-.steam-game-hide {
-  display: none;
-}
-
-.steam-game-show {
-  display: block;
-}
-
-.steam-game-title {
-  font-size: 18px;
-}
-
-.steam-game-title a {
-  line-height: 1;
-  padding: 5px;
-}
-
-.steam-game-title a:hover {
-  padding: 5px;
-  position: relative;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  border: 1px solid rgba(123, 123, 123, .5);
-  -webkit-transition: all .3s;
-  -moz-transition: all .3s;
-  -o-transition: all .3s;
-  transition: all .3s;
-}
-
-.steam-game-link {
-  min-height: 50px;
-}
-
-@media (max-width:400px) {
-  .steam-game-picture {
-    padding-left: 5px;
-  }
-
-  .steam-game-info {
-    position: relative;
-    left: 0;
-    top: 0px;
-    width: 188px;
-  }
-}
-
-.steam-game-picture img {
-  border: 2px solid #7b7b7b;
-  border-radius: 20px 7px;
-}
-
-.steam-game-button {
-  color: #00b8ff !important;
-  -webkit-transition: all .5s;
-  -moz-transition: all .5s;
-  -o-transition: all .5s;
-  transition: all .5s;
-  position: relative;
-}
-
-.steam-game-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  -webkit-transition: all .3s;
-  -moz-transition: all .3s;
-  -o-transition: all .3s;
-  transition: all .3s;
-}
-
-.steam-game-button:hover::before {
-  opacity: 0;
-  -webkit-transform: scale(1.2, 1.2);
-  transform: scale(1.2, 1.2);
-}
-
-.steam-game-button::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  opacity: 0;
-  background-color: rgba(255, 255, 255, .25);
-  -webkit-transition: all .3s;
-  -moz-transition: all .3s;
-  -o-transition: all .3s;
-  transition: all .3s;
-  -webkit-transform: scale(.5, .5);
-  transform: scale(.5, .5);
-}
-
-.steam-game-button:hover::after {
-  opacity: 1;
-  -webkit-transform: scale(1, 1);
-  transform: scale(1, 1);
-}
-</style>
-<div>
-    <div id="steam-item1">
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/431960/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/431960/">Wallpaper Engine：壁纸引擎</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 22 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/431960/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/431960">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1238810/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1238810/">《战地风云 5》</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 19.1 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1238810/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1238810">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/359550/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/false/">Tom Clancy&#39;s Rainbow Six Siege</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 14.6 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/359550/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/359550">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1593500/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1593500/">God of War</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 12.6 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1593500/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1593500">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/477160/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/477160/">人类一败涂地 / Human Fall Flat</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 6.1 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/477160/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/477160">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/239140/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/DyingLight/">Dying Light</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 4.8 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/239140/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/239140">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1366540/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1366540/">戴森球计划</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 3.8 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1366540/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1366540">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/208650/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/208650/">Batman™: Arkham Knight</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 2.8 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/208650/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/208650">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1057090/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1057090/">Ori and the Will of the Wisps</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 2.3 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1057090/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1057090">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/323190/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/323190/">Frostpunk</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 1.3 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/323190/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/323190">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/918570/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/918570/">Century: Age of Ashes</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 0.4 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/918570/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/918570">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/730/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/CSGO/">Counter-Strike: Global Offensive</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 0.2 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/730/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/730">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/501300/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/501300/">What Remains of Edith Finch</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/501300/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/501300">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1091500/">赛博朋克 2077</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1091500/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1091500">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/550/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/L4D2/">Left 4 Dead 2</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/550/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/550">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/242760/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/242760/">The Forest</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/242760/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/242760">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/623990/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/false/">Tom Clancy&#39;s Rainbow Six Siege - Test Server</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/623990/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/623990">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1543030/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1543030/">仙剑奇侠传七</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1543030/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1543030">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/1426210/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/1426210/">双人成行</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/1426210/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/1426210">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-item">
-    <div class="steam-game-picture" style="float:left"><img
-            src="https://steamstore-a.akamaihd.net/public/shared/images/header/globalheader_logo.png"
-            data-src="https://cdn.cloudflare.steamstatic.com/steam/apps/349040/capsule_184x69.jpg" referrerPolicy="no-referrer" />
-    </div>
-
-    <div class="steam-game-info">
-        <div class="steam-game-title">
-            <a target="_blank" href="https://store.steampowered.com/app/349040/">火影忍者 疾风传 终极风暴4</a>
-        </div>
-        <div class="steam-game-meta">
-            <span class="steam-game-info-time">
-                总时数 undefined 小时
-            </span>
-        </div>
-        <br/>
-        <div class="steam-game-link">
-            <a class="steam-game-button" target="_blank"
-               href="https://steamcommunity.com/profiles/76561198997580810/stats/349040/?tab=achievements">成就</a>
-
-            <a class="steam-game-button" target="_blank"
-               href="https://store.steampowered.com/app/349040">游戏介绍</a>
-        </div>
-    </div>
-
-</div>
-
-        
-        <div class="steam-game-pagination">
-    <a class="steam-game-button steam-game-firstpage" href="javascript:;" target="_self" onclick="return false"> 首页</a>
-    <a class="steam-game-button steam-game-previouspage" href="javascript:;" target="_self" onclick="return false">上一页</a>
-    <span class="steam-game-pagenum">2 / 3</span>
-    <a class="steam-game-button steam-game-nextpage" href="javascript:;" target="_self" onclick="return false">下一页</a>
-    <a class="steam-game-button steam-game-lastpage" href="javascript:;" target="_self" onclick="return false">尾页</a>
-</div>    </div>
-</div>
-<script>
-    Element.prototype.siblings = function () {
-    let siblingElement = [];
-    let sibs = this.parentNode.children;
-    for (let i = 0; i < sibs.length; i++) {
-        if (sibs[i] !== this) {
-            siblingElement.push(sibs[i]);
-        }
-    }
-    return siblingElement;
-};
-function tabClick() {
-    //修改标签样式
-    this.classList.add('steam-game-active');
-    let sibs = this.siblings();
-    for (let j = 0; j < sibs.length; j++) {
-        sibs[j].classList.remove('steam-game-active');
-    }
-    //显示对应板块
-    let itemId = this.id.replace('tab', 'item');
-    let target = document.getElementById(itemId);
-    target.classList.remove('steam-game-hide');
-    target.classList.add('steam-game-show');
-    sibs = document.getElementById(itemId).siblings();
-    for (let k = 0; k < sibs.length; k++) {
-        sibs[k].classList.remove('steam-game-show');
-        sibs[k].classList.add('steam-game-hide');
-    }
-}
-let tabs = document.getElementsByClassName("steam-game-tab");
-for (let i = 0; i < tabs.length; i++) {
-    tabs[i].onclick = tabClick;
-    tabs[i].onclick.apply(tabs[i]);
-}    var firstpages = document.getElementsByClassName("steam-game-firstpage");
-var previouspages = document.getElementsByClassName("steam-game-previouspage");
-var nextpages = document.getElementsByClassName("steam-game-nextpage");
-var lastpages = document.getElementsByClassName("steam-game-lastpage");
-var pagenums = document.getElementsByClassName("steam-game-pagenum");
-
-function makePageNum(num, arr) {
-    return (num + 1) + ' / ' + (Math.ceil(arr.length / 10 === 0 ? 1 : Math.ceil(arr.length / 10)));
-}
-
-function firstBtn() {
-    var sibs = this.parentNode.siblings();
-    displayPage(sibs, 0);
-    this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText = makePageNum(0, sibs);
-}
-
-function previousBtn() {
-    var sibs = this.parentNode.siblings();
-    var currNum = this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText;
-    currNum = currNum.substr(0, currNum.indexOf('/') - 1);
-    currNum = parseInt(currNum, 10) - 1;
-    if (currNum > 0) {
-        currNum--;
-    }
-    displayPage(sibs, currNum);
-    this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText = makePageNum(currNum, sibs);
-}
-
-function nextBtn() {
-    var sibs = this.parentNode.siblings();
-    var currNum = this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText;
-    currNum = currNum.substr(0, currNum.indexOf('/') - 1);
-    currNum = parseInt(currNum, 10) - 1;
-    if (currNum < Math.ceil(sibs.length / 10) - 1) {
-        currNum++;
-    }
-    displayPage(sibs, currNum);
-    this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText = makePageNum(currNum, sibs);
-}
-
-function lastBtn() {
-    var sibs = this.parentNode.siblings();
-    displayPage(sibs, Math.ceil(sibs.length / 10) - 1);
-    this.parentNode.getElementsByClassName('steam-game-pagenum')[0].innerText = makePageNum(Math.ceil(sibs.length / 10) - 1 === -1 ? 0 : Math.ceil(sibs.length / 10) - 1, sibs);
-}
-
-function displayPage(arr, num) {
-    for (var i = 0; i < arr.length; i++) {
-        if (Math.floor(i / 10) === num) {
-            arr[i].classList.remove('steam-game-hide');
-            var img = arr[i].getElementsByTagName('img')[0];
-            img.src = img.getAttribute('data-src');
-        } else {
-            arr[i].classList.add('steam-game-hide');
-        }
-    }
-}
-
-for (var i = 0; i < firstpages.length; i++) {
-
-    //add listener
-    firstpages[i].onclick = firstBtn;
-    previouspages[i].onclick = previousBtn;
-    nextpages[i].onclick = nextBtn;
-    lastpages[i].onclick = lastBtn;
-
-    //set page num
-    var size = pagenums[i].parentNode.siblings().length;
-    pagenums[i].innerText = '1 / ' + (Math.ceil(size / 10) === 0 ? 1 : Math.ceil(size / 10));
-    firstpages[i].click();
-}</script>
                 
             </div>
             <hr/>
@@ -1418,7 +870,7 @@ for (var i = 0; i < firstpages.length; i++) {
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://example.com/steamgames/index.html">http://example.com/steamgames/index.html</a>
+                    <a href="http://example.com/db-bench-yuan-ma-er-mixgraph-fu-zai-de-yuan-ma-jie-du/">http://example.com/db-bench-yuan-ma-er-mixgraph-fu-zai-de-yuan-ma-jie-du/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -1455,7 +907,15 @@ for (var i = 0; i < firstpages.length; i++) {
                 <div class="post-meta__tag-list" style="display: inline-block;">
                     
                         <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
+                            
+                                <a href="/tags/%E5%AD%98%E5%82%A8/">
+                                    <span class="chip bg-color">存储</span>
+                                </a>
+                            
+                                <a href="/tags/rocksdb/">
+                                    <span class="chip bg-color">rocksdb</span>
+                                </a>
+                            
                         </div>
                     
                 </div>
@@ -1904,13 +1364,13 @@ for (var i = 0; i < firstpages.length; i++) {
                 <i class="far fa-dot-circle"></i>&nbsp;本篇
             </div>
             <div class="card">
-                <a href="/steamgames/index.html">
+                <a href="/db-bench-yuan-ma-er-mixgraph-fu-zai-de-yuan-ma-jie-du/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="Steam游戏库">
+                        <img src="/medias/featureimages/8.jpg" class="responsive-img" alt="db_bench源码(二)：mixgraph负载的源码解读">
                         
-                        <span class="card-title">Steam游戏库</span>
+                        <span class="card-title">db_bench源码(二)：mixgraph负载的源码解读</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -1925,13 +1385,29 @@ for (var i = 0; i < firstpages.length; i++) {
                             </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-user fa-fw"></i>
-                            SrcMiLe
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
+                                </a>
+                            
                             
                         </span>
                     </div>
                 </div>
 
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E5%AD%98%E5%82%A8/">
+                        <span class="chip bg-color">存储</span>
+                    </a>
+                    
+                    <a href="/tags/rocksdb/">
+                        <span class="chip bg-color">rocksdb</span>
+                    </a>
+                    
+                </div>
                 
             </div>
         </div>
@@ -1939,16 +1415,16 @@ for (var i = 0; i < firstpages.length; i++) {
         
         <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge right-badge text-color">
-                本篇&nbsp;<i class="far fa-dot-circle"></i>
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/steamgames/index.html">
+                <a href="/rocksdb-trivialmove-yu-db-bench-de-fillseq/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="Steam游戏库">
+                        <img src="/medias/featureimages/17.jpg" class="responsive-img" alt="RocksDB: TrivialMove 与 db_bench 的 fillseq">
                         
-                        <span class="card-title">Steam游戏库</span>
+                        <span class="card-title">RocksDB: TrivialMove 与 db_bench 的 fillseq</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -1959,17 +1435,32 @@ for (var i = 0; i < firstpages.length; i++) {
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2023-08-04
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-08-02
                             </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-user fa-fw"></i>
-                            SrcMiLe
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
+                                </a>
+                            
                             
                         </span>
                     </div>
                 </div>
-
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E5%AD%98%E5%82%A8/">
+                        <span class="chip bg-color">存储</span>
+                    </a>
+                    
+                    <a href="/tags/rocksdb/">
+                        <span class="chip bg-color">rocksdb</span>
+                    </a>
+                    
+                </div>
                 
             </div>
         </div>
