@@ -4,6 +4,33 @@
   
     
     <entry>
+      <title>MIT6.s081 / MIT6.1810</title>
+      <link href="/mit6-s081-mit6-1810/"/>
+      <url>/mit6-s081-mit6-1810/</url>
+      
+        <content type="html"><![CDATA[<ul><li><p><a href="https://github.com/sakura-ysy/MIT6.1810">github 代码仓库</a></p></li><li><p><a href="https://yesiyuan.cn/mit6-1810-lab1-xv6-and-unix-utilities/">Lab1: Xv6 and Unix utilities</a></p></li><li><p><a href="https://yesiyuan.cn/mit6-1810-lab2-system-calls/">Lab2: system calls</a></p></li><li><p><a href="https://yesiyuan.cn/mit6-1810-lab3-page-tables/">Lab3: page tables</a></p></li><li><p><a href="https://yesiyuan.cn/mit6-1810-lab4-traps/">Lab4: traps</a></p></li><li><p><a href="https://yesiyuan.cn/mit6-1810-lab5-copy-on-write-fork-for-xv6/">Lab5: Copy-on-Write Fork for xv6</a></p></li><li><p><a href="https://yesiyuan.cn/mit6-1810-lab6-multithreading/">Lab6: Multithreading</a></p></li><li><p><a href="https://yesiyuan.cn/mit6-1810-lab7-network-driver/">Lab7: network driver</a></p></li></ul>]]></content>
+      
+      
+      <categories>
+          
+          <category> os </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> MIT6.s081 </tag>
+            
+            <tag> os </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>MIT6.1810-Lab7: network driver</title>
       <link href="/mit6-1810-lab7-network-driver/"/>
       <url>/mit6-1810-lab7-network-driver/</url>
