@@ -1,0 +1,1792 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="MIT6.1810-Lab7: network driver, SrcMiLeの杂货铺">
+    <meta name="description" content="">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
+
+    <title>MIT6.1810-Lab7: network driver | SrcMiLeの杂货铺</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+
+    <script src="/libs/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+    
+
+                <body>
+                    <header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="nav-wrapper container">
+            <div class="brand-logo">
+                <a href="/" class="waves-effect waves-light">
+                    
+                    <img src="/medias/avatar.jpg" class="logo-img" alt="LOGO">
+                    
+                    <span class="logo-span">SrcMiLeの杂货铺</span>
+                </a>
+            </div>
+            
+
+<a href="#" data-target="mobile-nav" class="sidenav-trigger button-collapse"><i class="fas fa-bars"></i></a>
+<ul class="right nav-menu">
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/" class="waves-effect waves-light">
+      
+      <i class="fas fa-home" style="zoom: 0.6;"></i>
+      
+      <span>首页</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/tags" class="waves-effect waves-light">
+      
+      <i class="fas fa-tags" style="zoom: 0.6;"></i>
+      
+      <span>标签</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/categories" class="waves-effect waves-light">
+      
+      <i class="fas fa-bookmark" style="zoom: 0.6;"></i>
+      
+      <span>分类</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/archives" class="waves-effect waves-light">
+      
+      <i class="fas fa-archive" style="zoom: 0.6;"></i>
+      
+      <span>归档</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/about" class="waves-effect waves-light">
+      
+      <i class="fas fa-user-circle" style="zoom: 0.6;"></i>
+      
+      <span>关于</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/contact" class="waves-effect waves-light">
+      
+      <i class="fas fa-comments" style="zoom: 0.6;"></i>
+      
+      <span>留言板</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="/friends" class="waves-effect waves-light">
+      
+      <i class="fas fa-address-book" style="zoom: 0.6;"></i>
+      
+      <span>友情链接</span>
+    </a>
+    
+  </li>
+  
+  <li class="hide-on-med-and-down nav-item">
+    
+    <a href="" class="waves-effect waves-light">
+
+      
+      <i class="fas fa-list" style="zoom: 0.6;"></i>
+      
+      <span>Medias</span>
+      <i class="fas fa-chevron-down" aria-hidden="true" style="zoom: 0.6;"></i>
+    </a>
+    <ul class="sub-nav menus_item_child ">
+      
+      <li>
+        <a href="/movies">
+          
+          <i class="fas fa-film" style="margin-top: -20px; zoom: 0.6;"></i>
+          
+          <span>放映室</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/books">
+          
+          <i class="fas fa-book" style="margin-top: -20px; zoom: 0.6;"></i>
+          
+          <span>破书架</span>
+        </a>
+      </li>
+      
+    </ul>
+    
+  </li>
+  
+  <li>
+    <a href="#searchModal" class="modal-trigger waves-effect waves-light">
+      <i id="searchIcon" class="fas fa-search" title="搜索" style="zoom: 0.85;"></i>
+    </a>
+  </li>
+</ul>
+
+
+<div id="mobile-nav" class="side-nav sidenav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/avatar.jpg" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">SrcMiLeの杂货铺</div>
+        <div class="logo-desc">
+            
+            Never really desperate, only the lost of the soul.
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+        <li class="m-nav-item">
+	  
+		<a href="/" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-home"></i>
+			
+			首页
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/tags" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-tags"></i>
+			
+			标签
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/categories" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-bookmark"></i>
+			
+			分类
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/archives" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-archive"></i>
+			
+			归档
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/about" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-user-circle"></i>
+			
+			关于
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/contact" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-comments"></i>
+			
+			留言板
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="/friends" class="waves-effect waves-light">
+			
+			    <i class="fa-fw fas fa-address-book"></i>
+			
+			友情链接
+		</a>
+          
+        </li>
+        
+        <li class="m-nav-item">
+	  
+		<a href="javascript:;">
+			
+				<i class="fa-fw fas fa-list"></i>
+			
+			Medias
+			<span class="m-icon"><i class="fas fa-chevron-right"></i></span>
+		</a>
+            <ul  style="background:  ;" >
+              
+                <li>
+
+                  <a href="/movies " style="margin-left:75px">
+				  
+				   <i class="fa fas fa-film" style="position: absolute;left:50px" ></i>
+			      
+		          <span>放映室</span>
+                  </a>
+                </li>
+              
+                <li>
+
+                  <a href="/books " style="margin-left:75px">
+				  
+				   <i class="fa fas fa-book" style="position: absolute;left:50px" ></i>
+			      
+		          <span>破书架</span>
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/sakura-ysy" class="waves-effect waves-light" target="_blank">
+                <i class="fab fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+</div>
+
+
+        </div>
+
+        
+            <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/sakura-ysy" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+
+</header>
+
+                        
+
+
+
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/15.jpg')">
+    <div class="container" style="right: 0px;left: 0px;">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <h1 class="description center-align post-title">MIT6.1810-Lab7: network driver</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        width: 345px;
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        padding: 35px 0 15px 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content {
+        padding-bottom: 30px;
+        overflow: auto;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+
+        position: absolute;
+        right: 23.5vw;
+        display: block;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #floating-toc-btn {
+        position: fixed;
+        right: 15px;
+        bottom: 76px;
+        padding-top: 15px;
+        margin-bottom: 0;
+        z-index: 998;
+    }
+
+    #floating-toc-btn .btn-floating {
+        width: 48px;
+        height: 48px;
+    }
+
+    #floating-toc-btn .btn-floating i {
+        line-height: 48px;
+        font-size: 1.4rem;
+    }
+</style>
+<div class="row">
+    <div id="main-content" class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/MIT6-s081/">
+                                <span class="chip bg-color">MIT6.s081</span>
+                            </a>
+                        
+                            <a href="/tags/os/">
+                                <span class="chip bg-color">os</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/os/" class="post-category">
+                                os
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                
+                <div class="post-date info-break-policy">
+                    <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2023-08-04
+                </div>
+                
+
+                
+
+                
+                <div class="info-break-policy">
+                    <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
+                    4k
+                </div>
+                
+
+                
+
+                
+            </div>
+        </div>
+        <hr class="clearfix">
+
+        
+        <!-- 是否加载使用自带的 prismjs. -->
+        <link rel="stylesheet" href="/libs/prism/prism.css">
+        
+
+        
+
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h2 id="Lab-network-driver"><a href="#Lab-network-driver" class="headerlink" title="Lab: network driver"></a>Lab: network driver</h2><blockquote>
+<p>You’ll use a network device called the E1000 to handle network communication. To xv6 (and the driver you write), the E1000 looks like a real piece of hardware connected to a real Ethernet local area network (LAN). In fact, the E1000 your driver will talk to is an emulation provided by qemu, connected to a LAN that is also emulated by qemu. On this emulated LAN, xv6 (the “guest”) has an IP address of 10.0.2.15. Qemu also arranges for the computer running qemu to appear on the LAN with IP address 10.0.2.2. When xv6 uses the E1000 to send a packet to 10.0.2.2, qemu delivers the packet to the appropriate application on the (real) computer on which you’re running qemu (the “host”)</p>
+</blockquote>
+<p>说实话，这个 lab 对我而言是有难度，难的不在思想，而是对 E1000 的使用。本 lab 只有一个任务，就是实现 xv6 对链路帧的处理，也就网络模型中的链路层，方式是使用网卡 E1000。本 lab 没有去看 Lecture 的必要，因为其中讲的都是基础的计网知识，也没有看 xv6 book 的必要，唯独需要看的，是 <a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.828/2022/readings/8254x_GBe_SDM.pdf">E1000 手册</a>，不看根本做不了，整整 410 页，我人麻了。</p>
+<p>为了一个实验把 410 页全看完不现实，指导书也说了，着重看 5 章即可：</p>
+<blockquote>
+<ul>
+<li>Section 2 is essential and gives an overview of the entire device.</li>
+<li>Section 3.2 gives an overview of packet receiving.</li>
+<li>Section 3.3 gives an overview of packet transmission, alongside section 3.4.</li>
+<li>Section 13 gives an overview of the registers used by the E1000.</li>
+<li>Section 14 may help you understand the init code that we’ve provided.</li>
+</ul>
+</blockquote>
+<p>然后哪怕这五章内容也不少，因此我是结合了 E1000 手册和网上博客一同学习的，最后基本完成了实验。在进行实验之前，一定要先搞清楚三个事情：</p>
+<ol>
+<li>xv6 收发网络包的调用链，从网络层到链路层；</li>
+<li>E1000 收发链路帧的模型，DMA 模型；</li>
+<li>E1000 的使用，主要在于各种寄存器；</li>
+</ol>
+<h3 id="xv6-网络调用链"><a href="#xv6-网络调用链" class="headerlink" title="xv6 网络调用链"></a>xv6 网络调用链</h3><p>首先是发送调用链。</p>
+<p>Linux 万物皆文件，xv6 亦是如此。上层若想发送网络包，那就要通过系统调用 sys_write() 来写“文件”。接着，调用 filewrite() ，其在最后会判断写入的文件类型是不是套接字（FD_SOCK）。如果是，那么就调用 sockwrite() ，至此运输层开始。sockwrite() 会给报文分配一个空间用于写数据，接着调用 net_tx_udp() 来进行 UDP 封装，封装完成后进一步调用 net_tx_ip() 进行 IP 封装，随后进一步调用 net_tx_eth() 进行链路层封装。最后，通过调用 e1000_transmit() 来使用 E1000 发送链路帧，这部分需要我们自己实现，后面就是硬件的活了。上述函数都是嵌套调用的，故 xv6 发包的流程如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">sys_write() -&gt; filewrite() -&gt; sockwrite() -&gt; net_tx_udp() -&gt; net_tx_ip() -&gt; net_tx_eth() -&gt; e1000_transmit()<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>然后是接收调用链。</p>
+<p>要明白 xv6 是如何知道 E1000 收到链路帧了，是通过中断。每当 E1000 收到一个链路帧时，就会触发对应的硬件中断。在 usertrap()，会通过 devintr() 来进入硬件中断处理入口。devintr() 会先判断硬件中断的类型，如果是 E1000_IRQ，就说明是 E1000 产生的中断，接着进入 e1000_intr() 处理该中断。随后，调用 e1000_recv() 来处理介绍到的链路帧，这部分需要我们自己实现，个人认为接收比发送要难。 e1000_recv() 中会调用 net_rx() 对链路帧进行解封装，并将其递交给网络层。之后，根据包类型调用 net_rx_ip() 或是 net_rx_arp() 来进一步向上递交，前者是 IP 报文后者是 ARP 报文。对于 IP 报文，进一步调用 net_rx_udp() 将其解封装为 UDP 报文。随后，调用 sockrecvudp()，其会进一步调用 mbufq_pushtail() 来将报文放入一个接收队列。此后，上层就可以通过 sockread() 来从队列中读出该报文了。而对于 ARP 报文，其本身不再有运输层报文，因此不会向上递交，而是会调用 net_tx_arp() 来进行一个 ARP 回复。故 xv6 收包的流程如下：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">e1000_intr() -&gt; e1000_recv() -&gt; net_rx() -&gt; net_rx_ip() -&gt; net_rx_udp() -&gt; sockrecvudp() -&gt; mbufq_pushtail()<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<h3 id="E1000-收发模型"><a href="#E1000-收发模型" class="headerlink" title="E1000 收发模型"></a>E1000 收发模型</h3><p>E1000 使用 DMA 模型（Direct Memory Access），也就是内存直接访问。在学计网的时候我们知道，任何处理网络包的终端都会有一个缓冲区，这是该硬件自带的，E1000 也不例外。但是，E1000 自带的空间毕竟太小了，因此 E1000 将会直接使用主机内容来作缓冲区，也就是内存直接访问。这也是为什么，在实现代码时会发现，所有的包空间都是最终都是通过 kalloc 来分配空间的。</p>
+<p><strong>发送模型</strong></p>
+<p>从代码中可以看出，我们有两个结构体需要重点注意：<code>mbuf</code>、<code>tx_desc</code>。而他们各自又有着自己的队列，名为 <code>tx_mbufs</code>、<code>tx_ring</code>。四个的作用如下：</p>
+<ul>
+<li><strong>mbuf</strong>：内存中存放报文的空间；</li>
+<li><strong>tx_desc</strong>：上述 mbuf 的描述符，可以理解为指向它具体内容的指针；</li>
+<li><strong>tx_mbufs</strong>：mbuf <em>地址</em> 组成的队列，以 desc 的 idx 作为索引，用于标识后续要释放的空间；</li>
+<li><strong>tx_ring</strong>：tx_desc 组成的队列；</li>
+</ul>
+<p>而 E1000 的发送模型，主要围绕 tx_ring 来进行。简单地讲，流程如下。</p>
+<p>要被发送的报文会先被分配一块空间，也就是 mbuf，里面存放着报文的内容，这些空间在 heap 中，因此是不连续的。而每一个 mbuf 都会被一个 tx_desc 指向，tx_desc 被连续的放进 tx_ring 队列中。因此，不连续的报文空间因为 tx_ring 的存在，可以被连续地访问。</p>
+<p>那么问题来了。tx_mbufs 是干啥的？tx_mbufs 中的每个元素都是一个 tx_desc 对应的 mbuf 的首址。通俗的将，第 i 个 tx_desc 指向的 mbuf 的首址就是 mbufs[i]。那就奇怪了，明明 tx_desc 已经指向了 mbuf 了，为什么还需要一个队列来专门标明呢？看一下 tx_desc 指向的内容就明白了：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">struct mbuf &#123;
+  struct mbuf  *next; &#x2F;&#x2F; the next mbuf in the chain
+  char         *head; &#x2F;&#x2F; the current start position of the buffer
+  unsigned int len;   &#x2F;&#x2F; the length of the buffer
+  char         buf[MBUF_SIZE]; &#x2F;&#x2F; the backing store
+&#125;;
+&#x2F;&#x2F; ...
+tx_desc-&gt;addr &#x3D; (uint64)m-&gt;head;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>其中，head 指向的缓冲区 buf 的头部。实际上，tx_desc-&gt;addr 就是这个 head，而不是 mbuf 的首址，因此，我们额外记录每个 tx_desc 对应的 mbuf 首址，这就是 mbufs 的内容。而为什么要记录首址呢？答案是为了释放。当第 i 个 tx_desc 处理完后，对应的 mbuf 就要被释放，而 tx_desc-&gt;addr 并不是 mbuf 的首址，因此不能通过其释放，需要通过 tx_mbufs[i] 来释放。因此，整个发送模型的核心就是 tx_ring。</p>
+<p>根据开发手册 3.4 节描述的发送描述符的队列结构. 这其中涉及了队列在内存的地址和长度 E1000_TDBAL E1000_TDLEN，队列的首尾指针 E1000_TDH E1000_TDT，这些变量都在对应的寄存器中，可由 regs 数组进行访问。在 kernel/e1000.c 的 e1000_init() 函数中，会进行发送初始化，会对以上变量进行初始化。开发手册对该模型用下图表示：</p>
+<img src="MIT6-1810-Lab7-network-driver/image-20230727171351699.png" alt="image-20230727171351699" style="zoom:67%;" />
+
+<p>其中, 最需要关注的是发送队列的首尾指针 <code>E1000_TDH</code> 和 <code>E1000_TDT</code>。 根据开发手册 3.4 节，发送首指针指向以及载入输出队列的数据,，由网卡<strong>硬件维护</strong>并更新该指针。而发送尾指针则指向第一个软件可以写入的描述符的位置，即由网卡驱动<strong>软件维护</strong>该指针。</p>
+<p><strong>接收模型</strong></p>
+<p>与发送模型对应的结构相同，接收模型也有 <code>mbuf</code>、<code>rx_desc</code>、<code>rx_bufs</code> 和 <code>rx_ring</code>。不同于发送模型中 mbuf 的空间需要我们自己分配，在接收模型中，mbufs 的每一个元素对应空间都已经被分配好了，用于存放接收到的报文。mbufs 中何时被放入了数据包我们不管，只需要按照 rx_ring 的顺序依次处理这些 mbuf 并将其递交给上层即可。</p>
+<p>相对应的，rx_mbufs 的作用和 tx_mbufs 的作用也不同。发送缓冲区队列 tx_mbufs  初始时全为空指针，而缓冲区 mbuf 实际由 sockwrite() 分配，在最后时绑定到缓冲区队列中, 主要是为了方便后续释放缓冲区。而接收缓冲区队列 rx_mbufs  在初始化时全部都已分配，由内核解封装后释放内存。当 rx_mbufs 中的一个 mbuf 被处理完毕后，需要替换成一个新的缓冲区用于下一次硬件接收数据。</p>
+<p>我们需要取得 rx_ring 中首个未处理（未递交）的报文，通过 <code>(regs[E1000_RDT]+1)%RX_RING_SIZE</code> 来确定（tail + 1）。注意，这里不是队列尾，而是队列尾 +1。对于发送模型而言，队列尾是下一个待处理的报文，而对于接收模型而言，队列尾是当前在处理的，而队列尾 +1才是下一个待处理的报文们。这一点在手册中有说明，在指导书中也有提示：</p>
+<blockquote>
+<p>TX: Finally, update the ring position by adding one to <code>E1000_TDT</code> modulo <code>TX_RING_SIZE</code>.</p>
+<p>RX: by fetching the <code>E1000_RDT</code> control register and adding one modulo <code>RX_RING_SIZE</code>.</p>
+</blockquote>
+<p>需要注意的是，在实验指导中指出可能之前到达的数据包超过队列待处理大小，需要进行处理。也就是说，处理包的速度比接收包的速度慢，导致 tail + 1 之后还有一些包未处理。这里我参考了其他人的做法，在 e1000_recv() 添加循环，tail 一直往后推，从而让一次中断触发后网卡软件会一直将可解封装的数据传递到网络栈，以避免队列中的可处理数据帧的堆积来避免上述情况。而终止条件即当前描述符的 DD 标志位未被设置，则证明当前数据还未由硬件处理完毕。</p>
+<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><p>实现上参考了 <a target="_blank" rel="noopener" href="https://blog.csdn.net/LostUnravel/article/details/121437373">博客</a> 的内容，博客帮我理清了 E1000 的收发流程，还提示了一些细节问题，比如内存屏障，我自己就没想到。</p>
+<p><strong>e1000_transmit</strong></p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">int
+e1000_transmit(struct mbuf *m)
+&#123;
+  &#x2F;&#x2F;
+  &#x2F;&#x2F; Your code here.
+  &#x2F;&#x2F;
+  &#x2F;&#x2F; the mbuf contains an ethernet frame; program it into
+  &#x2F;&#x2F; the TX descriptor ring so that the e1000 sends it. Stash
+  &#x2F;&#x2F; a pointer so that it can be freed after sending.
+  &#x2F;&#x2F;
+  acquire(&amp;e1000_lock);
+  uint32 tdt &#x3D; regs[E1000_TDT]; &#x2F;&#x2F; 队列尾
+  struct tx_desc *desc &#x3D; &amp;tx_ring[tdt];
+
+  &#x2F;&#x2F; 检查队列是否已满，通过 E1000_TXD_STAT_DD
+  if(!(desc-&gt;status &amp; E1000_TXD_STAT_DD))&#123;
+    release(&amp;e1000_lock);
+    return -1;
+  &#125;
+
+  &#x2F;&#x2F; 释放 desc 指向的原内存
+  if(tx_mbufs[tdt])&#123;
+    mbuffree(tx_mbufs[tdt]);
+  &#125;;
+
+  &#x2F;&#x2F; m 记录在 mbufs，用于之后释放
+  tx_mbufs[tdt] &#x3D; m;
+
+  &#x2F;&#x2F; desc 指向 m
+  desc-&gt;addr &#x3D; (uint64)m-&gt;head;
+  desc-&gt;length &#x3D; m-&gt;len;
+  desc-&gt;cmd &#x3D; E1000_TXD_CMD_EOP | E1000_TXD_CMD_RS;
+
+  &#x2F;&#x2F; &#x2F;&#x2F; 内存屏障
+  &#x2F;&#x2F; __sync_synchronize();
+
+  &#x2F;&#x2F; 更新尾指针寄存器
+  regs[E1000_TDT] &#x3D; (tdt + 1) % TX_RING_SIZE;
+  release(&amp;e1000_lock);
+
+  return 0;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>注意点：</p>
+<ul>
+<li>检查尾指针指向的描述符是否在状态中写入了 E1000_TXD_STAT_DD标志位。根据开发手册 3.3.3.2 节关于 DD 标志位的描述，该标志位会在描述符的数据被处理完成后设置。因此未设置该标志位的描述符其数据仍未被硬件完成传输，因此此时还不能进行数据写入，返回失败。这里实验指导中携带是检查”溢出(overflowing)”，但是并未通过检查队满条件 (Tail+1)%Size==Head 判断的，而是通过 DD 标志位，根据开发手册，Head 指向的是由硬件所有的描述符的起始位置，等待发送，其 DD 标志位理论上还未被设置，所以若遇到 DD 位未被设置的描述符，则可说明队列已满。</li>
+<li>更新尾指针指向的描述符的 addr 字段指向数据帧缓冲区的头部 m-&gt;head；length 字段记录数据帧的长度 m-&gt;len。在上文也提到过，e1000_transmit() 是网络栈最后进行调用，在上层 sockwrite() 中分配的缓冲区 m，同时在一层层封装时会更新缓冲区头部（首地址）的位置字段 m-&gt;head。</li>
+<li>更新尾指针指向的描述符的 <code>cmd</code> 字段。在 <code>kernel/e1000_dev.h</code> 中，关于描述符 command 定义了 <code>E1000_TXD_CMD_EOP</code> 和 <code>E1000_TXD_CMD_RS</code> 两个标志位。实际上，在手册中介绍了很多标志位，但 xv6 代码框架并没有提供，只提供了上面两个，因此很容易想到就用这两个。具体而言，</li>
+<li>根据开发手册 3.3.3.1 节，容易判断出 EOF 标志位表示数据包的结束，因此需要被设置。而再结合 3.3.3.2 节 “The transmit descriptor status field is only present in cases where RS (or RPS for the 82544GC/EI only) is set in the command field”，和 3.4 节 “Software can determine if a packet has been sent by setting the RS bit (or the RPS bit for the 82544GC/EI only) in the transmit descriptor command field”，可以判断出 RS 字段用于报告状态信息，只有设置了该字段，描述符的 status 字段才是有效的，而网卡将数据包发送完成后会设置 DD 状态，因此此处也需要对描述符设置 RS 标志位。</li>
+<li>在更改寄存器前通过 <code>__sync_synchronize()</code> ，这是为了防止编译器错误的重排指令。在 C 编译时，编译器会基于优化的考虑重排指令从而加速运行，当然在软件层面这不会导致问题。但是，编译器不会识别存在的硬件隐患，因此指令重排可能将 regs[E1000_TDT] 寄存器的设置给排到前面去了，这显然是错的。所以要在 regs[E1000_TDT] 设置之前放置内存屏障，从而保证所有操作执行完毕后才能设置该寄存器。</li>
+<li>上文提到过，e1000_transmit() 的源头是 sys_write()，因此可能多线程调用，故出于同步的考量，要进行加锁。</li>
+</ul>
+<p><strong>e1000_recv</strong></p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">static void
+e1000_recv(void)
+&#123;
+  &#x2F;&#x2F;
+  &#x2F;&#x2F; Your code here.
+  &#x2F;&#x2F;
+  &#x2F;&#x2F; Check for packets that have arrived from the e1000
+  &#x2F;&#x2F; Create and deliver an mbuf for each packet (using net_rx()).
+  &#x2F;&#x2F;
+  &#x2F;&#x2F; 不能加锁，因为 net_tx_arp() 中加了，此处再加就会死锁
+  &#x2F;&#x2F;acquire(&amp;e1000_lock);
+  uint32 rdt &#x3D; regs[E1000_RDT];
+  uint32 tail &#x3D; (rdt + 1) % RX_RING_SIZE;
+  struct rx_desc *desc &#x3D; &amp;rx_ring[tail];
+  while(desc-&gt;status &amp; E1000_RXD_STAT_DD)&#123;
+    if(desc-&gt;length &gt; MBUF_SIZE) &#123;
+      panic(&quot;e1000 len&quot;);
+    &#125;
+    &#x2F;&#x2F; 更新长度
+    rx_mbufs[tail]-&gt;len &#x3D; desc-&gt;length;
+
+    &#x2F;&#x2F; 将包递交给网络栈
+    net_rx(rx_mbufs[tail]);
+
+    &#x2F;&#x2F; 分配一块新的缓冲区用于硬件下一次放包
+    rx_mbufs[tail] &#x3D; mbufalloc(0);
+    if(!rx_mbufs[tail])&#123;
+      panic(&quot;e1000_recv mbufalloc failed&quot;);
+    &#125;
+    desc-&gt;addr &#x3D; (uint64)rx_mbufs[tail]-&gt;head;
+    desc-&gt;status &#x3D; 0;
+
+    tail &#x3D; (tail + 1)%RX_RING_SIZE;
+    desc &#x3D; &amp;rx_ring[tail];
+  &#125;
+  regs[E1000_RDT] &#x3D; (tail - 1) % RX_RING_SIZE;
+  &#x2F;&#x2F;release(&amp;e1000_lock);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>注意点：</p>
+<ul>
+<li>待处理的包位于 tail + 1，这点和发送数据不一样。</li>
+<li>如前文所述，通过 while 循环让一次中断触发后网卡软件会一直将可解封装的数据传递到网络栈，以避免队列中的可处理数据帧的堆积。</li>
+<li>这里不能加锁，否则会报错。这是因为后续调用 net_rx() 时，会有一个分支走 net_rx_arp()，而在这个函数中调用了 acquire(&amp;lock)，因此如果在 e1000_recv() 申请锁，那就会出现持有锁的情况下再次申请锁，就会出错。个人认为 xv6 这里写的不合适，锁应该加在 e1000_recv() 处，而非 net_rx_arp() 处。</li>
+</ul>
+<h3 id="未解决的问题"><a href="#未解决的问题" class="headerlink" title="未解决的问题"></a>未解决的问题</h3><p>在测试 nettests 时出现错误：<code>invalid name for EDNS</code></p>
+<ul>
+<li><p>问题位于测试 nettests 中对收到的 DNS 进行 addtional record 检查部分：</p>
+</li>
+<li><pre><code class="c++">// needed for DNS servers with EDNS support
+for(int i = 0; i &lt; ntohs(hdr-&gt;arcount); i++) &#123;
+  char *qn = (char *) (ibuf+len);
+  if(*qn != 0) &#123;
+    printf(&quot;invalid name for EDNS\n&quot;);
+    exit(1);
+  &#125;
+  len += 1;
+  
+  struct dns_data *d = (struct dns_data *) (ibuf+len);
+  len += sizeof(struct dns_data);
+  if(ntohs(d-&gt;type) != 41) &#123;
+    printf(&quot;invalid type for EDNS\n&quot;);
+    exit(1);
+  &#125;
+  len += ntohs(d-&gt;len);
+&#125;
+</code></pre>
+</li>
+</ul>
+
+                
+            </div>
+            <hr/>
+
+            
+
+    <div class="reprint" id="reprint-statement">
+        
+            <div class="reprint__author">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-user">
+                        文章作者:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="/about" rel="external nofollow noreferrer">SrcMiLe</a>
+                </span>
+            </div>
+            <div class="reprint__type">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-link">
+                        文章链接:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    <a href="http://example.com/mit6-1810-lab7-network-driver/">http://example.com/mit6-1810-lab7-network-driver/</a>
+                </span>
+            </div>
+            <div class="reprint__notice">
+                <span class="reprint-meta" style="font-weight: bold;">
+                    <i class="fas fa-copyright">
+                        版权声明:
+                    </i>
+                </span>
+                <span class="reprint-info">
+                    本博客所有文章除特別声明外，均采用
+                    <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="external nofollow noreferrer" target="_blank">CC BY 4.0</a>
+                    许可协议。转载请注明来源
+                    <a href="/about" target="_blank">SrcMiLe</a>
+                    !
+                </span>
+            </div>
+        
+    </div>
+
+    <script async defer>
+      document.addEventListener("copy", function (e) {
+        let toastHTML = '<span>复制成功，请遵循本文的转载规则</span><button class="btn-flat toast-action" onclick="navToReprintStatement()" style="font-size: smaller">查看</a>';
+        M.toast({html: toastHTML})
+      });
+
+      function navToReprintStatement() {
+        $("html, body").animate({scrollTop: $("#reprint-statement").offset().top - 80}, 800);
+      }
+    </script>
+
+
+
+            <div class="tag_share" style="display: block;">
+                <div class="post-meta__tag-list" style="display: inline-block;">
+                    
+                        <div class="article-tag">
+                            
+                                <a href="/tags/MIT6-s081/">
+                                    <span class="chip bg-color">MIT6.s081</span>
+                                </a>
+                            
+                                <a href="/tags/os/">
+                                    <span class="chip bg-color">os</span>
+                                </a>
+                            
+                        </div>
+                    
+                </div>
+                <div class="post_share" style="zoom: 80%; width: fit-content; display: inline-block; float: right; margin: -0.15rem 0;">
+                    <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+<div id="article-share">
+
+    
+    <div class="social-share" data-sites="twitter,facebook,google,qq,qzone,wechat,weibo,douban,linkedin" data-wechat-qrcode-helper="<p>微信扫一扫即可分享！</p>"></div>
+    <script src="/libs/share/js/social-share.min.js"></script>
+    
+
+    
+
+</div>
+
+                </div>
+            </div>
+            
+                <style>
+    #reward {
+        margin: 40px 0;
+        text-align: center;
+    }
+
+    #reward .reward-link {
+        font-size: 1.4rem;
+        line-height: 38px;
+    }
+
+    #reward .btn-floating:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #rewardModal {
+        width: 320px;
+        height: 350px;
+    }
+
+    #rewardModal .reward-title {
+        margin: 15px auto;
+        padding-bottom: 5px;
+    }
+
+    #rewardModal .modal-content {
+        padding: 10px;
+    }
+
+    #rewardModal .close {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        color: rgba(0, 0, 0, 0.5);
+        font-size: 1.3rem;
+        line-height: 20px;
+        cursor: pointer;
+    }
+
+    #rewardModal .close:hover {
+        color: #ef5350;
+        transform: scale(1.3);
+        -moz-transform:scale(1.3);
+        -webkit-transform:scale(1.3);
+        -o-transform:scale(1.3);
+    }
+
+    #rewardModal .reward-tabs {
+        margin: 0 auto;
+        width: 210px;
+    }
+
+    .reward-tabs .tabs {
+        height: 38px;
+        margin: 10px auto;
+        padding-left: 0;
+    }
+
+    .reward-content ul {
+        padding-left: 0 !important;
+    }
+
+    .reward-tabs .tabs .tab {
+        height: 38px;
+        line-height: 38px;
+    }
+
+    .reward-tabs .tab a {
+        color: #fff;
+        background-color: #ccc;
+    }
+
+    .reward-tabs .tab a:hover {
+        background-color: #ccc;
+        color: #fff;
+    }
+
+    .reward-tabs .wechat-tab .active {
+        color: #fff !important;
+        background-color: #22AB38 !important;
+    }
+
+    .reward-tabs .alipay-tab .active {
+        color: #fff !important;
+        background-color: #019FE8 !important;
+    }
+
+    .reward-tabs .reward-img {
+        width: 210px;
+        height: 210px;
+    }
+</style>
+
+<div id="reward">
+    <a href="#rewardModal" class="reward-link modal-trigger btn-floating btn-medium waves-effect waves-light red">赏</a>
+
+    <!-- Modal Structure -->
+    <div id="rewardModal" class="modal">
+        <div class="modal-content">
+            <a class="close modal-close"><i class="fas fa-times"></i></a>
+            <h4 class="reward-title">你的赏识是我前进的动力</h4>
+            <div class="reward-content">
+                <div class="reward-tabs">
+                    <ul class="tabs row">
+                        <li class="tab col s6 alipay-tab waves-effect waves-light"><a href="#alipay">支付宝</a></li>
+                        <li class="tab col s6 wechat-tab waves-effect waves-light"><a href="#wechat">微 信</a></li>
+                    </ul>
+                    <div id="alipay">
+                        <img src="/medias/reward/alipay.jpg" class="reward-img" alt="支付宝打赏二维码">
+                    </div>
+                    <div id="wechat">
+                        <img src="/medias/reward/wechat.jpg" class="reward-img" alt="微信打赏二维码">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('.tabs').tabs();
+    });
+</script>
+
+            
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+        <style>
+    .valine-card {
+        margin: 1.5rem auto;
+    }
+
+    .valine-card .card-content {
+        padding: 20px 20px 5px 20px;
+    }
+
+    #vcomments textarea {
+        box-sizing: border-box;
+        background: url("/") 100% 100% no-repeat;
+    }
+
+    #vcomments p {
+        margin: 2px 2px 10px;
+        font-size: 1.05rem;
+        line-height: 1.78rem;
+    }
+
+    #vcomments blockquote p {
+        text-indent: 0.2rem;
+    }
+
+    #vcomments a {
+        padding: 0 2px;
+        color: #4cbf30;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    #vcomments img {
+        max-width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    #vcomments ol li {
+        list-style-type: decimal;
+    }
+
+    #vcomments ol,
+    ul {
+        display: block;
+        padding-left: 2em;
+        word-spacing: 0.05rem;
+    }
+
+    #vcomments ul li,
+    ol li {
+        display: list-item;
+        line-height: 1.8rem;
+        font-size: 1rem;
+    }
+
+    #vcomments ul li {
+        list-style-type: disc;
+    }
+
+    #vcomments ul ul li {
+        list-style-type: circle;
+    }
+
+    #vcomments table,
+    th,
+    td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    #vcomments table,
+    th,
+    td {
+        border: 0;
+    }
+
+    table tr:nth-child(2n),
+    thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments h1 {
+        font-size: 1.85rem;
+        font-weight: bold;
+        line-height: 2.2rem;
+    }
+
+    #vcomments h2 {
+        font-size: 1.65rem;
+        font-weight: bold;
+        line-height: 1.9rem;
+    }
+
+    #vcomments h3 {
+        font-size: 1.45rem;
+        font-weight: bold;
+        line-height: 1.7rem;
+    }
+
+    #vcomments h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    #vcomments h5 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        line-height: 1.4rem;
+    }
+
+    #vcomments h6 {
+        font-size: 1rem;
+        line-height: 1.3rem;
+    }
+
+    #vcomments p {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    #vcomments hr {
+        margin: 12px 0;
+        border: 0;
+        border-top: 1px solid #ccc;
+    }
+
+    #vcomments blockquote {
+        margin: 15px 0;
+        border-left: 5px solid #42b983;
+        padding: 1rem 0.8rem 0.3rem 0.8rem;
+        color: #666;
+        background-color: rgba(66, 185, 131, .1);
+    }
+
+    #vcomments pre {
+        font-family: monospace, monospace;
+        padding: 1.2em;
+        margin: .5em 0;
+        background: #272822;
+        overflow: auto;
+        border-radius: 0.3em;
+        tab-size: 4;
+    }
+
+    #vcomments code {
+        font-family: monospace, monospace;
+        padding: 1px 3px;
+        font-size: 0.92rem;
+        color: #e96900;
+        background-color: #f8f8f8;
+        border-radius: 2px;
+    }
+
+    #vcomments pre code {
+        font-family: monospace, monospace;
+        padding: 0;
+        color: #e8eaf6;
+        background-color: #272822;
+    }
+
+    #vcomments pre[class*="language-"] {
+        padding: 1.2em;
+        margin: .5em 0;
+    }
+
+    #vcomments code[class*="language-"],
+    pre[class*="language-"] {
+        color: #e8eaf6;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked),
+    [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+
+    #vcomments b,
+    strong {
+        font-weight: bold;
+    }
+
+    #vcomments dfn {
+        font-style: italic;
+    }
+
+    #vcomments small {
+        font-size: 85%;
+    }
+
+    #vcomments cite {
+        font-style: normal;
+    }
+
+    #vcomments mark {
+        background-color: #fcf8e3;
+        padding: .2em;
+    }
+
+    #vcomments table,
+    th,
+    td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table tr:nth-child(2n),
+    thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked),
+    [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+</style>
+
+<div class="card valine-card" data-aos="fade-up">
+    <div class="comment_headling"
+        style="font-size: 20px; font-weight: 700; position: relative; padding-left: 20px; top: 15px; padding-bottom: 5px;">
+        <i class="fas fa-comments fa-fw" aria-hidden="true"></i>
+        <span>评论</span>
+    </div>
+    <div id="vcomments" class="card-content" style="display: grid">
+    </div>
+</div>
+
+<script src="/libs/valine/av-min.js"></script>
+<script src="/libs/valine/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        appId: '3sjvW0J6zav7ITbeaCaE5CCA-gzGzoHsz',
+        appKey: 'M81tKeUfrGJmrEv4VDvcyEAH',
+        notify: 'false' === 'true',
+        verify: 'true' === 'true',
+        visitor: 'true' === 'true',
+        avatar: 'monsterid',
+        pageSize: '10',
+        lang: 'zh-cn',
+        placeholder: 'just go go'
+    });
+</script>
+
+<!--酷Q推送-->
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
+            <div class="card">
+                <a href="/mit6-1810-lab7-network-driver/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/15.jpg" class="responsive-img" alt="MIT6.1810-Lab7: network driver">
+                        
+                        <span class="card-title">MIT6.1810-Lab7: network driver</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-08-04
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/os/" class="post-category">
+                                    os
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/MIT6-s081/">
+                        <span class="chip bg-color">MIT6.s081</span>
+                    </a>
+                    
+                    <a href="/tags/os/">
+                        <span class="chip bg-color">os</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/mit6-1810-lab6-multithreading/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/5.jpg" class="responsive-img" alt="MIT6.1810-Lab6: Multithreading">
+                        
+                        <span class="card-title">MIT6.1810-Lab6: Multithreading</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-08-04
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/os/" class="post-category">
+                                    os
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/MIT6-s081/">
+                        <span class="chip bg-color">MIT6.s081</span>
+                    </a>
+                    
+                    <a href="/tags/os/">
+                        <span class="chip bg-color">os</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+
+</div>
+
+
+
+<!-- 代码块功能依赖 -->
+<script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
+
+<!-- 代码语言 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeLang.js"></script>
+
+
+<!-- 代码块复制 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeCopy.js"></script>
+
+
+<!-- 代码块收缩 -->
+
+<script type="text/javascript" src="/libs/codeBlock/codeShrink.js"></script>
+
+
+    </div>
+    <div id="toc-aside" class="expanded col l3 hide-on-med-and-down">
+        <div class="toc-widget card" style="background-color: white;">
+            <div class="toc-title"><i class="far fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- TOC 悬浮按钮. -->
+
+<div id="floating-toc-btn" class="hide-on-med-and-down">
+    <a class="btn-floating btn-large bg-color">
+        <i class="fas fa-list-ul"></i>
+    </a>
+</div>
+
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            collapseDepth: Number('0'),
+            headingSelector: 'h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+
+        
+        /* 修复文章卡片 div 的宽度. */
+        let fixPostCardWidth = function (srcId, targetId) {
+            let srcDiv = $('#' + srcId);
+            if (srcDiv.length === 0) {
+                return;
+            }
+
+            let w = srcDiv.width();
+            if (w >= 450) {
+                w = w + 21;
+            } else if (w >= 350 && w < 450) {
+                w = w + 18;
+            } else if (w >= 300 && w < 350) {
+                w = w + 16;
+            } else {
+                w = w + 14;
+            }
+            $('#' + targetId).width(w);
+        };
+
+        // 切换TOC目录展开收缩的相关操作.
+        const expandedClass = 'expanded';
+        let $tocAside = $('#toc-aside');
+        let $mainContent = $('#main-content');
+        $('#floating-toc-btn .btn-floating').click(function () {
+            if ($tocAside.hasClass(expandedClass)) {
+                $tocAside.removeClass(expandedClass).hide();
+                $mainContent.removeClass('l9');
+            } else {
+                $tocAside.addClass(expandedClass).show();
+                $mainContent.addClass('l9');
+            }
+            fixPostCardWidth('artDetail', 'prenext-posts');
+        });
+        
+    });
+</script>
+
+    
+
+</main>
+
+
+
+
+                            <footer class="page-footer bg-color">
+    
+    <div class="container row center-align" style="margin-bottom: 15px !important;">
+        <div class="col s12 m8 l8 copy-right">
+            Copyright&nbsp;&copy;
+            
+                <span id="year">2022-2023</span>
+            
+            <span id="year">2022</span>
+            <a href="/about" target="_blank">SrcMiLe</a>
+            |&nbsp;Powered by&nbsp;<a href="https://hexo.io/" target="_blank">Hexo</a>
+            |&nbsp;Theme&nbsp;<a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">Matery</a>
+            <br>
+            
+            
+            
+            
+            
+            
+            <span id="busuanzi_container_site_pv">
+                |&nbsp;<i class="far fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
+                    class="white-color"></span>&nbsp;次
+            </span>
+            
+            
+            <span id="busuanzi_container_site_uv">
+                |&nbsp;<i class="fas fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
+                    class="white-color"></span>&nbsp;人
+            </span>
+            
+            <br>
+            
+            <span id="sitetime">载入运行时间...</span>
+            <script>
+                function siteTime() {
+                    var seconds = 1000;
+                    var minutes = seconds * 60;
+                    var hours = minutes * 60;
+                    var days = hours * 24;
+                    var years = days * 365;
+                    var today = new Date();
+                    var startYear = "2022";
+                    var startMonth = "1";
+                    var startDate = "12";
+                    var startHour = "0";
+                    var startMinute = "0";
+                    var startSecond = "0";
+                    var todayYear = today.getFullYear();
+                    var todayMonth = today.getMonth() + 1;
+                    var todayDate = today.getDate();
+                    var todayHour = today.getHours();
+                    var todayMinute = today.getMinutes();
+                    var todaySecond = today.getSeconds();
+                    var t1 = Date.UTC(startYear, startMonth, startDate, startHour, startMinute, startSecond);
+                    var t2 = Date.UTC(todayYear, todayMonth, todayDate, todayHour, todayMinute, todaySecond);
+                    var diff = t2 - t1;
+                    var diffYears = Math.floor(diff / years);
+                    var diffDays = Math.floor((diff / days) - diffYears * 365);
+                    var diffHours = Math.floor((diff - (diffYears * 365 + diffDays) * days) / hours);
+                    var diffMinutes = Math.floor((diff - (diffYears * 365 + diffDays) * days - diffHours * hours) /
+                        minutes);
+                    var diffSeconds = Math.floor((diff - (diffYears * 365 + diffDays) * days - diffHours * hours -
+                        diffMinutes * minutes) / seconds);
+                    if (startYear == todayYear) {
+                        document.getElementById("year").innerHTML = todayYear;
+                        document.getElementById("sitetime").innerHTML = "本站已安全运行 " + diffDays + " 天 " + diffHours +
+                            " 小时 " + diffMinutes + " 分钟 " + diffSeconds + " 秒";
+                    } else {
+                        document.getElementById("year").innerHTML = startYear + " - " + todayYear;
+                        document.getElementById("sitetime").innerHTML = "本站已安全运行 " + diffYears + " 年 " + diffDays +
+                            " 天 " + diffHours + " 小时 " + diffMinutes + " 分钟 " + diffSeconds + " 秒";
+                    }
+                }
+                setInterval(siteTime, 1000);
+            </script>
+            
+            <br>
+            
+        </div>
+        <div class="col s12 m4 l4 social-link social-statis">
+    <a href="https://github.com/sakura-ysy" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fab fa-github"></i>
+    </a>
+
+
+
+    <a href="mailto:2575633193@qq.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
+        <i class="fas fa-envelope-open"></i>
+    </a>
+
+
+
+
+
+
+
+    <a href="tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=2575633193" class="tooltipped" target="_blank" data-tooltip="QQ联系我: 2575633193" data-position="top" data-delay="50">
+        <i class="fab fa-qq"></i>
+    </a>
+
+
+
+
+
+
+
+    <a href="/atom.xml" class="tooltipped" target="_blank" data-tooltip="RSS 订阅" data-position="top" data-delay="50">
+        <i class="fas fa-rss"></i>
+    </a>
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+                                <!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fas fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+$(function () {
+    var searchFunc = function (path, search_id, content_id) {
+        'use strict';
+        $.ajax({
+            url: path,
+            dataType: "xml",
+            success: function (xmlResponse) {
+                // get the contents from search data
+                var datas = $("entry", xmlResponse).map(function () {
+                    return {
+                        title: $("title", this).text(),
+                        content: $("content", this).text(),
+                        url: $("url", this).text()
+                    };
+                }).get();
+                var $input = document.getElementById(search_id);
+                var $resultContent = document.getElementById(content_id);
+                $input.addEventListener('input', function () {
+                    var str = '<ul class=\"search-result-list\">';
+                    var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                    $resultContent.innerHTML = "";
+                    if (this.value.trim().length <= 0) {
+                        return;
+                    }
+                    // perform local searching
+                    datas.forEach(function (data) {
+                        var isMatch = true;
+                        var data_title = data.title.trim().toLowerCase();
+                        var data_content = data.content.trim().replace(/<[^>]+>/g, "").toLowerCase();
+                        var data_url = data.url;
+                        data_url = data_url.indexOf('/') === 0 ? data.url : '/' + data_url;
+                        var index_title = -1;
+                        var index_content = -1;
+                        var first_occur = -1;
+                        // only match artiles with not empty titles and contents
+                        if (data_title !== '' && data_content !== '') {
+                            keywords.forEach(function (keyword, i) {
+                                index_title = data_title.indexOf(keyword);
+                                index_content = data_content.indexOf(keyword);
+                                if (index_title < 0 && index_content < 0) {
+                                    isMatch = false;
+                                } else {
+                                    if (index_content < 0) {
+                                        index_content = 0;
+                                    }
+                                    if (i === 0) {
+                                        first_occur = index_content;
+                                    }
+                                }
+                            });
+                        }
+                        // show search results
+                        if (isMatch) {
+                            str += "<li><a href='" + data_url + "' class='search-result-title'>" + data_title + "</a>";
+                            var content = data.content.trim().replace(/<[^>]+>/g, "");
+                            if (first_occur >= 0) {
+                                // cut out 100 characters
+                                var start = first_occur - 20;
+                                var end = first_occur + 80;
+                                if (start < 0) {
+                                    start = 0;
+                                }
+                                if (start === 0) {
+                                    end = 100;
+                                }
+                                if (end > content.length) {
+                                    end = content.length;
+                                }
+                                var match_content = content.substr(start, end);
+                                // highlight all keywords
+                                keywords.forEach(function (keyword) {
+                                    var regS = new RegExp(keyword, "gi");
+                                    match_content = match_content.replace(regS, "<em class=\"search-keyword\">" + keyword + "</em>");
+                                });
+
+                                str += "<p class=\"search-result\">" + match_content + "...</p>"
+                            }
+                            str += "</li>";
+                        }
+                    });
+                    str += "</ul>";
+                    $resultContent.innerHTML = str;
+                });
+            }
+        });
+    };
+
+    searchFunc('/search.xml', 'searchInput', 'searchResult');
+});
+</script>
+
+                                    <!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+</div>
+
+
+                                        <script
+                                            src="/libs/materialize/materialize.min.js"></script>
+                                        <script
+                                            src="/libs/masonry/masonry.pkgd.min.js"></script>
+                                        <script
+                                            src="/libs/aos/aos.js"></script>
+                                        <script
+                                            src="/libs/scrollprogress/scrollProgress.min.js"></script>
+                                        <script
+                                            src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+                                        <script
+                                            src="/js/matery.js"></script>
+
+                                        <!-- Baidu Analytics -->
+
+                                            <!-- Baidu Push -->
+
+<script>
+    (function () {
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https') {
+            bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        } else {
+            bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+
+                                                
+                                                        
+                                                            <script async
+                                                                src="/libs/others/busuanzi.pure.mini.js"></script>
+                                                            
+
+                                                                
+
+                                                                        
+
+                                                                                
+                                                                                        
+
+                                                                                                
+                                                                                                    
+                                                                                                        <script
+                                                                                                            type="text/javascript"
+                                                                                                            size="150"
+                                                                                                            alpha='0.6'
+                                                                                                            zIndex="-1"
+                                                                                                            src="/libs/background/ribbon-refresh.min.js"
+                                                                                                            async="async"></script>
+                                                                                                        
+
+                                                                                                            
+
+                                                                                                                    
+                                                                                                                        <script
+                                                                                                                            src="/libs/instantpage/instantpage.js"
+                                                                                                                            type="module"></script>
+                                                                                                                        
+
+                </body>
+
+</html>
+
+<!-- 樱花 -->
+<script type="text/javascript" src="/js/sakura.js"></script>
