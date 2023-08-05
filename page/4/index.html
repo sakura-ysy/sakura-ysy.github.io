@@ -431,6 +431,59 @@
             
             <div class="article col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
+                    <a href="/rocksdb-yuan-ma-xue-xi-qi-xie-san-wal/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="RocksDB源码学习(七): 写(三)-WAL">
+                            
+                            <span class="card-title">RocksDB源码学习(七): 写(三)-WAL</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                本篇博客将从源码层面分析 RocksDB 中 WAL 的创建与写入，且不考虑 2pc，所用代码版本为 v7.7.4
+
+WAL 主要的功能是当 RocksDB 异常退出后，能够恢复出错前的 memtable 中的数据，因此 RocksDB 默
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-26
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fas fa-bookmark fa-fw icon-category"></i>
+                                
+                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
+                                </a>
+                                
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/%E5%AD%98%E5%82%A8/">
+                            <span class="chip bg-color">存储</span>
+                        </a>
+                        
+                        <a href="/tags/rocksdb/">
+                            <span class="chip bg-color">rocksdb</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
                     <a href="/rocksdb-yuan-ma-xue-xi-liu-xie-er-writegroup/">
                         <div class="card-image">
                             
@@ -907,58 +960,6 @@ RocksDB源码学习(五): 写(一)-
                         
                         <a href="/tags/rocksdb/">
                             <span class="chip bg-color">rocksdb</span>
-                        </a>
-                        
-                    </div>
-                    
-                </div>
-            </div>
-            
-            <div class="article col s12 m6 l4" data-aos="zoom-in">
-                <div class="card">
-                    <a href="/sstable-jie-shao/">
-                        <div class="card-image">
-                            
-                            
-                            <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="SSTable 介绍">
-                            
-                            <span class="card-title">SSTable 介绍</span>
-                        </div>
-                    </a>
-
-                    <div class="card-content article-content">
-                        <div class="summary block-with-text">
-                            
-                                SSTable（Sorted String Table）是一个简单，但是非常有用的用来交换大量的、排好序的数据片段的数据结构。其使用场景为：
-
-需要高效地存储大量地 K-V 数据；
-数据是顺序写入的；
-要求高效地顺序读写；
-没有随机读取或者
-                            
-                        </div>
-                        <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-12
-                            </span>
-                            <span class="publish-author">
-                                
-                                <i class="fas fa-bookmark fa-fw icon-category"></i>
-                                
-                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
-                                    存储
-                                </a>
-                                
-                                
-                            </span>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card-action article-tags">
-                        
-                        <a href="/tags/%E5%AD%98%E5%82%A8/">
-                            <span class="chip bg-color">存储</span>
                         </a>
                         
                     </div>

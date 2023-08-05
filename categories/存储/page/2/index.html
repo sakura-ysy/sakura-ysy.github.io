@@ -458,11 +458,11 @@
                 </a>
                 
                 
-                <a href="/categories/%E5%AD%98%E5%82%A8/" title="存储: 29">
+                <a href="/categories/%E5%AD%98%E5%82%A8/" title="存储: 30">
                     <span class="chip center-align waves-effect waves-light
                              chip-active "
                             style="background-color: #E8F8F5;">存储
-                        <span class="tag-length">29</span>
+                        <span class="tag-length">30</span>
                     </span>
                 </a>
                 
@@ -540,6 +540,58 @@
 
     <article id="articles" class="container articles">
         <div class="row tags-posts">
+            
+            <div class="article tag-post col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/leveldb-dan-yuan-ce-shi/">
+                        <div class="card-image tag-image">
+                            
+                            
+                            <img src="/medias/featureimages/6.jpg" class="responsive-img" alt="LevelDB单元测试">
+                            
+                            <span class="card-title">LevelDB单元测试</span>
+                        </div>
+                    </a>
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                在学习 leveldb 源码的过程中，肯定少不了对特定函数或结构的测试。LevelDB几乎给每个关键的数据结构都写好了测试代码，我们可以直接使用，或者根据他的框架自己编写新的测试体，很方便。
+但是，我不会用。。。
+我看的源码是截止写这篇博客
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2023-02-04
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fas fa-bookmark fa-fw icon-category"></i>
+                                
+                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
+                                    存储
+                                </a>
+                                
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/%E5%AD%98%E5%82%A8/">
+                            <span class="chip bg-color">存储</span>
+                        </a>
+                        
+                        <a href="/tags/leveldb/">
+                            <span class="chip bg-color">leveldb</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
             
             <div class="article tag-post col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
@@ -982,56 +1034,6 @@ WAL 主要的功能是当 RocksDB 异常退出后，能够恢复出错前的 mem
                                 本篇博客将从源码层面分析 RocksDB 写操作中与 WriteGroup 有关的内容，且不考虑 pipelined_write 与 2pc，所用代码版本为 v7.7.4
 
 WAL 主要的功能是当 RocksDB 异常退出后，能够恢复出错前
-                            
-                        </div>
-                        <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2022-10-25
-                            </span>
-                            <span class="publish-author">
-                                
-                                <i class="fas fa-bookmark fa-fw icon-category"></i>
-                                
-                                <a href="/categories/%E5%AD%98%E5%82%A8/" class="post-category">
-                                    存储
-                                </a>
-                                
-                                
-                            </span>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card-action article-tags">
-                        
-                        <a href="/tags/%E5%AD%98%E5%82%A8/">
-                            <span class="chip bg-color">存储</span>
-                        </a>
-                        
-                        <a href="/tags/rocksdb/">
-                            <span class="chip bg-color">rocksdb</span>
-                        </a>
-                        
-                    </div>
-                    
-                </div>
-            </div>
-            
-            <div class="article tag-post col s12 m6 l4" data-aos="zoom-in">
-                <div class="card">
-                    <a href="/rocksdb-yuan-ma-xue-xi-wu-xie-yi-kuang-jia/">
-                        <div class="card-image tag-image">
-                            
-                            
-                            <img src="/medias/featureimages/15.jpg" class="responsive-img" alt="RocksDB源码学习(五): 写(一)-框架">
-                            
-                            <span class="card-title">RocksDB源码学习(五): 写(一)-框架</span>
-                        </div>
-                    </a>
-                    <div class="card-content article-content">
-                        <div class="summary block-with-text">
-                            
-                                RocksDB 的写流程比读流程要复杂很多，其中涉及到了多线程写入与 RocksDB 采用的很多优化，比如 unordered_write、pipelined_write 等等，还有一些可选策略，比如 2pc、parallel 等等，所以写
                             
                         </div>
                         <div class="publish-info">
